@@ -33,10 +33,8 @@ public class OsciloscopeScreen implements Screen {
     private Bloom bloom;
 
     private final boolean realtime = false;
-    private final int FPS = 7680 * 2;
     private final int recordingFPS = 60;
     private float step;
-    private float frameSpacing;
     private int recorderFrame;
     int frame;
     private final float fadeout = 0.005f;
@@ -52,9 +50,7 @@ public class OsciloscopeScreen implements Screen {
 
     OsciloscopeScreen() {
 
-        frameSpacing = FPS / recordingFPS;
-
-        step = 44100 / FPS;
+        step = 44100 / (float)recordingFPS;
 
         ShaderLoader.BasePath = "core/assets/shaders/";
         blurProcessor = new PostProcessor(false, false, Gdx.app.getType() == Application.ApplicationType.Desktop);
@@ -128,10 +124,9 @@ public class OsciloscopeScreen implements Screen {
 
         }else{
 
-            for(int i = 0; i<frameSpacing; i++){
-
+            for(int i = 0; i<step; i++) {
                 addCoords(frame);
-                frame += step;
+                frame++;
                 fadeOut();
             }
 
@@ -158,8 +153,7 @@ public class OsciloscopeScreen implements Screen {
             pixmap.dispose();
 
             batch.begin();
-            font.draw(batch, recorderFrame/(float)(recordingFPS) + "s", 100, 110);
-            font.draw(batch, frame/44100 + "s", 100, 70);
+            font.draw(batch, String.format("% 2f", frame/(float)44100) + "s", 100, 70);
             batch.end();
         }
 
