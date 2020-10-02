@@ -10,7 +10,6 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.BufferUtils;
@@ -31,8 +30,8 @@ public class OsciloscopeScreen implements Screen {
     private PostProcessor blurProcessor;
     private Bloom bloom;
 
-    private final boolean realtime = true;
-    private final int recordingFPS = 60;
+    private final boolean realtime = false;
+    private final int recordingFPS = 30;
     private float step;
     private int recorderFrame;
     int frame;
@@ -41,6 +40,10 @@ public class OsciloscopeScreen implements Screen {
     private final int STANDARD = 0;
     private final int RADIAL = 1;
     private final int BUBBLE = 2;
+    private final int RADIAL_BUBBLE = 3;
+    private final int SHAPES = 4;
+
+    private int maxSaturation = 4;
 
     private final int type = BUBBLE;
 
@@ -97,16 +100,21 @@ public class OsciloscopeScreen implements Screen {
             }
         }
 
+        if(type == SHAPES){
+            maxSaturation = 0;
+        }
+
         for (int i = 0; i < rSamples.length; i++) {
             rSamplesNormalised[i] = rSamples[i] / maxValue;
             lSamplesNormalised[i] = lSamples[i] / maxValue;
             averageSamplesNormalised[i] = averageSamples[i] / maxValue_average;
-            if (type == STANDARD) {
+            averageSamplesNormalised[i] *= maxSaturation;
+            if (type == STANDARD || type == SHAPES || type == RADIAL) {
                 rSamplesNormalised[i] = rSamplesNormalised[i] * 450;
                 lSamplesNormalised[i] = lSamplesNormalised[i] * 450;
-            } else if (type == BUBBLE) {
-                rSamplesNormalised[i] = rSamplesNormalised[i] * 200;
-                lSamplesNormalised[i] = lSamplesNormalised[i] * 200;
+            } else if (type == BUBBLE || type == RADIAL_BUBBLE) {
+                rSamplesNormalised[i] = rSamplesNormalised[i] * 300;
+                lSamplesNormalised[i] = lSamplesNormalised[i] * 300;
             }
         }
 
@@ -125,9 +133,9 @@ public class OsciloscopeScreen implements Screen {
     public void render(float delta) {
 
         if (realtime) {
-            bloom.setBloomSaturation(averageSamplesNormalised[(int) (music.getPosition() * 44100)] * 4 + 1);
+            bloom.setBloomSaturation(averageSamplesNormalised[(int) (music.getPosition() * 44100)] + 1);
         } else {
-            bloom.setBloomSaturation(averageSamplesNormalised[(int) (frame + step)] * 4 + 1);
+            bloom.setBloomSaturation(averageSamplesNormalised[(int) (frame + step)] + 1);
         }
 
         blurProcessor.capture();
@@ -183,28 +191,56 @@ public class OsciloscopeScreen implements Screen {
 
         Vector3 coords = new Vector3();
 
+        float x, y, angle, rad;
+
         switch (type) {
             case (STANDARD):
                 coords.set(lSamplesNormalised[pos], rSamplesNormalised[pos], 0);
                 break;
             case (RADIAL):
-                float angle = -lSamplesNormalised[pos] * 180;
-                float x = -MathUtils.cosDeg(angle) * rSamplesNormalised[pos] * 450;
-                float y = -MathUtils.sinDeg(angle) * rSamplesNormalised[pos] * 450;
+                angle = -lSamplesNormalised[pos] * 180;
+                x = -MathUtils.cosDeg(angle) * rSamplesNormalised[pos];
+                y = -MathUtils.sinDeg(angle) * rSamplesNormalised[pos];
                 coords.set(x, y, 0);
                 break;
             case (BUBBLE):
-                float rad = Math.abs(Math.max(lSamplesNormalised[pos], rSamplesNormalised[pos]));
+                rad = Math.abs(Math.max(lSamplesNormalised[pos], rSamplesNormalised[pos]));
+                rad = (float) (Math.random()*rad);
                 coords.set(lSamplesNormalised[pos], rSamplesNormalised[pos], rad);
+                break;
+            case(RADIAL_BUBBLE):
+                rad = Math.abs(Math.max(lSamplesNormalised[pos], rSamplesNormalised[pos]));
+                rad = (float) (Math.random()*rad);
+                angle = -lSamplesNormalised[pos] * 180;
+                x = -MathUtils.cosDeg(angle) * rSamplesNormalised[pos];
+                y = -MathUtils.sinDeg(angle) * rSamplesNormalised[pos];
+                coords.set(x, y, rad);
+                break;
+            case(SHAPES):
+                x = 0;
+                y = 0;
+                dots.add(new Vector3().set(x, y, 0));
+                colors.add(new Vector3(1, 1, 0));
+                angle = lSamplesNormalised[pos] * 90;
+                for (int i = 0; i < 50; i++) {
+                    x = x - (float) Math.cos(angle) * rSamplesNormalised[pos] / 2;
+                    y = y - (float) Math.sin(angle) * rSamplesNormalised[pos] / 2;
+                    angle = angle + 1;
+                    dots.add(new Vector3().set(x, y, 0));
+                    colors.add(new Vector3(1, i / 50f, 0));
+                }
                 break;
         }
 
-        colors.add(color);
-        dots.add(coords);
+
+        if(type != SHAPES) {
+            colors.add(color);
+            dots.add(coords);
+        }
     }
 
     private void render() {
-        if (type == BUBBLE) {
+        if (type == BUBBLE || type == RADIAL_BUBBLE) {
             for (int i = 0; i < dots.size; i++) {
                 Vector3 colorV = colors.get(i);
                 renderer.setColor(colorV.x, colorV.y, colorV.z, 1);
@@ -235,7 +271,7 @@ public class OsciloscopeScreen implements Screen {
                 colorV.x = MathUtils.clamp(colorV.x - fadeout / 1.5f, 0, 1);
                 colorV.y = MathUtils.clamp(colorV.y - fadeout * 1.5f, 0, 1);
                 colorV.z = MathUtils.clamp(colorV.z - fadeout, 0, 1);
-                if(type == BUBBLE){
+                if(type == BUBBLE || type == RADIAL_BUBBLE){
                     dots.get(i).z = MathUtils.clamp(dots.get(i).z - fadeout*4, 0, 450);
                 }
                 colors.set(i, colorV);
