@@ -4,6 +4,7 @@ import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.PixmapIO;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -30,22 +31,31 @@ public class OsciloscopeScreen implements Screen {
     private PostProcessor blurProcessor;
     private Bloom bloom;
 
-    private final boolean realtime = false;
+    private final boolean realtime = true;
     private final int recordingFPS = 30;
     private float step;
     private int recorderFrame;
     int frame;
-    private final float fadeout = 0.005f;
+    private float fadeout = 0.005f;
 
     private final int STANDARD = 0;
     private final int RADIAL = 1;
     private final int BUBBLE = 2;
     private final int RADIAL_BUBBLE = 3;
     private final int SHAPES = 4;
+    private final int SINUS = 5;
+
+    private final int LIME = 103;
+    private final int FIRE = 104;
+    private final int CYAN = 105;
+    private Color palletColor;
 
     private int maxSaturation = 4;
 
-    private final int type = BUBBLE;
+    private final int type = SINUS;
+    private final int pallet = CYAN;
+    private int skipOver;
+    private boolean bloomSync;
 
     private BitmapFont font;
 
@@ -100,8 +110,26 @@ public class OsciloscopeScreen implements Screen {
             }
         }
 
-        if(type == SHAPES){
+        if (type == BUBBLE || type == SHAPES || type == RADIAL_BUBBLE || type == SINUS) {
+            skipOver = (int) step;
             maxSaturation = 0;
+        } else {
+            skipOver = 1;
+        }
+
+        bloomSync = type != SINUS;
+
+        if (!bloomSync) {
+            bloom.setBloomSaturation(0);
+            bloom.setBloomIntesity(0);
+            bloom.setBlurPasses(0);
+        }
+
+        if (type == SINUS) {
+            fadeout *= 50;
+        }
+        if (type == SHAPES) {
+            fadeout *= 5;
         }
 
         for (int i = 0; i < rSamples.length; i++) {
@@ -122,6 +150,23 @@ public class OsciloscopeScreen implements Screen {
             music.play();
         }
 
+        palletColor = new Color();
+
+        switch (pallet) {
+            case (FIRE):
+                palletColor.r = 1;
+                palletColor.g = 1;
+                break;
+            case (CYAN):
+                palletColor.b = 1;
+                palletColor.g = 1;
+                break;
+            case (LIME):
+                palletColor.r = 0.5f;
+                palletColor.g = 1;
+                break;
+        }
+
     }
 
     @Override
@@ -132,10 +177,12 @@ public class OsciloscopeScreen implements Screen {
     @Override
     public void render(float delta) {
 
-        if (realtime) {
-            bloom.setBloomSaturation(averageSamplesNormalised[(int) (music.getPosition() * 44100)] + 1);
-        } else {
-            bloom.setBloomSaturation(averageSamplesNormalised[(int) (frame + step)] + 1);
+        if (bloomSync) {
+            if (realtime) {
+                bloom.setBloomSaturation(averageSamplesNormalised[(int) (music.getPosition() * 44100)] + 1);
+            } else {
+                bloom.setBloomSaturation(averageSamplesNormalised[(int) (frame + step)] + 1);
+            }
         }
 
         blurProcessor.capture();
@@ -150,9 +197,9 @@ public class OsciloscopeScreen implements Screen {
 
         } else {
 
-            for (int i = 0; i < step; i++) {
+            for (int i = 0; i < step; i += skipOver) {
                 addCoords(frame);
-                frame++;
+                frame += skipOver;
                 fadeOut();
             }
 
@@ -186,12 +233,16 @@ public class OsciloscopeScreen implements Screen {
     }
 
     private void addCoords(int pos) {
-        Vector3 color = new Vector3();
-        color.set(1, 1, 0);
 
+        Vector3 color = new Vector3(palletColor.r, palletColor.g, palletColor.b);
         Vector3 coords = new Vector3();
 
         float x, y, angle, rad;
+        int repeat = 1;
+
+        if (!realtime) {
+            repeat = 3;
+        }
 
         switch (type) {
             case (STANDARD):
@@ -204,36 +255,56 @@ public class OsciloscopeScreen implements Screen {
                 coords.set(x, y, 0);
                 break;
             case (BUBBLE):
-                rad = Math.abs(Math.max(lSamplesNormalised[pos], rSamplesNormalised[pos]));
-                rad = (float) (Math.random()*rad);
-                coords.set(lSamplesNormalised[pos], rSamplesNormalised[pos], rad);
+                for (int i = 0; i < repeat; i++) {
+                    rad = Math.abs(Math.max(lSamplesNormalised[pos], rSamplesNormalised[pos]));
+                    rad = (float) (Math.random() * rad);
+                    colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
+                    dots.add(new Vector3().set(lSamplesNormalised[pos], rSamplesNormalised[pos], rad));
+                }
                 break;
-            case(RADIAL_BUBBLE):
-                rad = Math.abs(Math.max(lSamplesNormalised[pos], rSamplesNormalised[pos]));
-                rad = (float) (Math.random()*rad);
-                angle = -lSamplesNormalised[pos] * 180;
-                x = -MathUtils.cosDeg(angle) * rSamplesNormalised[pos];
-                y = -MathUtils.sinDeg(angle) * rSamplesNormalised[pos];
-                coords.set(x, y, rad);
+            case (RADIAL_BUBBLE):
+                for (int i = 0; i < repeat; i++) {
+                    rad = Math.abs(Math.max(lSamplesNormalised[pos], rSamplesNormalised[pos]));
+                    rad = (float) (Math.random() * rad);
+                    angle = -lSamplesNormalised[pos] * 180;
+                    x = -MathUtils.cosDeg(angle) * rSamplesNormalised[pos];
+                    y = -MathUtils.sinDeg(angle) * rSamplesNormalised[pos];
+                    colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
+                    dots.add(new Vector3().set(x, y, rad));
+                }
                 break;
-            case(SHAPES):
+            case (SHAPES):
                 x = 0;
                 y = 0;
                 dots.add(new Vector3().set(x, y, 0));
                 colors.add(new Vector3(1, 1, 0));
-                angle = lSamplesNormalised[pos] * 90;
+                angle = lSamplesNormalised[pos] * 90 / 450;
                 for (int i = 0; i < 50; i++) {
-                    x = x - (float) Math.cos(angle) * rSamplesNormalised[pos] / 2;
-                    y = y - (float) Math.sin(angle) * rSamplesNormalised[pos] / 2;
-                    angle = angle + 1;
+                    x = x - (float) Math.cos(angle) * rSamplesNormalised[pos];
+                    y = y - (float) Math.sin(angle) * rSamplesNormalised[pos];
+                    angle = angle + Math.abs(lSamplesNormalised[pos] / 450) + 1;
                     dots.add(new Vector3().set(x, y, 0));
-                    colors.add(new Vector3(1, i / 50f, 0));
+                    colors.add(new Vector3(palletColor.r, i / 50f * palletColor.g, palletColor.b));
                 }
                 break;
+            case (SINUS):
+                for (float i = 0; i < 1600; i += 0.5f) {
+                    if (i % 2 == 0) {
+                        y = (float) (Math.sin(i / 8 * lSamplesNormalised[pos] * 180) * rSamplesNormalised[pos] * 200);
+                    } else {
+                        y = 0;
+                    }
+                    dots.add(new Vector3().set(i - 800, y, 0));
+                    colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
+                }
+                dots.add(new Vector3().set(800, 0, 0));
+                colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
+                dots.add(new Vector3().set(-800, 0, 0));
+                colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
         }
 
 
-        if(type != SHAPES) {
+        if (type != SHAPES && type != RADIAL_BUBBLE && type != BUBBLE && type != SINUS) {
             colors.add(color);
             dots.add(coords);
         }
@@ -271,8 +342,8 @@ public class OsciloscopeScreen implements Screen {
                 colorV.x = MathUtils.clamp(colorV.x - fadeout / 1.5f, 0, 1);
                 colorV.y = MathUtils.clamp(colorV.y - fadeout * 1.5f, 0, 1);
                 colorV.z = MathUtils.clamp(colorV.z - fadeout, 0, 1);
-                if(type == BUBBLE || type == RADIAL_BUBBLE){
-                    dots.get(i).z = MathUtils.clamp(dots.get(i).z - fadeout*4, 0, 450);
+                if (type == BUBBLE || type == RADIAL_BUBBLE) {
+                    dots.get(i).z = MathUtils.clamp(dots.get(i).z - fadeout * 4, 0, 450);
                 }
                 colors.set(i, colorV);
             } else {
