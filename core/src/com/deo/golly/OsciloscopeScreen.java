@@ -50,12 +50,11 @@ public class OsciloscopeScreen implements Screen {
     private final int CYAN = 105;
     private Color palletColor;
 
-    private int maxSaturation = 4;
+    private float maxSaturation = 4;
 
     private final int type = SINUS;
-    private final int pallet = CYAN;
+    private final int pallet = FIRE;
     private int skipOver;
-    private boolean bloomSync;
 
     private BitmapFont font;
 
@@ -117,16 +116,10 @@ public class OsciloscopeScreen implements Screen {
             skipOver = 1;
         }
 
-        bloomSync = type != SINUS;
-
-        if (!bloomSync) {
-            bloom.setBloomSaturation(0);
-            bloom.setBloomIntesity(0);
-            bloom.setBlurPasses(0);
-        }
-
         if (type == SINUS) {
-            fadeout *= 50;
+            fadeout *= 30;
+            maxSaturation = 3;
+            bloom.setBloomIntesity(2f);
         }
         if (type == SHAPES) {
             fadeout *= 5;
@@ -177,12 +170,10 @@ public class OsciloscopeScreen implements Screen {
     @Override
     public void render(float delta) {
 
-        if (bloomSync) {
-            if (realtime) {
-                bloom.setBloomSaturation(averageSamplesNormalised[(int) (music.getPosition() * 44100)] + 1);
-            } else {
-                bloom.setBloomSaturation(averageSamplesNormalised[(int) (frame + step)] + 1);
-            }
+        if (realtime) {
+            bloom.setBloomSaturation(MathUtils.clamp(averageSamplesNormalised[(int) (music.getPosition() * 44100)] + 1, 1, maxSaturation + 1));
+        } else {
+            bloom.setBloomSaturation(MathUtils.clamp(averageSamplesNormalised[(int) (frame + step)] + 1, 1, maxSaturation + 1));
         }
 
         blurProcessor.capture();
@@ -226,7 +217,10 @@ public class OsciloscopeScreen implements Screen {
             pixmap.dispose();
 
             batch.begin();
-            font.draw(batch, String.format("% 2f", frame / (float) 44100) + "s", 100, 70);
+            font.draw(batch, String.format("% 2f", recorderFrame / (float) recordingFPS) + "s", 100, 120);
+            boolean normal = frame / (float) 44100 == recorderFrame / (float) recordingFPS;
+            font.draw(batch, frame + "fr "+recorderFrame+"fr " + normal, 100, 170);
+            font.draw(batch, frame/(float)averageSamplesNormalised.length*100+"%", 100, 70);
             batch.end();
         }
 
@@ -289,10 +283,10 @@ public class OsciloscopeScreen implements Screen {
                 break;
             case (SINUS):
                 for (float i = 0; i < 1600; i += 0.5f) {
-                    if (i % 2 == 0) {
-                        y = (float) (Math.sin(i / 8 * lSamplesNormalised[pos] * 180) * rSamplesNormalised[pos] * 200);
+                    if (i % 7 == 0) {
+                        y = (float) (Math.sin(i / 32) * lSamplesNormalised[pos] * 150);
                     } else {
-                        y = 0;
+                        y = (float) (Math.cos(i / 32) * rSamplesNormalised[pos] * 150);
                     }
                     dots.add(new Vector3().set(i - 800, y, 0));
                     colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));

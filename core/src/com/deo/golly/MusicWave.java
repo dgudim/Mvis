@@ -21,7 +21,7 @@ public class MusicWave {
 
         String path;
 
-        path = "!DeltaCore/vosto.wav";
+        path = "!DeltaCore/kubby.wav";
 
         File file = Gdx.files.external(path).file();
 
