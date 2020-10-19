@@ -18,12 +18,13 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import com.deo.golly.postprocessing.PostProcessor;
 import com.deo.golly.postprocessing.effects.Bloom;
 
-public class MushroomScreen implements Screen {
+public class RingScreen implements Screen {
 
     private ShapeRenderer renderer;
-    private Array<Array<Vector2>> branches;
+    private Array<Float> radiuses, radiuses2;
+    private Array<Vector2> positions;
     private Array<Vector3> colors;
-    private float fadeout;
+    private float fadeout, ringGrowSpeed;
 
     private SpriteBatch batch;
     private PostProcessor blurProcessor;
@@ -41,23 +42,17 @@ public class MushroomScreen implements Screen {
     private int frame;
     private int recorderFrame;
 
-    private final int SINGLE = 0;
-    private final int DOUBLE = 1;
-    private final int TRIPLE = 2;
-    private final int DOUBLE_CHANNEL = 3;
-    private boolean EXPONENTIAL = true;
-
-    private final int type = DOUBLE_CHANNEL;
-
-    MushroomScreen() {
-
+    RingScreen() {
         batch = new SpriteBatch();
 
         renderer = new ShapeRenderer();
         renderer.setAutoShapeType(true);
-        branches = new Array<>();
+        radiuses = new Array<>();
+        radiuses2 = new Array<>();
+        positions = new Array<>();
         colors = new Array<>();
-        fadeout = 0.05f;
+        fadeout = 0.006f;
+        ringGrowSpeed = 12f;
 
         ShaderLoader.BasePath = "core/assets/shaders/";
         blurProcessor = new PostProcessor(false, false, Gdx.app.getType() == Application.ApplicationType.Desktop);
@@ -92,53 +87,33 @@ public class MushroomScreen implements Screen {
     @Override
     public void render(float delta) {
 
-        fadeOut();
-        float angle;
-        int iterations;
+        fadeout();
+        float radiusx, radiusy;
         if (!render) {
-            angle = rSamplesNormalised[(int) (music.getPosition() * 44100)] * 45;
-            iterations = (int) (lSamplesNormalised[(int) (music.getPosition() * 44100)] * 10) + 5;
+            radiusx = lSamplesNormalised[(int) (music.getPosition() * 44100)] * 720;
+            radiusy = rSamplesNormalised[(int) (music.getPosition() * 44100)] * 720;
             bloom.setBloomSaturation(averageSamplesNormalised[(int) (music.getPosition() * 44100)] + 1);
         } else {
-            angle = rSamplesNormalised[frame] * 45;
-            iterations = (int) (lSamplesNormalised[frame] * 10) + 5;
+            radiusx = lSamplesNormalised[frame] * 720;
+            radiusy = rSamplesNormalised[frame] * 720;
             bloom.setBloomSaturation(averageSamplesNormalised[frame] + 1);
             frame += step;
             recorderFrame++;
         }
 
-        switch (type) {
-            case (SINGLE):
-                buildMushroom(-90, angle, 40, iterations, 800, 290);
-                break;
-            case (DOUBLE):
-                buildMushroom(-90, angle, 40, iterations, 800, 450);
-                buildMushroom(90, angle, 40, iterations, 800, 450);
-                break;
-            case(DOUBLE_CHANNEL):
-                angle = rSamplesNormalised[(int) (music.getPosition() * 44100)] * 45;
-                iterations = (int) (rSamplesNormalised[(int) (music.getPosition() * 44100)] * 10) + 5;
-                buildMushroom(-90, angle, 40, iterations, 800, 450);
-                angle = lSamplesNormalised[(int) (music.getPosition() * 44100)] * 45;
-                iterations = (int) (lSamplesNormalised[(int) (music.getPosition() * 44100)] * 10) + 5;
-                buildMushroom(90, angle, 40, iterations, 800, 450);
-                break;
-            case (TRIPLE):
-                buildMushroom(150, angle, 40, iterations, 800, 450);
-                buildMushroom(270, angle, 40, iterations, 800, 450);
-                buildMushroom(390, angle, 40, iterations, 800, 450);
-                break;
-        }
+        positions.add(new Vector2(800, 450));
+        colors.add(new Vector3(1, 1, 0));
+
+        radiuses.add(radiusx);
+        radiuses2.add(radiusy);
 
         blurProcessor.capture();
-
         renderer.begin();
-        for (int i = 0; i < branches.size; i++) {
-            renderer.setColor(colors.get(i).x, colors.get(i).y, (branches.get(i).get(0).y - 100) / 900f, 1);
-            renderer.line(branches.get(i).get(0), branches.get(i).get(1));
+        for (int i = 0; i < positions.size; i++) {
+            renderer.setColor(colors.get(i).x, colors.get(i).y, colors.get(i).z, 1);
+            renderer.ellipse(positions.get(i).x - radiuses.get(i) / 2f, positions.get(i).y - radiuses2.get(i) / 2f, radiuses.get(i), radiuses2.get(i));
         }
         renderer.end();
-
         blurProcessor.render();
 
         if (render) {
@@ -160,10 +135,13 @@ public class MushroomScreen implements Screen {
             font.draw(batch, frame / (float) averageSamplesNormalised.length * 100 + "%", 100, 70);
             batch.end();
         }
+
     }
 
-    private void fadeOut() {
-        for (int i = 0; i < colors.size; i++) {
+    void fadeout() {
+        for (int i = 0; i < positions.size; i++) {
+            radiuses.set(i, radiuses.get(i) + ringGrowSpeed);
+            radiuses2.set(i, radiuses2.get(i) + ringGrowSpeed);
             Vector3 colorV = colors.get(i);
             if (colorV.x + colorV.y + colorV.z >= fadeout) {
                 colorV.x = MathUtils.clamp(colorV.x - fadeout / 1.5f, 0, 1);
@@ -171,53 +149,12 @@ public class MushroomScreen implements Screen {
                 colorV.z = MathUtils.clamp(colorV.z - fadeout, 0, 1);
                 colors.set(i, colorV);
             } else {
-                branches.removeIndex(i);
+                positions.removeIndex(i);
+                radiuses.removeIndex(i);
+                radiuses2.removeIndex(i);
                 colors.removeIndex(i);
             }
         }
-    }
-
-    void buildMushroom(float initialAngle, float offsetAngle, float branchLength, int iterations, float x, float y) {
-
-        float angleRight = initialAngle + offsetAngle;
-        float angleLeft = initialAngle - offsetAngle;
-
-        float sinRight = MathUtils.sinDeg(angleRight) * branchLength;
-        float cosRight = MathUtils.cosDeg(angleRight) * branchLength;
-
-        float sinLeft = MathUtils.sinDeg(angleLeft) * branchLength;
-        float cosLeft = MathUtils.cosDeg(angleLeft) * branchLength;
-
-        float xRight = x - cosRight;
-        float yRight = y - sinRight;
-
-        float xLeft = x - cosLeft;
-        float yLeft = y - sinLeft;
-
-        Array<Vector2> branchRight = new Array<>();
-
-        branchRight.add(new Vector2(x, y));
-        branchRight.add(new Vector2(xRight, yRight));
-
-        Array<Vector2> branchLeft = new Array<>();
-
-        branchLeft.add(new Vector2(x, y));
-        branchLeft.add(new Vector2(xLeft, yLeft));
-
-        branches.add(branchRight, branchLeft);
-        colors.add(new Vector3(1, 1, 0), new Vector3(1, 1, 0));
-
-        if (iterations > 0 && branchLength > 0) {
-            float offset = -0.9f;
-            float bOffset = 0;
-            if (EXPONENTIAL) {
-                offset = 1;
-                bOffset = 1.7f;
-            }
-            buildMushroom(angleRight, offsetAngle + offset, branchLength + bOffset, iterations - 1, xRight, yRight);
-            buildMushroom(angleLeft, offsetAngle + offset, branchLength + bOffset, iterations - 1, xLeft, yLeft);
-        }
-
     }
 
     @Override

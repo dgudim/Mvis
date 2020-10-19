@@ -31,12 +31,19 @@ public class OsciloscopeScreen implements Screen {
     private PostProcessor blurProcessor;
     private Bloom bloom;
 
-    private final boolean realtime = true;
+    //settings
+    private final boolean realtime = false;
+    private final boolean absolute = false;
     private final int recordingFPS = 30;
+    private final int freqDisplaySamples = 512;
+    private float fadeout = 0.005f;
+
     private float step;
+    private float freqDisplayRenderAngle;
+    private float angleStep;
     private int recorderFrame;
     int frame;
-    private float fadeout = 0.005f;
+    private int skipOver;
 
     private final int STANDARD = 0;
     private final int RADIAL = 1;
@@ -44,17 +51,18 @@ public class OsciloscopeScreen implements Screen {
     private final int RADIAL_BUBBLE = 3;
     private final int SHAPES = 4;
     private final int SINUS = 5;
+    private final int FREQUENCY = 6;
 
     private final int LIME = 103;
     private final int FIRE = 104;
     private final int CYAN = 105;
     private Color palletColor;
+    private Vector3 palletFadeoutPattern;
 
     private float maxSaturation = 4;
 
-    private final int type = SINUS;
-    private final int pallet = FIRE;
-    private int skipOver;
+    private final int type = SHAPES;
+    private final int pallet = CYAN;
 
     private BitmapFont font;
 
@@ -63,6 +71,7 @@ public class OsciloscopeScreen implements Screen {
     OsciloscopeScreen() {
 
         step = 44100 / (float) recordingFPS;
+        angleStep = 360 / (float) freqDisplaySamples;
 
         ShaderLoader.BasePath = "core/assets/shaders/";
         blurProcessor = new PostProcessor(false, false, Gdx.app.getType() == Application.ApplicationType.Desktop);
@@ -72,10 +81,6 @@ public class OsciloscopeScreen implements Screen {
         blurProcessor.addEffect(bloom);
 
         MusicWave musicWave = new MusicWave();
-
-        float[] lSamples = musicWave.getLeftChannelSamples();
-        float[] rSamples = musicWave.getRightChannelSamples();
-        float[] averageSamples = musicWave.getSamples();
         music = musicWave.getMusic();
 
         batch = new SpriteBatch();
@@ -87,31 +92,15 @@ public class OsciloscopeScreen implements Screen {
         dots = new Array<>();
         colors = new Array<>();
 
-        float maxValue = 0;
-        float maxValue_average = 0;
+        freqDisplayRenderAngle = 0;
 
-        rSamplesNormalised = new float[rSamples.length];
-        lSamplesNormalised = new float[rSamples.length];
-        averageSamplesNormalised = new float[rSamples.length];
-
-        for (int i = 0; i < rSamples.length; i++) {
-            if (Math.abs(lSamples[i]) > maxValue) {
-                maxValue = Math.abs(lSamples[i]);
-            }
-            if (Math.abs(rSamples[i]) > maxValue) {
-                maxValue = Math.abs(rSamples[i]);
-            }
-        }
-
-        for (int i = 0; i < averageSamples.length; i++) {
-            if (Math.abs(averageSamples[i]) > maxValue_average) {
-                maxValue_average = Math.abs(averageSamples[i]);
-            }
-        }
+        rSamplesNormalised = musicWave.normaliseSamples(false, absolute, musicWave.getRightChannelSamples());
+        lSamplesNormalised = musicWave.normaliseSamples(false, absolute, musicWave.getLeftChannelSamples());
+        averageSamplesNormalised = musicWave.normaliseSamples(false, true, musicWave.getSamples());
 
         if (type == BUBBLE || type == SHAPES || type == RADIAL_BUBBLE || type == SINUS) {
             skipOver = (int) step;
-            maxSaturation = 0;
+            maxSaturation = 1;
         } else {
             skipOver = 1;
         }
@@ -121,14 +110,21 @@ public class OsciloscopeScreen implements Screen {
             maxSaturation = 3;
             bloom.setBloomIntesity(2f);
         }
+
+        if (type == FREQUENCY) {
+            if (realtime) {
+                fadeout *= 5;
+            } else {
+                fadeout /= step/freqDisplaySamples * 16;
+            }
+            bloom.setBloomIntesity(1.3f);
+        }
+
         if (type == SHAPES) {
             fadeout *= 5;
         }
 
-        for (int i = 0; i < rSamples.length; i++) {
-            rSamplesNormalised[i] = rSamples[i] / maxValue;
-            lSamplesNormalised[i] = lSamples[i] / maxValue;
-            averageSamplesNormalised[i] = averageSamples[i] / maxValue_average;
+        for (int i = 0; i < averageSamplesNormalised.length; i++) {
             averageSamplesNormalised[i] *= maxSaturation;
             if (type == STANDARD || type == SHAPES || type == RADIAL) {
                 rSamplesNormalised[i] = rSamplesNormalised[i] * 450;
@@ -144,19 +140,25 @@ public class OsciloscopeScreen implements Screen {
         }
 
         palletColor = new Color();
+        palletFadeoutPattern = new Vector3();
 
         switch (pallet) {
             case (FIRE):
                 palletColor.r = 1;
                 palletColor.g = 1;
+                palletFadeoutPattern.set(fadeout / 1.5f, fadeout * 1.5f, fadeout);
                 break;
             case (CYAN):
-                palletColor.b = 1;
+                palletColor.r = 0.5f;
                 palletColor.g = 1;
+                palletColor.b = 1;
+                palletFadeoutPattern.set(fadeout / 3f, fadeout * 6f, fadeout / 0.75f);
                 break;
             case (LIME):
                 palletColor.r = 0.5f;
                 palletColor.g = 1;
+                palletColor.b = 0.3f;
+                palletFadeoutPattern.set(fadeout, fadeout, fadeout / 8f);
                 break;
         }
 
@@ -219,8 +221,8 @@ public class OsciloscopeScreen implements Screen {
             batch.begin();
             font.draw(batch, String.format("% 2f", recorderFrame / (float) recordingFPS) + "s", 100, 120);
             boolean normal = frame / (float) 44100 == recorderFrame / (float) recordingFPS;
-            font.draw(batch, frame + "fr "+recorderFrame+"fr " + normal, 100, 170);
-            font.draw(batch, frame/(float)averageSamplesNormalised.length*100+"%", 100, 70);
+            font.draw(batch, frame + "fr " + recorderFrame + "fr " + normal, 100, 170);
+            font.draw(batch, frame / (float) averageSamplesNormalised.length * 100 + "%", 100, 70);
             batch.end();
         }
 
@@ -228,25 +230,24 @@ public class OsciloscopeScreen implements Screen {
 
     private void addCoords(int pos) {
 
-        Vector3 color = new Vector3(palletColor.r, palletColor.g, palletColor.b);
-        Vector3 coords = new Vector3();
-
         float x, y, angle, rad;
-        int repeat = 1;
 
+        int repeat = 1; //triple circle effect happens automatically because music.getPosition returns in milliseconds
         if (!realtime) {
-            repeat = 3;
+            repeat = 3;  //make triple circle effect
         }
 
         switch (type) {
             case (STANDARD):
-                coords.set(lSamplesNormalised[pos], rSamplesNormalised[pos], 0);
+                colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
+                dots.add(new Vector3().set(lSamplesNormalised[pos], rSamplesNormalised[pos], 0));
                 break;
             case (RADIAL):
                 angle = -lSamplesNormalised[pos] * 180;
                 x = -MathUtils.cosDeg(angle) * rSamplesNormalised[pos];
                 y = -MathUtils.sinDeg(angle) * rSamplesNormalised[pos];
-                coords.set(x, y, 0);
+                colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
+                dots.add(new Vector3().set(x, y, 0));
                 break;
             case (BUBBLE):
                 for (int i = 0; i < repeat; i++) {
@@ -295,16 +296,31 @@ public class OsciloscopeScreen implements Screen {
                 colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
                 dots.add(new Vector3().set(-800, 0, 0));
                 colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
-        }
-
-
-        if (type != SHAPES && type != RADIAL_BUBBLE && type != BUBBLE && type != SINUS) {
-            colors.add(color);
-            dots.add(coords);
+                break;
+            case (FREQUENCY):
+                if (realtime) {
+                    freqDisplayRenderAngle = 0;
+                    if (pos >= freqDisplaySamples / 2) {
+                        for (int i = 0; i < freqDisplaySamples; i++) {
+                            freqDisplayRenderAngle += angleStep;
+                            x = -MathUtils.cosDeg(freqDisplayRenderAngle) * averageSamplesNormalised[pos - freqDisplaySamples / 2 + i] * 100;
+                            y = -MathUtils.sinDeg(freqDisplayRenderAngle) * averageSamplesNormalised[pos - freqDisplaySamples / 2 + i] * 100;
+                            dots.add(new Vector3().set(x, y, 0));
+                            colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
+                        }
+                    }
+                } else {
+                    freqDisplayRenderAngle += angleStep;
+                    x = -MathUtils.cosDeg(freqDisplayRenderAngle) * averageSamplesNormalised[pos] * 100;
+                    y = -MathUtils.sinDeg(freqDisplayRenderAngle) * averageSamplesNormalised[pos] * 100;
+                    dots.add(new Vector3().set(x, y, 0));
+                    colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
+                }
         }
     }
 
     private void render() {
+        // bubble renderer
         if (type == BUBBLE || type == RADIAL_BUBBLE) {
             for (int i = 0; i < dots.size; i++) {
                 Vector3 colorV = colors.get(i);
@@ -315,6 +331,7 @@ public class OsciloscopeScreen implements Screen {
                 renderer.circle(x, y, radius);
             }
         } else {
+            // normal renderer
             for (int i = 1; i < dots.size; i++) {
                 Vector3 colorV = colors.get(i);
                 renderer.setColor(colorV.x, colorV.y, colorV.z, 1);
@@ -328,15 +345,17 @@ public class OsciloscopeScreen implements Screen {
     }
 
     private void fadeOut() {
-        for (int i = 1; i < dots.size; i++) {
+        // fade the colors
+        for (int i = 0; i < dots.size; i++) {
 
             Vector3 colorV = colors.get(i);
 
             if (colorV.x + colorV.y + colorV.z >= fadeout) {
-                colorV.x = MathUtils.clamp(colorV.x - fadeout / 1.5f, 0, 1);
-                colorV.y = MathUtils.clamp(colorV.y - fadeout * 1.5f, 0, 1);
-                colorV.z = MathUtils.clamp(colorV.z - fadeout, 0, 1);
+                colorV.x = MathUtils.clamp(colorV.x - palletFadeoutPattern.x, 0, 1);
+                colorV.y = MathUtils.clamp(colorV.y - palletFadeoutPattern.y, 0, 1);
+                colorV.z = MathUtils.clamp(colorV.z - palletFadeoutPattern.z, 0, 1);
                 if (type == BUBBLE || type == RADIAL_BUBBLE) {
+                    // size fadeout
                     dots.get(i).z = MathUtils.clamp(dots.get(i).z - fadeout * 4, 0, 450);
                 }
                 colors.set(i, colorV);

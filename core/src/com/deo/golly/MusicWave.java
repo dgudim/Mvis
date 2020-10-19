@@ -21,7 +21,7 @@ public class MusicWave {
 
         String path;
 
-        path = "!DeltaCore/kubby.wav";
+        path = "!DeltaCore/upandaway.wav";
 
         File file = Gdx.files.external(path).file();
 
@@ -96,6 +96,25 @@ public class MusicWave {
 
     public Music getMusic(){
         return music;
+    }
+
+    public float[] normaliseSamples(boolean cutoff, boolean absolute, float[] samples){
+        float maxValue = 0;
+        for (int i = 0; i < samples.length; i++) {
+            if (Math.abs(samples[i]) > maxValue) {
+                maxValue = Math.abs(samples[i]);
+            }
+        }
+        for (int i = 0; i < samples.length; i++) {
+            samples[i] /= maxValue;
+            if(cutoff) {
+                samples[i] = Math.max(samples[i], 0);
+            }
+            if(absolute){
+                samples[i] = Math.abs(samples[i]);
+            }
+        }
+        return samples;
     }
 
 
