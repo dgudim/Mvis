@@ -42,8 +42,8 @@ public class MusicWave {
             leftChannelSamples = new float[twoChannelSamples[0].length];
             rightChannelSamples = new float[twoChannelSamples[1].length];
 
-            for(int i = 0; i<averageChannelAmplitude.length; i++){
-                averageChannelAmplitude[i] = Math.abs(twoChannelSamples[0][i] + twoChannelSamples[1][i])/2.0f;
+            for (int i = 0; i < averageChannelAmplitude.length; i++) {
+                averageChannelAmplitude[i] = Math.abs(twoChannelSamples[0][i] + twoChannelSamples[1][i]) / 2.0f;
                 leftChannelSamples[i] = twoChannelSamples[0][i];
                 rightChannelSamples[i] = twoChannelSamples[1][i];
             }
@@ -82,7 +82,7 @@ public class MusicWave {
         return toReturn;
     }
 
-    public float[] getSamples(){
+    public float[] getSamples() {
         return samples;
     }
 
@@ -94,11 +94,11 @@ public class MusicWave {
         return rightChannelSamples;
     }
 
-    public Music getMusic(){
+    public Music getMusic() {
         return music;
     }
 
-    public float[] normaliseSamples(boolean cutoff, boolean absolute, float[] samples){
+    public float[] normaliseSamples(boolean cutoff, boolean absolute, float[] samples) {
         float maxValue = 0;
         for (int i = 0; i < samples.length; i++) {
             if (Math.abs(samples[i]) > maxValue) {
@@ -107,14 +107,28 @@ public class MusicWave {
         }
         for (int i = 0; i < samples.length; i++) {
             samples[i] /= maxValue;
-            if(cutoff) {
+            if (cutoff) {
                 samples[i] = Math.max(samples[i], 0);
             }
-            if(absolute){
+            if (absolute) {
                 samples[i] = Math.abs(samples[i]);
             }
         }
         return samples;
+    }
+
+    float[] smoothSamples(float[] samples, int smoothingFactor, int smoothingSampleRange) {
+        for (int i = 0; i < smoothingFactor; i++) {
+            for (int i2 = smoothingSampleRange; i2 < samples.length - smoothingSampleRange; i2++) {
+                float sum = samples[i2]; // middle sample
+                for (int i3 = 1; i3 < smoothingSampleRange; i3++) {
+                    sum = sum + samples[i2 + i3] + samples[i2 - i3];
+                    // samples to the left and to the right
+                }
+                samples[i2] = sum / (float) (smoothingSampleRange + 1); //smooth out the sample
+            }
+        }
+        return normaliseSamples(false, false, samples);
     }
 
 
