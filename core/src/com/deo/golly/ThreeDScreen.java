@@ -18,11 +18,12 @@ import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
-import com.badlogic.gdx.graphics.g3d.attributes.IntAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.BufferUtils;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.deo.golly.postprocessing.PostProcessor;
@@ -36,8 +37,9 @@ public class ThreeDScreen implements Screen {
     private PerspectiveCamera cam;
     private ModelBatch modelBatch;
     private ModelBuilder modelBuilder;
-    private Model model;
-    private ModelInstance instance;
+    private Array<Model> models;
+    private Array<Float> modelYPoses;
+    private Array<ModelInstance> instances;
     private Environment environment;
 
     private Music music;
@@ -52,12 +54,17 @@ public class ThreeDScreen implements Screen {
 
     private final int FPS = 30;
     private final int step = 44100 / FPS;
-    private final boolean render = false;
+    private final boolean render = true;
     private int frame;
     private int recorderFrame;
 
     private Color fadeColor;
     private DirectionalLight prevLight;
+
+    private final int SINGULAR = 0;
+    private final int GRID = 1;
+
+    private final int type = GRID;
 
     ThreeDScreen() {
 
@@ -79,13 +86,11 @@ public class ThreeDScreen implements Screen {
         cam.far = 300f;
         cam.update();
 
+        models = new Array<>();
+        instances = new Array<>();
+        modelYPoses = new Array<>();
+
         modelBuilder = new ModelBuilder();
-
-        model = modelBuilder.createBox(5, 5, 5,
-                new Material(ColorAttribute.createDiffuse(Color.WHITE)),
-                VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal);
-
-        instance = new ModelInstance(model);
 
         modelBatch = new ModelBatch();
 
@@ -101,9 +106,15 @@ public class ThreeDScreen implements Screen {
         bloom.setBloomIntesity(1f);
         blurProcessor.addEffect(bloom);
 
+        batch = new SpriteBatch();
+        font = new BitmapFont(Gdx.files.internal("core/assets/font2(old).fnt"));
+
+        initialiseScene();
+
         if (!render) {
             music.play();
         }
+
     }
 
     @Override
@@ -117,32 +128,24 @@ public class ThreeDScreen implements Screen {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 
         int pos;
-        if(render){
+        if (render) {
             frame += step;
             recorderFrame++;
             pos = frame;
-        }else{
+        } else {
             pos = (int) (music.getPosition() * 44100);
         }
 
         bloom.setBloomSaturation(Math.abs(averageSamplesNormalised[pos]) + 1);
 
-        degrees += averageSamplesNormalised[pos] * 2;
-
-        instance.transform.setToScaling(averageSamplesNormalised[pos] * 0.8f + 1, averageSamplesNormalised[pos] * 0.8f + 1, averageSamplesNormalised[pos] * 0.8f + 1);
-        instance.transform.rotate(new Vector3(1, 0, 0), degrees);
-        instance.transform.rotate(new Vector3(0, 1, 0), degrees);
-        instance.transform.rotate(new Vector3(0, 0, 1), degrees);
-
-        fadeColor = new Color().fromHsv(120 - averageSamplesNormalised[pos] * 120, 1f, 1).add(0, 0, 0, 1);
-
-        environment.remove(prevLight);
-        prevLight = new DirectionalLight().set(fadeColor.r, fadeColor.g, fadeColor.b, -1f, -0.8f, -0.2f);
-        environment.add(prevLight);
+        transform3d(pos);
 
         blurProcessor.capture();
         modelBatch.begin(cam);
-        modelBatch.render(instance, environment);
+        for (int i = instances.size - 1; i >= 0; i--) {
+            modelBatch.render(instances.get(i), environment);
+            modelBatch.flush();
+        }
         modelBatch.end();
         blurProcessor.render();
 
@@ -166,6 +169,92 @@ public class ThreeDScreen implements Screen {
             batch.end();
         }
 
+    }
+
+    private void transform3d(int pos) {
+        switch (type) {
+            case (SINGULAR):
+                degrees += averageSamplesNormalised[pos] * 2;
+
+                instances.get(0).transform.setToScaling(averageSamplesNormalised[pos] * 0.8f + 1, averageSamplesNormalised[pos] * 0.8f + 1, averageSamplesNormalised[pos] * 0.8f + 1);
+                instances.get(0).transform.rotate(new Vector3(1, 0, 0), degrees);
+                instances.get(0).transform.rotate(new Vector3(0, 1, 0), degrees);
+                instances.get(0).transform.rotate(new Vector3(0, 0, 1), degrees);
+
+                fadeColor = new Color().fromHsv(160 - averageSamplesNormalised[pos] * 120, 1f, 1).add(0, 0, 0, 1);
+
+                environment.remove(prevLight);
+                prevLight = new DirectionalLight().set(fadeColor.r, fadeColor.g, fadeColor.b, -1f, -0.8f, -0.2f);
+                environment.add(prevLight);
+                break;
+            case (GRID):
+                for (int i = 0; i < 51; i++) {
+                    transformInRadius(i, pos);
+                }
+
+                fadeColor = new Color().fromHsv(160 - averageSamplesNormalised[pos] * 120, 1f, 1).add(0, 0, 0, 1);
+
+                environment.remove(prevLight);
+                prevLight = new DirectionalLight().set(fadeColor.r, fadeColor.g, fadeColor.b, -1f, -0.8f, -0.2f);
+                environment.add(prevLight);
+
+                break;
+        }
+    }
+
+    private void initialiseScene() {
+        switch (type) {
+            case (SINGULAR):
+                Model model = modelBuilder.createBox(5, 5, 5,
+                        new Material(ColorAttribute.createDiffuse(Color.WHITE)),
+                        VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal);
+
+                ModelInstance instance = new ModelInstance(model);
+
+                models.add(model);
+                instances.add(instance);
+                break;
+            case (GRID):
+
+                for (int x = 0; x < 101; x++) {
+                    for (int z = 0; z < 101; z++) {
+                        Model model2 = modelBuilder.createBox(0.5f, 0.5f, 0.5f,
+                                new Material(ColorAttribute.createDiffuse(Color.WHITE)),
+                                VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal);
+
+                        ModelInstance instance2 = new ModelInstance(model2);
+
+                        instance2.transform.translate(-x * 0.6f, -17, -z * 0.6f);
+
+                        models.add(model2);
+                        instances.add(instance2);
+                        modelYPoses.add(0f);
+
+                    }
+                }
+
+                cam.position.set(0f, 9f, 0f);
+                cam.lookAt(-7, 0, -7);
+                cam.update();
+
+                bloom.setBloomIntesity(0.3f);
+
+                break;
+        }
+    }
+
+    private void transformInRadius(int radius, int Mpos) {
+        for (float i = 0; i < 360; i += 0.01f) {
+            float x = -MathUtils.cosDeg(i) * radius + 50;
+            float y = -MathUtils.sinDeg(i) * radius + 50;
+            int pos = 101 * (int) Math.floor(x) + (int) Math.floor(y);
+            try {
+                instances.get(pos).transform.translate(0, averageSamplesNormalised[Mpos - radius * step] * 2.5f - modelYPoses.get(pos), 0);
+                modelYPoses.set(pos, averageSamplesNormalised[Mpos - radius * step] * 2.5f);
+            } catch (Exception e) {
+                //ignore
+            }
+        }
     }
 
     @Override
