@@ -17,6 +17,7 @@ import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
+import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
@@ -95,9 +96,6 @@ public class ThreeDScreen implements Screen {
         modelBatch = new ModelBatch();
 
         environment = new Environment();
-        environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.3f, 0.3f, 0.3f, 1f));
-        prevLight = new DirectionalLight().set(0, 1, 1, -1f, -0.8f, -0.2f);
-        environment.add(prevLight);
 
         ShaderLoader.BasePath = "core/assets/shaders/";
         blurProcessor = new PostProcessor(false, false, Gdx.app.getType() == Application.ApplicationType.Desktop);
@@ -124,6 +122,7 @@ public class ThreeDScreen implements Screen {
 
     @Override
     public void render(float delta) {
+
         Gdx.gl.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 
@@ -166,6 +165,7 @@ public class ThreeDScreen implements Screen {
             boolean normal = frame / (float) 44100 == recorderFrame / (float) FPS;
             font.draw(batch, frame + "fr " + recorderFrame + "fr " + normal, 100, 170);
             font.draw(batch, frame / (float) averageSamplesNormalised.length * 100 + "%", 100, 70);
+            font.draw(batch, addAndComputeTime() + "h", 100, 220);
             batch.end();
         }
 
@@ -188,15 +188,15 @@ public class ThreeDScreen implements Screen {
                 environment.add(prevLight);
                 break;
             case (GRID):
-                for (int i = 0; i < 51; i++) {
-                    transformInRadius(i, pos);
+
+                int radius = 10;
+                if (render) {
+                    radius = 51;
                 }
 
-                fadeColor = new Color().fromHsv(160 - averageSamplesNormalised[pos] * 120, 1f, 1).add(0, 0, 0, 1);
-
-                environment.remove(prevLight);
-                prevLight = new DirectionalLight().set(fadeColor.r, fadeColor.g, fadeColor.b, -1f, -0.8f, -0.2f);
-                environment.add(prevLight);
+                for (int i = 0; i < radius; i++) {
+                    transformInRadius(i, pos);
+                }
 
                 break;
         }
@@ -205,6 +205,11 @@ public class ThreeDScreen implements Screen {
     private void initialiseScene() {
         switch (type) {
             case (SINGULAR):
+
+                environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.3f, 0.3f, 0.3f, 1f));
+                prevLight = new DirectionalLight().set(0, 1, 1, -1f, -0.8f, -0.2f);
+                environment.add(prevLight);
+
                 Model model = modelBuilder.createBox(5, 5, 5,
                         new Material(ColorAttribute.createDiffuse(Color.WHITE)),
                         VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal);
@@ -216,10 +221,14 @@ public class ThreeDScreen implements Screen {
                 break;
             case (GRID):
 
+                environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 1, 1, 1, 1f));
+                prevLight = new DirectionalLight().set(0, 1, 1, -1f, -0.8f, -0.2f);
+                environment.add(prevLight);
+
                 for (int x = 0; x < 101; x++) {
                     for (int z = 0; z < 101; z++) {
-                        Model model2 = modelBuilder.createBox(0.5f, 0.5f, 0.5f,
-                                new Material(ColorAttribute.createDiffuse(Color.WHITE)),
+                        Model model2 = modelBuilder.createBox(0.5f, 8f, 0.5f,
+                                new Material(ColorAttribute.createDiffuse(Color.valueOf("#00000000")), new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA)),
                                 VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal);
 
                         ModelInstance instance2 = new ModelInstance(model2);
@@ -244,17 +253,40 @@ public class ThreeDScreen implements Screen {
     }
 
     private void transformInRadius(int radius, int Mpos) {
+        float prevPos = 0;
         for (float i = 0; i < 360; i += 0.01f) {
-            float x = -MathUtils.cosDeg(i) * radius + 50;
-            float y = -MathUtils.sinDeg(i) * radius + 50;
-            int pos = 101 * (int) Math.floor(x) + (int) Math.floor(y);
+            float x = -MathUtils.cosDeg(i) * radius + 49.5f;
+            float y = -MathUtils.sinDeg(i) * radius + 49.5f;
+            float x2 = x;
+            float y2 = y;
+
+            x = (float) Math.floor(Math.abs(x));
+            y = (float) Math.floor(Math.abs(y));
+            if (x2 < 0) {
+                x *= -1;
+            }
+            if (y2 < 0) {
+                y *= -1;
+            }
+
+            int pos = 101 * (int) x + (int) y;
             try {
-                instances.get(pos).transform.translate(0, averageSamplesNormalised[Mpos - radius * step] * 2.5f - modelYPoses.get(pos), 0);
-                modelYPoses.set(pos, averageSamplesNormalised[Mpos - radius * step] * 2.5f);
+                if (pos != prevPos) {
+                    instances.get(pos).transform.translate(0, averageSamplesNormalised[Mpos - radius * step] * 4 - modelYPoses.get(pos), 0);
+
+                    fadeColor = new Color().fromHsv( -averageSamplesNormalised[Mpos - radius * step] * 180, 0.75f, 0.85f).add(0, 0, 0, 1);
+                    instances.get(pos).materials.get(0).set(ColorAttribute.createDiffuse(fadeColor));
+
+                    modelYPoses.set(pos, averageSamplesNormalised[Mpos - radius * step] * 4);
+                }
             } catch (Exception e) {
                 //ignore
             }
         }
+    }
+
+    private float addAndComputeTime() {
+        return Gdx.graphics.getDeltaTime() * (averageSamplesNormalised.length / (float) step - recorderFrame) / 3600;
     }
 
     @Override
