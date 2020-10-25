@@ -41,7 +41,9 @@ public class ThreeDScreen implements Screen {
     private Array<Model> models;
     private Array<Float> modelYPoses;
     private Array<ModelInstance> instances;
+    private Array<Array<Integer>> cachedPositions;
     private Environment environment;
+    boolean preloaded;
 
     private Music music;
 
@@ -64,17 +66,17 @@ public class ThreeDScreen implements Screen {
 
     private final int SINGULAR = 0;
     private final int GRID = 1;
+    private final int RUBENSTUBE = 2;
 
-    private final int type = GRID;
+    private final int type = RUBENSTUBE;
 
     ThreeDScreen() {
 
         MusicWave musicWave = new MusicWave();
         music = musicWave.getMusic();
 
-        rSamplesNormalised = musicWave.normaliseSamples(false, true, musicWave.getRightChannelSamples());
-        lSamplesNormalised = musicWave.normaliseSamples(false, true, musicWave.getLeftChannelSamples());
-
+        rSamplesNormalised = musicWave.smoothSamples(musicWave.getRightChannelSamples(), 1, 32);
+        lSamplesNormalised = musicWave.smoothSamples(musicWave.getLeftChannelSamples(), 1, 32);
         averageSamplesNormalised = musicWave.smoothSamples(musicWave.getSamples(), 2, 32);
 
         renderer = new ShapeRenderer();
@@ -90,6 +92,8 @@ public class ThreeDScreen implements Screen {
         models = new Array<>();
         instances = new Array<>();
         modelYPoses = new Array<>();
+        cachedPositions = new Array<>();
+        cachedPositions.setSize(51);
 
         modelBuilder = new ModelBuilder();
 
@@ -169,6 +173,10 @@ public class ThreeDScreen implements Screen {
             batch.end();
         }
 
+        if (pos > step * 51 && !preloaded) {
+            preloaded = true;
+        }
+
     }
 
     private void transform3d(int pos) {
@@ -186,17 +194,18 @@ public class ThreeDScreen implements Screen {
                 environment.remove(prevLight);
                 prevLight = new DirectionalLight().set(fadeColor.r, fadeColor.g, fadeColor.b, -1f, -0.8f, -0.2f);
                 environment.add(prevLight);
+
                 break;
             case (GRID):
 
-                int radius = 10;
-                if (render) {
-                    radius = 51;
-                }
-
-                for (int i = 0; i < radius; i++) {
+                for (int i = 0; i < 51; i++) {
                     transformInRadius(i, pos);
                 }
+
+                break;
+            case(RUBENSTUBE):
+
+                rubensTransform(pos);
 
                 break;
         }
@@ -218,8 +227,10 @@ public class ThreeDScreen implements Screen {
 
                 models.add(model);
                 instances.add(instance);
+
                 break;
             case (GRID):
+            case(RUBENSTUBE):
 
                 environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 1, 1, 1, 1f));
                 prevLight = new DirectionalLight().set(0, 1, 1, -1f, -0.8f, -0.2f);
@@ -233,7 +244,7 @@ public class ThreeDScreen implements Screen {
 
                         ModelInstance instance2 = new ModelInstance(model2);
 
-                        instance2.transform.translate(-x * 0.6f, -17, -z * 0.6f);
+                        instance2.transform.translate(-x * 0.5f, -17, -z * 0.5f);
 
                         models.add(model2);
                         instances.add(instance2);
@@ -253,40 +264,78 @@ public class ThreeDScreen implements Screen {
     }
 
     private void transformInRadius(int radius, int Mpos) {
-        float prevPos = 0;
-        for (float i = 0; i < 360; i += 0.01f) {
-            float x = -MathUtils.cosDeg(i) * radius + 49.5f;
-            float y = -MathUtils.sinDeg(i) * radius + 49.5f;
-            float x2 = x;
-            float y2 = y;
+        if (!preloaded) {
+            float prevPos = 0;
+            Array<Integer> positions = new Array<>();
+            for (float i = 0; i < 360; i += 0.01f) {
+                float x = -MathUtils.cosDeg(i) * radius + 49.5f;
+                float y = -MathUtils.sinDeg(i) * radius + 49.5f;
+                float x2 = x;
+                float y2 = y;
 
-            x = (float) Math.floor(Math.abs(x));
-            y = (float) Math.floor(Math.abs(y));
-            if (x2 < 0) {
-                x *= -1;
-            }
-            if (y2 < 0) {
-                y *= -1;
-            }
-
-            int pos = 101 * (int) x + (int) y;
-            try {
-                if (pos != prevPos) {
-                    instances.get(pos).transform.translate(0, averageSamplesNormalised[Mpos - radius * step] * 4 - modelYPoses.get(pos), 0);
-
-                    fadeColor = new Color().fromHsv( -averageSamplesNormalised[Mpos - radius * step] * 180, 0.75f, 0.85f).add(0, 0, 0, 1);
-                    instances.get(pos).materials.get(0).set(ColorAttribute.createDiffuse(fadeColor));
-
-                    modelYPoses.set(pos, averageSamplesNormalised[Mpos - radius * step] * 4);
+                x = (float) Math.floor(Math.abs(x));
+                y = (float) Math.floor(Math.abs(y));
+                if (x2 < 0) {
+                    x *= -1;
                 }
-            } catch (Exception e) {
-                //ignore
+                if (y2 < 0) {
+                    y *= -1;
+                }
+
+                int pos = 101 * (int) x + (int) y;
+
+                try {
+                    if (pos != prevPos) {
+
+                        transformGridAtPos(pos, Mpos, radius);
+
+                        positions.add(pos);
+                    }
+                } catch (Exception e) {
+                    //ignore
+                }
+            }
+            cachedPositions.set(radius, positions);
+        } else {
+            Array<Integer> positions = cachedPositions.get(radius);
+            for (int i = 0; i < positions.size; i++) {
+                transformGridAtPos(positions.get(i), Mpos, radius);
             }
         }
     }
 
+    private void transformGridAtPos(final int pos, final int Mpos, final int radius) {
+
+        float fadeFactor = radius / 51f + 1;
+
+        instances.get(pos).transform.translate(0, averageSamplesNormalised[Mpos - radius * step] * 4 / fadeFactor - modelYPoses.get(pos), 0);
+
+        fadeColor = new Color().fromHsv(-averageSamplesNormalised[Mpos - radius * step] * 180 / fadeFactor, 0.75f, 0.85f).add(0, 0, 0, 1);
+        instances.get(pos).materials.get(0).set(ColorAttribute.createDiffuse(fadeColor));
+
+        modelYPoses.set(pos, averageSamplesNormalised[Mpos - radius * step] * 4 / fadeFactor);
+    }
+
     private float addAndComputeTime() {
         return Gdx.graphics.getDeltaTime() * (averageSamplesNormalised.length / (float) step - recorderFrame) / 3600;
+    }
+
+    private void rubensTransform(int pos){
+        try{
+            for (int x = 0; x < 101; x++) {
+                for (int y = 0; y < 101; y++) {
+                    int arrayPos = 101 * x + y;
+                    float height = rSamplesNormalised[pos - x * step / 128] + lSamplesNormalised[pos - y * step / 128];
+                    instances.get(arrayPos).transform.translate(0, height * 2 - modelYPoses.get(arrayPos), 0);
+                    modelYPoses.set(arrayPos, height * 2);
+
+                    fadeColor = new Color().fromHsv(height * 80, 0.75f, 0.85f).add(0, 0, 0, 1);
+                    instances.get(arrayPos).materials.get(0).set(ColorAttribute.createDiffuse(fadeColor));
+                }
+            }
+        }catch (Exception e){
+            //ignore
+        }
     }
 
     @Override
