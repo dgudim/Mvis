@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.PixmapIO;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.VertexAttributes;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -153,6 +154,7 @@ public class ThreeDScreen implements Screen {
         blurProcessor.render();
 
         if (render) {
+
             byte[] pixels = ScreenUtils.getFrameBufferPixels(0, 0, Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight(), true);
 
             for (int i4 = 4; i4 < pixels.length; i4 += 4) {
@@ -203,7 +205,7 @@ public class ThreeDScreen implements Screen {
                 }
 
                 break;
-            case(RUBENSTUBE):
+            case (RUBENSTUBE):
 
                 rubensTransform(pos);
 
@@ -230,7 +232,7 @@ public class ThreeDScreen implements Screen {
 
                 break;
             case (GRID):
-            case(RUBENSTUBE):
+            case (RUBENSTUBE):
 
                 environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 1, 1, 1, 1f));
                 prevLight = new DirectionalLight().set(0, 1, 1, -1f, -0.8f, -0.2f);
@@ -320,12 +322,31 @@ public class ThreeDScreen implements Screen {
         return Gdx.graphics.getDeltaTime() * (averageSamplesNormalised.length / (float) step - recorderFrame) / 3600;
     }
 
-    private void rubensTransform(int pos){
-        try{
+    private void rubensTransform(int pos) {
+        try {
             for (int x = 0; x < 101; x++) {
                 for (int y = 0; y < 101; y++) {
                     int arrayPos = 101 * x + y;
-                    float height = rSamplesNormalised[pos - x * step / 128] + lSamplesNormalised[pos - y * step / 128];
+
+                    float prevHeight = 0;
+                    for (int i = 1; i < FPS * 1.5; i++) {
+                        prevHeight += rSamplesNormalised[pos - x * (step - i) / 128] / 1.3f;
+                        prevHeight += lSamplesNormalised[pos - y * (step - i) / 128] / 1.3f;
+                    }
+
+                    float nextHeight = 0;
+                    for (int i = 1; i < FPS * 1.5; i++) {
+                        nextHeight += rSamplesNormalised[pos - x * (step + i) / 128] / 1.3f;
+                        nextHeight += lSamplesNormalised[pos - y * (step + i) / 128] / 1.3f;
+                    }
+
+                    prevHeight = prevHeight / FPS / 2;
+                    nextHeight = nextHeight / FPS / 2;
+
+                    float height = rSamplesNormalised[pos - x * step / 128] + lSamplesNormalised[pos - y * step / 128] + prevHeight + nextHeight;
+
+                    height /= 2f;
+
                     instances.get(arrayPos).transform.translate(0, height * 2 - modelYPoses.get(arrayPos), 0);
                     modelYPoses.set(arrayPos, height * 2);
 
@@ -333,7 +354,7 @@ public class ThreeDScreen implements Screen {
                     instances.get(arrayPos).materials.get(0).set(ColorAttribute.createDiffuse(fadeColor));
                 }
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             //ignore
         }
     }
