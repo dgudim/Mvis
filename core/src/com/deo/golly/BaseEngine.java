@@ -5,6 +5,6 @@ public final class BaseEngine extends Game {
 
     @Override
     public void create() {
-        this.setScreen(new ThreeDScreen());
+        this.setScreen(new OsciloscopeScreen());
     }
 }

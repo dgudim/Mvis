@@ -26,11 +26,8 @@ public class RingScreen implements Screen {
     private Array<Vector3> colors;
     private float fadeout, ringGrowSpeed;
 
-    private SpriteBatch batch;
-    private PostProcessor blurProcessor;
     private Bloom bloom;
     private Music music;
-    private BitmapFont font;
 
     private float[] rSamplesNormalised;
     private float[] lSamplesNormalised;
@@ -42,8 +39,9 @@ public class RingScreen implements Screen {
     private int frame;
     private int recorderFrame;
 
+    private Utils utils;
+
     RingScreen() {
-        batch = new SpriteBatch();
 
         renderer = new ShapeRenderer();
         renderer.setAutoShapeType(true);
@@ -54,25 +52,16 @@ public class RingScreen implements Screen {
         fadeout = 0.006f;
         ringGrowSpeed = 12f;
 
-        ShaderLoader.BasePath = "core/assets/shaders/";
-        blurProcessor = new PostProcessor(false, false, Gdx.app.getType() == Application.ApplicationType.Desktop);
-        bloom = new Bloom((int) (Gdx.graphics.getWidth() * 0.25f), (int) (Gdx.graphics.getHeight() * 0.25f));
-        bloom.setBlurPasses(3);
-        bloom.setBloomIntesity(4f);
-        blurProcessor.addEffect(bloom);
-
-        font = new BitmapFont(Gdx.files.internal("core/assets/font2(old).fnt"));
-
         MusicWave musicWave = new MusicWave();
         music = musicWave.getMusic();
 
         rSamplesNormalised = musicWave.normaliseSamples(false, false, musicWave.getRightChannelSamples());
         lSamplesNormalised = musicWave.normaliseSamples(false, false, musicWave.getLeftChannelSamples());
-        averageSamplesNormalised = musicWave.normaliseSamples(false, true, musicWave.getSamples());
+        averageSamplesNormalised = musicWave.smoothSamples(musicWave.getSamples(), 2, 32);
 
-        for (int i = 0; i < averageSamplesNormalised.length; i++) {
-            averageSamplesNormalised[i] *= 3;
-        }
+        musicWave.multiplySamples(averageSamplesNormalised, 3);
+
+        utils = new Utils(FPS, step, averageSamplesNormalised, 3, 4, 1, true);
 
         if (!render) {
             music.play();
@@ -89,14 +78,15 @@ public class RingScreen implements Screen {
 
         fadeout();
         float radiusx, radiusy;
+        int pos;
         if (!render) {
             radiusx = lSamplesNormalised[(int) (music.getPosition() * 44100)] * 720;
             radiusy = rSamplesNormalised[(int) (music.getPosition() * 44100)] * 720;
-            bloom.setBloomSaturation(averageSamplesNormalised[(int) (music.getPosition() * 44100)] + 1);
+            pos = (int) (music.getPosition() * 44100);
         } else {
             radiusx = lSamplesNormalised[frame] * 720;
             radiusy = rSamplesNormalised[frame] * 720;
-            bloom.setBloomSaturation(averageSamplesNormalised[frame] + 1);
+            pos = frame;
             frame += step;
             recorderFrame++;
         }
@@ -107,33 +97,18 @@ public class RingScreen implements Screen {
         radiuses.add(radiusx);
         radiuses2.add(radiusy);
 
-        blurProcessor.capture();
+        utils.bloomBegin(true, pos);
         renderer.begin();
         for (int i = 0; i < positions.size; i++) {
             renderer.setColor(colors.get(i).x, colors.get(i).y, colors.get(i).z, 1);
             renderer.ellipse(positions.get(i).x - radiuses.get(i) / 2f, positions.get(i).y - radiuses2.get(i) / 2f, radiuses.get(i), radiuses2.get(i));
         }
         renderer.end();
-        blurProcessor.render();
+        utils.bloomRender();
 
         if (render) {
-            byte[] pixels = ScreenUtils.getFrameBufferPixels(0, 0, Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight(), true);
-
-            for (int i4 = 4; i4 < pixels.length; i4 += 4) {
-                pixels[i4 - 1] = (byte) 255;
-            }
-
-            Pixmap pixmap = new Pixmap(Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight(), Pixmap.Format.RGBA8888);
-            BufferUtils.copy(pixels, 0, pixmap.getPixels(), pixels.length);
-            PixmapIO.writePNG(Gdx.files.external("GollyRender/pict" + recorderFrame + ".png"), pixmap);
-            pixmap.dispose();
-
-            batch.begin();
-            font.draw(batch, String.format("% 2f", recorderFrame / (float) FPS) + "s", 100, 120);
-            boolean normal = frame / (float) 44100 == recorderFrame / (float) FPS;
-            font.draw(batch, frame + "fr " + recorderFrame + "fr " + normal, 100, 170);
-            font.draw(batch, frame / (float) averageSamplesNormalised.length * 100 + "%", 100, 70);
-            batch.end();
+            utils.makeAScreenShot(recorderFrame);
+            utils.displayData(recorderFrame, frame);
         }
 
     }

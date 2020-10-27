@@ -1,22 +1,12 @@
 package com.deo.golly;
 
-import com.badlogic.gdx.Application;
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.Pixmap;
-import com.badlogic.gdx.graphics.PixmapIO;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.BufferUtils;
-import com.badlogic.gdx.utils.ScreenUtils;
-import com.deo.golly.postprocessing.PostProcessor;
-import com.deo.golly.postprocessing.effects.Bloom;
 
 public class OsciloscopeScreen implements Screen {
 
@@ -28,17 +18,14 @@ public class OsciloscopeScreen implements Screen {
     private Array<Vector3> dots;
     private Array<Vector3> colors;
 
-    private PostProcessor blurProcessor;
-    private Bloom bloom;
-
     //settings
-    private final boolean realtime = false;
+    private final boolean realtime = true;
     private final boolean absolute = false;
     private final int recordingFPS = 30;
     private final int freqDisplaySamples = 512;
     private float fadeout = 0.005f;
 
-    private float step;
+    private int step;
     private float freqDisplayRenderAngle;
     private float angleStep;
     private int recorderFrame;
@@ -64,30 +51,18 @@ public class OsciloscopeScreen implements Screen {
     private final int type = SHAPES;
     private final int pallet = CYAN;
 
-    private BitmapFont font;
-
-    private SpriteBatch batch;
+    private Utils utils;
 
     OsciloscopeScreen() {
 
-        step = 44100 / (float) recordingFPS;
+        step = (int) (44100 / (float) recordingFPS);
         angleStep = 360 / (float) freqDisplaySamples;
-
-        ShaderLoader.BasePath = "core/assets/shaders/";
-        blurProcessor = new PostProcessor(false, false, Gdx.app.getType() == Application.ApplicationType.Desktop);
-        bloom = new Bloom((int) (Gdx.graphics.getWidth() * 0.25f), (int) (Gdx.graphics.getHeight() * 0.25f));
-        bloom.setBlurPasses(3);
-        bloom.setBloomIntesity(4f);
-        blurProcessor.addEffect(bloom);
 
         MusicWave musicWave = new MusicWave();
         music = musicWave.getMusic();
 
-        batch = new SpriteBatch();
         renderer = new ShapeRenderer();
         renderer.setAutoShapeType(true);
-
-        font = new BitmapFont(Gdx.files.internal("core/assets/font2(old).fnt"));
 
         dots = new Array<>();
         colors = new Array<>();
@@ -96,10 +71,10 @@ public class OsciloscopeScreen implements Screen {
 
         rSamplesNormalised = musicWave.normaliseSamples(false, absolute, musicWave.getRightChannelSamples());
         lSamplesNormalised = musicWave.normaliseSamples(false, absolute, musicWave.getLeftChannelSamples());
-        averageSamplesNormalised = musicWave.normaliseSamples(false, true, musicWave.getSamples());
+        averageSamplesNormalised = musicWave.smoothSamples(musicWave.getSamples(), 2, 32);
 
         if (type == BUBBLE || type == SHAPES || type == RADIAL_BUBBLE || type == SINUS) {
-            skipOver = (int) step;
+            skipOver = step;
             maxSaturation = 1;
         } else {
             skipOver = 1;
@@ -108,20 +83,20 @@ public class OsciloscopeScreen implements Screen {
         if (type == SINUS) {
             fadeout *= 30;
             maxSaturation = 3;
-            bloom.setBloomIntesity(2f);
+            utils.setBloomIntensity(2f);
         }
 
         if (type == FREQUENCY) {
             if (realtime) {
                 fadeout *= 5;
             } else {
-                fadeout /= step/freqDisplaySamples * 16;
+                fadeout /= step/(float)freqDisplaySamples * 16;
             }
-            bloom.setBloomIntesity(1.3f);
+            utils.setBloomIntensity(1.3f);
         }
 
         if (type == SHAPES) {
-            fadeout *= 5;
+            fadeout *= 2;
         }
 
         for (int i = 0; i < averageSamplesNormalised.length; i++) {
@@ -162,6 +137,8 @@ public class OsciloscopeScreen implements Screen {
                 break;
         }
 
+        utils = new Utils(recordingFPS, step, averageSamplesNormalised, 3, 1, 1, true);
+
     }
 
     @Override
@@ -172,13 +149,14 @@ public class OsciloscopeScreen implements Screen {
     @Override
     public void render(float delta) {
 
+        int pos;
         if (realtime) {
-            bloom.setBloomSaturation(MathUtils.clamp(averageSamplesNormalised[(int) (music.getPosition() * 44100)] + 1, 1, maxSaturation + 1));
+           pos = (int) (music.getPosition() * 44100);
         } else {
-            bloom.setBloomSaturation(MathUtils.clamp(averageSamplesNormalised[(int) (frame + step)] + 1, 1, maxSaturation + 1));
+            pos = frame;
         }
 
-        blurProcessor.capture();
+        utils.bloomBegin(true, pos);
 
         renderer.begin();
 
@@ -204,26 +182,11 @@ public class OsciloscopeScreen implements Screen {
 
         renderer.end();
 
-        blurProcessor.render();
+        utils.bloomRender();
 
         if (!realtime) {
-            byte[] pixels = ScreenUtils.getFrameBufferPixels(0, 0, Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight(), true);
-
-            for (int i4 = 4; i4 < pixels.length; i4 += 4) {
-                pixels[i4 - 1] = (byte) 255;
-            }
-
-            Pixmap pixmap = new Pixmap(Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight(), Pixmap.Format.RGBA8888);
-            BufferUtils.copy(pixels, 0, pixmap.getPixels(), pixels.length);
-            PixmapIO.writePNG(Gdx.files.external("GollyRender/pict" + recorderFrame + ".png"), pixmap);
-            pixmap.dispose();
-
-            batch.begin();
-            font.draw(batch, String.format("% 2f", recorderFrame / (float) recordingFPS) + "s", 100, 120);
-            boolean normal = frame / (float) 44100 == recorderFrame / (float) recordingFPS;
-            font.draw(batch, frame + "fr " + recorderFrame + "fr " + normal, 100, 170);
-            font.draw(batch, frame / (float) averageSamplesNormalised.length * 100 + "%", 100, 70);
-            batch.end();
+            utils.makeAScreenShot(recorderFrame);
+            utils.displayData(recorderFrame, frame);
         }
 
     }
@@ -272,7 +235,7 @@ public class OsciloscopeScreen implements Screen {
                 x = 0;
                 y = 0;
                 dots.add(new Vector3().set(x, y, 0));
-                colors.add(new Vector3(1, 1, 0));
+                colors.add(new Vector3(0, 0, 0));
                 angle = lSamplesNormalised[pos] * 90 / 450;
                 for (int i = 0; i < 50; i++) {
                     x = x - (float) Math.cos(angle) * rSamplesNormalised[pos];

@@ -21,7 +21,7 @@ public class MusicWave {
 
         String path;
 
-        path = "!DeltaCore/illumination.wav";
+        path = "!DeltaCore/liquid.wav";
 
         File file = Gdx.files.external(path).file();
 
@@ -129,6 +129,13 @@ public class MusicWave {
             }
         }
         return normaliseSamples(false, false, samples);
+    }
+
+    float[] multiplySamples(float[] samples, float factor){
+        for (int i = 0; i < samples.length; i++) {
+            samples[i] *= factor;
+        }
+        return samples;
     }
 
 

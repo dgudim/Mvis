@@ -92,7 +92,6 @@ public class ThreeDScreen implements Screen {
 
         environment = new Environment();
 
-
         utils = new Utils(FPS, step, averageSamplesNormalised, 3, 1, 1, type == SINGULAR);
 
         initialiseScene();

@@ -1,22 +1,14 @@
 package com.deo.golly;
 
-import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.audio.Music;
-import com.badlogic.gdx.graphics.Pixmap;
-import com.badlogic.gdx.graphics.PixmapIO;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.BufferUtils;
-import com.badlogic.gdx.utils.ScreenUtils;
-import com.deo.golly.postprocessing.PostProcessor;
-import com.deo.golly.postprocessing.effects.Bloom;
 
 public class MushroomScreen implements Screen {
 
@@ -25,11 +17,7 @@ public class MushroomScreen implements Screen {
     private Array<Vector3> colors;
     private float fadeout;
 
-    private SpriteBatch batch;
-    private PostProcessor blurProcessor;
-    private Bloom bloom;
     private Music music;
-    private BitmapFont font;
 
     private float[] rSamplesNormalised;
     private float[] lSamplesNormalised;
@@ -45,28 +33,19 @@ public class MushroomScreen implements Screen {
     private final int DOUBLE = 1;
     private final int TRIPLE = 2;
     private final int DOUBLE_CHANNEL = 3;
-    private boolean EXPONENTIAL = true;
+    private boolean EXPONENTIAL = false;
 
-    private final int type = DOUBLE_CHANNEL;
+    private final int type = SINGLE;
+
+    private Utils utils;
 
     MushroomScreen() {
-
-        batch = new SpriteBatch();
 
         renderer = new ShapeRenderer();
         renderer.setAutoShapeType(true);
         branches = new Array<>();
         colors = new Array<>();
         fadeout = 0.05f;
-
-        ShaderLoader.BasePath = "core/assets/shaders/";
-        blurProcessor = new PostProcessor(false, false, Gdx.app.getType() == Application.ApplicationType.Desktop);
-        bloom = new Bloom((int) (Gdx.graphics.getWidth() * 0.25f), (int) (Gdx.graphics.getHeight() * 0.25f));
-        bloom.setBlurPasses(3);
-        bloom.setBloomIntesity(4f);
-        blurProcessor.addEffect(bloom);
-
-        font = new BitmapFont(Gdx.files.internal("core/assets/font2(old).fnt"));
 
         MusicWave musicWave = new MusicWave();
         music = musicWave.getMusic();
@@ -75,9 +54,9 @@ public class MushroomScreen implements Screen {
         lSamplesNormalised = musicWave.normaliseSamples(false, false, musicWave.getLeftChannelSamples());
         averageSamplesNormalised = musicWave.normaliseSamples(false, true, musicWave.getSamples());
 
-        for (int i = 0; i < averageSamplesNormalised.length; i++) {
-            averageSamplesNormalised[i] *= 3;
-        }
+        musicWave.multiplySamples(averageSamplesNormalised, 3);
+
+        utils = new Utils(FPS, step, averageSamplesNormalised, 3, 4, 1, true);
 
         if (!render) {
             music.play();
@@ -95,14 +74,15 @@ public class MushroomScreen implements Screen {
         fadeOut();
         float angle;
         int iterations;
+        int pos;
         if (!render) {
             angle = rSamplesNormalised[(int) (music.getPosition() * 44100)] * 45;
             iterations = (int) (lSamplesNormalised[(int) (music.getPosition() * 44100)] * 10) + 5;
-            bloom.setBloomSaturation(averageSamplesNormalised[(int) (music.getPosition() * 44100)] + 1);
+            pos = (int) (music.getPosition() * 44100);
         } else {
             angle = rSamplesNormalised[frame] * 45;
             iterations = (int) (lSamplesNormalised[frame] * 10) + 5;
-            bloom.setBloomSaturation(averageSamplesNormalised[frame] + 1);
+            pos = frame;
             frame += step;
             recorderFrame++;
         }
@@ -130,7 +110,7 @@ public class MushroomScreen implements Screen {
                 break;
         }
 
-        blurProcessor.capture();
+        utils.bloomBegin(true, pos);
 
         renderer.begin();
         for (int i = 0; i < branches.size; i++) {
@@ -139,26 +119,11 @@ public class MushroomScreen implements Screen {
         }
         renderer.end();
 
-        blurProcessor.render();
+        utils.bloomRender();
 
         if (render) {
-            byte[] pixels = ScreenUtils.getFrameBufferPixels(0, 0, Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight(), true);
-
-            for (int i4 = 4; i4 < pixels.length; i4 += 4) {
-                pixels[i4 - 1] = (byte) 255;
-            }
-
-            Pixmap pixmap = new Pixmap(Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight(), Pixmap.Format.RGBA8888);
-            BufferUtils.copy(pixels, 0, pixmap.getPixels(), pixels.length);
-            PixmapIO.writePNG(Gdx.files.external("GollyRender/pict" + recorderFrame + ".png"), pixmap);
-            pixmap.dispose();
-
-            batch.begin();
-            font.draw(batch, String.format("% 2f", recorderFrame / (float) FPS) + "s", 100, 120);
-            boolean normal = frame / (float) 44100 == recorderFrame / (float) FPS;
-            font.draw(batch, frame + "fr " + recorderFrame + "fr " + normal, 100, 170);
-            font.draw(batch, frame / (float) averageSamplesNormalised.length * 100 + "%", 100, 70);
-            batch.end();
+            utils.makeAScreenShot(recorderFrame);
+            utils.displayData(recorderFrame, frame);
         }
     }
 
