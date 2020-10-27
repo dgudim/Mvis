@@ -60,7 +60,7 @@ public class ThreeDScreen implements Screen {
     private final int GRID = 1;
     private final int RUBENSTUBE = 2;
 
-    private final int type = GRID;
+    private final int type = RUBENSTUBE;
 
     private Utils utils;
 
@@ -294,22 +294,19 @@ public class ThreeDScreen implements Screen {
 
                     float prevHeight = 0;
                     for (int i = 1; i < FPS * 1.5; i++) {
-                        prevHeight += rSamplesNormalised[pos - x * (step - i) / 128] / 1.3f;
-                        prevHeight += lSamplesNormalised[pos - y * (step - i) / 128] / 1.3f;
+                        prevHeight += rSamplesNormalised[pos - x * (step - i) / 128] / (i/2f);
+                        prevHeight += lSamplesNormalised[pos - y * (step - i) / 128] / (i/2f);
                     }
 
                     float nextHeight = 0;
                     for (int i = 1; i < FPS * 1.5; i++) {
-                        nextHeight += rSamplesNormalised[pos - x * (step + i) / 128] / 1.3f;
-                        nextHeight += lSamplesNormalised[pos - y * (step + i) / 128] / 1.3f;
+                        nextHeight += rSamplesNormalised[pos - x * (step + i) / 128] / (i/2f);
+                        nextHeight += lSamplesNormalised[pos - y * (step + i) / 128] / (i/2f);
                     }
 
-                    prevHeight = prevHeight / FPS / 2;
-                    nextHeight = nextHeight / FPS / 2;
+                    float height = (rSamplesNormalised[pos - x * step / 128] + lSamplesNormalised[pos - y * step / 128])*2 + prevHeight + nextHeight;
 
-                    float height = rSamplesNormalised[pos - x * step / 128] + lSamplesNormalised[pos - y * step / 128] + prevHeight + nextHeight;
-
-                    height /= 2f;
+                    height /= (FPS/1.3f);
 
                     instances.get(arrayPos).transform.translate(0, height * 2 - modelYPoses.get(arrayPos), 0);
                     modelYPoses.set(arrayPos, height * 2);
