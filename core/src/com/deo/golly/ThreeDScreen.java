@@ -301,6 +301,7 @@ public class ThreeDScreen implements Screen {
                     modelYPoses.set(arrayPos, nextTranslation);
 
                     fadeColor = new Color().fromHsv(nextTranslation * 40, 0.75f, 0.85f).add(0, 0, 0, 1);
+
                     instances.get(arrayPos).materials.get(0).set(ColorAttribute.createDiffuse(fadeColor));
                 }
             }
