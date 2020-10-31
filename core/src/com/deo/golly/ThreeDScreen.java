@@ -130,7 +130,7 @@ public class ThreeDScreen implements Screen {
         modelBatch.begin(cam);
         for (int i = instances.size - 1; i >= 0; i--) {
             modelBatch.render(instances.get(i), environment);
-            if(type == GRID && render){
+            if (type == GRID && render) {
                 modelBatch.flush();
             }
         }
@@ -292,26 +292,15 @@ public class ThreeDScreen implements Screen {
                 for (int y = 0; y < 101; y++) {
                     int arrayPos = 101 * x + y;
 
-                    float prevHeight = 0;
-                    for (int i = 1; i < FPS * 1.5; i++) {
-                        prevHeight += rSamplesNormalised[pos - x * (step - i) / 128] / (i/2f);
-                        prevHeight += lSamplesNormalised[pos - y * (step - i) / 128] / (i/2f);
-                    }
+                    float height = (rSamplesNormalised[pos - x * step / 128] + lSamplesNormalised[pos - y * step / 128]) * 2;
 
-                    float nextHeight = 0;
-                    for (int i = 1; i < FPS * 1.5; i++) {
-                        nextHeight += rSamplesNormalised[pos - x * (step + i) / 128] / (i/2f);
-                        nextHeight += lSamplesNormalised[pos - y * (step + i) / 128] / (i/2f);
-                    }
+                    float currentTranslation = modelYPoses.get(arrayPos);
+                    float nextTranslation = (modelYPoses.get(arrayPos) + height)/1.2f;
 
-                    float height = (rSamplesNormalised[pos - x * step / 128] + lSamplesNormalised[pos - y * step / 128])*2 + prevHeight + nextHeight;
+                    instances.get(arrayPos).transform.translate(0, nextTranslation - currentTranslation, 0);
+                    modelYPoses.set(arrayPos, nextTranslation);
 
-                    height /= (FPS/1.3f);
-
-                    instances.get(arrayPos).transform.translate(0, height * 2 - modelYPoses.get(arrayPos), 0);
-                    modelYPoses.set(arrayPos, height * 2);
-
-                    fadeColor = new Color().fromHsv(height * 80, 0.75f, 0.85f).add(0, 0, 0, 1);
+                    fadeColor = new Color().fromHsv(nextTranslation * 40, 0.75f, 0.85f).add(0, 0, 0, 1);
                     instances.get(arrayPos).materials.get(0).set(ColorAttribute.createDiffuse(fadeColor));
                 }
             }
