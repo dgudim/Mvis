@@ -26,13 +26,14 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
 
     private final int type = SINGLE;
 
-    MushroomScreen() {
+    public MushroomScreen() {
 
         branches = new Array<>();
         colors = new Array<>();
         fadeout = 0.05f;
 
         utils.maxSaturation = 3;
+        utils.setBloomIntensity(3);
     }
 
     @Override

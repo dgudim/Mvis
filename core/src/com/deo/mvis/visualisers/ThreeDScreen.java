@@ -62,7 +62,7 @@ public class ThreeDScreen extends BaseVisualiser implements Screen{
 
     private Utils utils;
 
-    ThreeDScreen() {
+    public ThreeDScreen() {
 
         MusicWave musicWave = new MusicWave(null);
         music = musicWave.getMusic();
@@ -93,11 +93,6 @@ public class ThreeDScreen extends BaseVisualiser implements Screen{
         utils = new Utils(FPS, step, averageSamplesNormalised, 3, 1, 1, type == SINGULAR);
 
         initialiseScene();
-
-        if (!render) {
-            music.play();
-        }
-
     }
 
     @Override

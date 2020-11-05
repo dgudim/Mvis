@@ -59,17 +59,17 @@
     "up": {
       "texture": "button_blank",
       "size": ["default", "default"],
-      "fontColor": "#FFFFFF"
+      "fontColor": "#BBFFBB"
     },
     "over":{
       "texture": "blank_over",
       "size": ["default", "default"],
-      "fontColor": "#FFFFFF"
+      "fontColor": "#BBFFBB"
     },
     "down":{
       "texture": "blank_enabled",
       "size": ["default", "default"],
-      "fontColor": "#FFFFFF"
+      "fontColor": "#BBFFBB"
     },
     "loadFrom": "menuButtons.atlas"
   },

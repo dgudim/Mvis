@@ -37,10 +37,10 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
 
     private float maxSaturation = 4;
 
-    private final int type = RADIAL;
+    private final int type = FREQUENCY;
     private final int pallet = CYAN;
 
-    OsciloscopeScreen() {
+    public OsciloscopeScreen() {
 
         camera = new OrthographicCamera(1600, 900);
         viewport = new ScreenViewport(camera);
