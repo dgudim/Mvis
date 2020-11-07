@@ -2,31 +2,36 @@ package com.deo.mvis.visualisers;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
-import com.deo.mvis.utils.MusicWave;
-import com.deo.mvis.utils.Utils;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
+
+import static com.deo.mvis.Launcher.HEIGHT;
 
 public class MushroomScreen extends BaseVisualiser implements Screen {
 
     private Array<Array<Vector2>> branches;
     private Array<Vector3> colors;
-    private float fadeout;
+    private static float fadeout;
 
     private final int SINGLE = 0;
     private final int DOUBLE = 1;
     private final int TRIPLE = 2;
     private final int DOUBLE_CHANNEL = 3;
-    private boolean EXPONENTIAL = false;
 
-    private final int type = SINGLE;
+    private static boolean exponential = false;
+
+    private static int type;
+    public static int palette;
 
     public MushroomScreen() {
+
+        camera = new OrthographicCamera(1600, 900);
+        viewport = new ScreenViewport(camera);
 
         branches = new Array<>();
         colors = new Array<>();
@@ -64,26 +69,29 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
 
         switch (type) {
             case (SINGLE):
-                buildMushroom(-90, angle, 40, iterations, 800, 290);
+                buildMushroom(-90, angle, 40, iterations, 0, -100);
                 break;
             case (DOUBLE):
-                buildMushroom(-90, angle, 40, iterations, 800, 450);
-                buildMushroom(90, angle, 40, iterations, 800, 450);
+                buildMushroom(-90, angle, 40, iterations, 0, 0);
+                buildMushroom(90, angle, 40, iterations, 0, 0);
                 break;
             case (DOUBLE_CHANNEL):
                 angle = rSamplesNormalised[(int) (music.getPosition() * 44100)] * 45;
                 iterations = (int) (rSamplesNormalised[(int) (music.getPosition() * 44100)] * 10) + 5;
-                buildMushroom(-90, angle, 40, iterations, 800, 450);
+                buildMushroom(-90, angle, 40, iterations, 0, 0);
                 angle = lSamplesNormalised[(int) (music.getPosition() * 44100)] * 45;
                 iterations = (int) (lSamplesNormalised[(int) (music.getPosition() * 44100)] * 10) + 5;
-                buildMushroom(90, angle, 40, iterations, 800, 450);
+                buildMushroom(90, angle, 40, iterations, 0, 0);
                 break;
             case (TRIPLE):
-                buildMushroom(150, angle, 40, iterations, 800, 450);
-                buildMushroom(270, angle, 40, iterations, 800, 450);
-                buildMushroom(390, angle, 40, iterations, 800, 450);
+                buildMushroom(150, angle, 40, iterations, 0, 0);
+                buildMushroom(270, angle, 40, iterations, 0, 0);
+                buildMushroom(390, angle, 40, iterations, 0, 0);
                 break;
         }
+
+        renderer.setProjectionMatrix(camera.combined);
+        utils.setBatchProjMat(camera.combined);
 
         utils.bloomBegin(true, pos);
 
@@ -150,7 +158,7 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
         if (iterations > 0 && branchLength > 0) {
             float offset = -0.9f;
             float bOffset = 0;
-            if (EXPONENTIAL) {
+            if (exponential) {
                 offset = 1;
                 bOffset = 1.7f;
             }
@@ -160,9 +168,28 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
 
     }
 
+    public static void init() {
+        paletteNames = new String[]{"Default"};
+        typeNames = new String[]{"Single", "Double", "Triple", "Double channel"};
+
+        settings = new String[]{"Type", "Pallet", "Exponential"};
+        settingTypes = new String[]{"int", "int", "boolean"};
+        settingMaxValues = new float[]{typeNames.length, paletteNames.length, 1};
+    }
+
+    public static String getName(){
+        return "Fractal tree";
+    }
+
+    public static void setSettings(float[] newSettings) {
+        type = (int) newSettings[0];
+        palette = (int) newSettings[1];
+        exponential = newSettings[2] > 0;
+    }
+
     @Override
     public void resize(int width, int height) {
-
+        super.resize(width, height, 0, true);
     }
 
     @Override

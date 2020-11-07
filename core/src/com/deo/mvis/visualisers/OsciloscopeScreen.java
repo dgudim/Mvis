@@ -3,11 +3,12 @@ package com.deo.mvis.visualisers;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+
+import static com.deo.mvis.Launcher.HEIGHT;
 
 public class OsciloscopeScreen extends BaseVisualiser implements Screen {
 
@@ -15,30 +16,34 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
     private Array<Vector3> colors;
 
     //settings
-    private final int freqDisplaySamples = 512;
-    private float fadeout = 0.005f;
+    private static int freqDisplaySamples = 512;
+    private static float fadeout = 0.005f;
+    private static int radialAmplitude = 180;
     private float freqDisplayRenderAngle;
     private float angleStep = 360 / (float) freqDisplaySamples;
     private int skipOver;
 
-    private final int STANDARD = 0;
-    private final int RADIAL = 1;
-    private final int BUBBLE = 2;
-    private final int RADIAL_BUBBLE = 3;
-    private final int SHAPES = 4;
-    private final int SINUS = 5;
-    private final int FREQUENCY = 6;
+    private int prevPosition = 0;
 
-    private final int LIME = 103;
-    private final int FIRE = 104;
-    private final int CYAN = 105;
+    public final int STANDARD = 0;
+    public final int RADIAL = 1;
+    public final int BUBBLE = 2;
+    public final int RADIAL_BUBBLE = 3;
+    public final int SHAPES = 4;
+    public final int SINUS = 5;
+    public final int FREQUENCY = 6;
+
+    public final int LIME = 100;
+    public final int FIRE = 101;
+    public final int CYAN = 102;
+
     private Color palletColor;
     private Vector3 palletFadeoutPattern;
 
     private float maxSaturation = 4;
 
-    private final int type = FREQUENCY;
-    private final int pallet = CYAN;
+    private static int type;
+    private static int palette;
 
     public OsciloscopeScreen() {
 
@@ -76,22 +81,12 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
             fadeout *= 2;
         }
 
-        for (int i = 0; i < numOfSamples; i++) {
-            if (type == STANDARD || type == SHAPES || type == RADIAL) {
-                rSamplesNormalised[i] = rSamplesNormalised[i] * 450;
-                lSamplesNormalised[i] = lSamplesNormalised[i] * 450;
-            } else if (type == BUBBLE || type == RADIAL_BUBBLE) {
-                rSamplesNormalised[i] = rSamplesNormalised[i] * 300;
-                lSamplesNormalised[i] = lSamplesNormalised[i] * 300;
-            }
-        }
-
         utils.maxSaturation = maxSaturation;
 
         palletColor = new Color();
         palletFadeoutPattern = new Vector3();
 
-        switch (pallet) {
+        switch (palette) {
             case (FIRE):
                 palletColor.r = 1;
                 palletColor.g = 1;
@@ -139,7 +134,10 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
 
             addCoords((int) (music.getPosition() * 44100));
             render();
-            fadeOut();
+
+            if (!(type == STANDARD || type == RADIAL)) {
+                fadeOut();
+            }
 
         } else {
 
@@ -162,7 +160,6 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
             utils.makeAScreenShot(recorderFrame);
             utils.displayData(recorderFrame, frame);
         }
-
     }
 
     private void addCoords(int pos) {
@@ -176,31 +173,60 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
 
         switch (type) {
             case (STANDARD):
-                colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
-                dots.add(new Vector3().set(lSamplesNormalised[pos], rSamplesNormalised[pos], 0));
+                if (!render) {
+                    if (pos - prevPosition > 1500) {
+                        prevPosition = pos - 1500;
+                    }
+                    for (int i = prevPosition; i < pos; i++) {
+                        colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
+                        dots.add(new Vector3().set(lSamplesNormalised[i] * (HEIGHT / 2f - 100), rSamplesNormalised[i] * (HEIGHT / 2f - 100), 0));
+                        fadeOut();
+                    }
+                    prevPosition = pos;
+                } else {
+                    colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
+                    dots.add(new Vector3().set(lSamplesNormalised[pos] * (HEIGHT / 2f - 100), rSamplesNormalised[pos] * (HEIGHT / 2f - 100), 0));
+                    fadeOut();
+                }
                 break;
             case (RADIAL):
-                angle = -lSamplesNormalised[pos] * 180;
-                x = -MathUtils.cosDeg(angle) * rSamplesNormalised[pos];
-                y = -MathUtils.sinDeg(angle) * rSamplesNormalised[pos];
-                colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
-                dots.add(new Vector3().set(x, y, 0));
+                if (!render) {
+                    if (pos - prevPosition > 1500) {
+                        prevPosition = pos - 1500;
+                    }
+                    for (int i = prevPosition; i < pos; i++) {
+                        angle = -lSamplesNormalised[i] * radialAmplitude;
+                        x = -MathUtils.cosDeg(angle) * rSamplesNormalised[i] * (HEIGHT / 2f - 100);
+                        y = -MathUtils.sinDeg(angle) * rSamplesNormalised[i] * (HEIGHT / 2f - 100);
+                        colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
+                        dots.add(new Vector3().set(x, y, 0));
+                        fadeOut();
+                    }
+                    prevPosition = pos;
+                } else {
+                    angle = -lSamplesNormalised[pos] * radialAmplitude;
+                    x = -MathUtils.cosDeg(angle) * rSamplesNormalised[pos] * (HEIGHT / 2f - 100);
+                    y = -MathUtils.sinDeg(angle) * rSamplesNormalised[pos] * (HEIGHT / 2f - 100);
+                    colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
+                    dots.add(new Vector3().set(x, y, 0));
+                    fadeOut();
+                }
                 break;
             case (BUBBLE):
                 for (int i = 0; i < repeat; i++) {
-                    rad = Math.abs(Math.max(lSamplesNormalised[pos], rSamplesNormalised[pos]));
+                    rad = Math.abs(Math.max(lSamplesNormalised[pos] * 300, rSamplesNormalised[pos] * 300));
                     rad = (float) (Math.random() * rad);
                     colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
-                    dots.add(new Vector3().set(lSamplesNormalised[pos], rSamplesNormalised[pos], rad));
+                    dots.add(new Vector3().set(lSamplesNormalised[pos] * (HEIGHT / 2f - 100), rSamplesNormalised[pos] * (HEIGHT / 2f - 100), rad));
                 }
                 break;
             case (RADIAL_BUBBLE):
                 for (int i = 0; i < repeat; i++) {
-                    rad = Math.abs(Math.max(lSamplesNormalised[pos], rSamplesNormalised[pos]));
+                    rad = Math.abs(Math.max(lSamplesNormalised[pos] * 300, rSamplesNormalised[pos] * 300));
                     rad = (float) (Math.random() * rad);
-                    angle = -lSamplesNormalised[pos] * 180;
-                    x = -MathUtils.cosDeg(angle) * rSamplesNormalised[pos];
-                    y = -MathUtils.sinDeg(angle) * rSamplesNormalised[pos];
+                    angle = -lSamplesNormalised[pos] * radialAmplitude;
+                    x = -MathUtils.cosDeg(angle) * rSamplesNormalised[pos] * (HEIGHT / 2f - 100);
+                    y = -MathUtils.sinDeg(angle) * rSamplesNormalised[pos] * (HEIGHT / 2f - 100);
                     colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
                     dots.add(new Vector3().set(x, y, rad));
                 }
@@ -212,9 +238,9 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
                 colors.add(new Vector3(0, 0, 0));
                 angle = lSamplesNormalised[pos] * 90 / 450;
                 for (int i = 0; i < 50; i++) {
-                    x = x - (float) Math.cos(angle) * rSamplesNormalised[pos];
-                    y = y - (float) Math.sin(angle) * rSamplesNormalised[pos];
-                    angle = angle + Math.abs(lSamplesNormalised[pos] / 450) + 1;
+                    x = x - (float) Math.cos(angle) * rSamplesNormalised[pos] * (HEIGHT / 2f - 100);
+                    y = y - (float) Math.sin(angle) * rSamplesNormalised[pos] * (HEIGHT / 2f - 100);
+                    angle = angle + Math.abs(lSamplesNormalised[pos]) + 1;
                     dots.add(new Vector3().set(x, y, 0));
                     colors.add(new Vector3(palletColor.r, i / 50f * palletColor.g, palletColor.b));
                 }
@@ -301,6 +327,27 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
                 colors.removeIndex(i);
             }
         }
+    }
+
+    public static void init() {
+        paletteNames = new String[]{"Lime", "Fire", "Water"};
+        typeNames = new String[]{"Oscilloscope", "Oscilloscope2", "Bubble", "Bubble2", "Shapes", "Sinus", "Frequency in circle"};
+
+        settings = new String[]{"Type", "Pallet", "Fadeout", "Frequency display samples(512 is enough)", "Radial visualiser amplitude"};
+        settingTypes = new String[]{"int", "int", "float", "int", "int"};
+        settingMaxValues = new float[]{typeNames.length, paletteNames.length, 1, 1024, 450};
+    }
+
+    public static String getName() {
+        return "Oscilloscope";
+    }
+
+    public static void setSettings(float[] newSettings) {
+        type = (int) newSettings[0];
+        palette = (int) (newSettings[1] + 100);
+        fadeout = newSettings[2];
+        freqDisplaySamples = (int) newSettings[3];
+        radialAmplitude = (int) newSettings[4];
     }
 
     @Override

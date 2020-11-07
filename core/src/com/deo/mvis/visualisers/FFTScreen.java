@@ -31,9 +31,10 @@ public class FFTScreen extends BaseVisualiser implements Screen {
 
     private final int DEFAULT = 0;
     private final int TRIANGLE = 1;
-    private float triangleFlyingSpeed = 75;
+    private static float triangleFlyingSpeed = 75;
 
-    private final int type = DEFAULT;
+    private static int type;
+    private static int palette;
 
     private final int fftSize = 512;
 
@@ -209,6 +210,25 @@ public class FFTScreen extends BaseVisualiser implements Screen {
             renderer.setColor(new Color().fromHsv(displaySamples[i] / 2048 - 60, 0.75f, 0.9f));
             renderer.rect(i * triangleStep - L / 2f, 256, triangleStep, displaySamples[i] / 512);
         }
+    }
+
+    public static void init() {
+        paletteNames = new String[]{"Default"};
+        typeNames = new String[]{"Basic", "Triangle"};
+
+        settings = new String[]{"Type", "Pallet", "Triangle flying speed"};
+        settingTypes = new String[]{"int", "int", "int"};
+        settingMaxValues = new float[]{typeNames.length, paletteNames.length, 200};
+    }
+
+    public static String getName(){
+        return "Frequency spectrum";
+    }
+
+    public static void setSettings(float[] newSettings) {
+        type = (int) newSettings[0];
+        palette = (int) newSettings[1];
+        triangleFlyingSpeed = newSettings[2];
     }
 
     @Override

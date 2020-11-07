@@ -19,13 +19,14 @@ import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.deo.mvis.utils.MusicWave;
 import com.deo.mvis.utils.Utils;
 
 import static com.deo.mvis.Launcher.HEIGHT;
 import static com.deo.mvis.Launcher.WIDTH;
 
-public class ThreeDScreen extends BaseVisualiser implements Screen{
+public class MuffinScreen extends BaseVisualiser implements Screen{
 
     private PerspectiveCamera cam;
     private ModelBatch modelBatch;
@@ -37,19 +38,7 @@ public class ThreeDScreen extends BaseVisualiser implements Screen{
     private Environment environment;
     boolean preloaded;
 
-    private Music music;
-
-    private float[] rSamplesNormalised;
-    private float[] lSamplesNormalised;
-    private float[] averageSamplesNormalised;
-
     private float degrees;
-
-    private final int FPS = 30;
-    private final int step = 44100 / FPS;
-    private final boolean render = false;
-    private int frame;
-    private int recorderFrame;
 
     private Color fadeColor;
     private DirectionalLight prevLight;
@@ -58,18 +47,10 @@ public class ThreeDScreen extends BaseVisualiser implements Screen{
     private final int GRID = 1;
     private final int RUBENSTUBE = 2;
 
-    private final int type = GRID;
+    private static int type;
+    private static int palette;
 
-    private Utils utils;
-
-    public ThreeDScreen() {
-
-        MusicWave musicWave = new MusicWave(null);
-        music = musicWave.getMusic();
-
-        rSamplesNormalised = musicWave.smoothSamples(musicWave.getRightChannelSamples(), 1, 32);
-        lSamplesNormalised = musicWave.smoothSamples(musicWave.getLeftChannelSamples(), 1, 32);
-        averageSamplesNormalised = musicWave.smoothSamples(musicWave.getSamples(), 2, 32);
+    public MuffinScreen() {
 
         cam = new PerspectiveCamera(67, WIDTH, HEIGHT);
         cam.position.set(10f, 10f, 10f);
@@ -77,6 +58,7 @@ public class ThreeDScreen extends BaseVisualiser implements Screen{
         cam.near = 1f;
         cam.far = 300f;
         cam.update();
+        viewport = new ScreenViewport(cam);
 
         models = new Array<>();
         instances = new Array<>();
@@ -89,8 +71,6 @@ public class ThreeDScreen extends BaseVisualiser implements Screen{
         modelBatch = new ModelBatch();
 
         environment = new Environment();
-
-        utils = new Utils(FPS, step, averageSamplesNormalised, 3, 1, 1, type == SINGULAR);
 
         initialiseScene();
     }
@@ -144,14 +124,14 @@ public class ThreeDScreen extends BaseVisualiser implements Screen{
     private void transform3d(int pos) {
         switch (type) {
             case (SINGULAR):
-                degrees += averageSamplesNormalised[pos] * 2;
+                degrees += samplesSmoothed[pos] * 2;
 
-                instances.get(0).transform.setToScaling(averageSamplesNormalised[pos] * 0.8f + 1, averageSamplesNormalised[pos] * 0.8f + 1, averageSamplesNormalised[pos] * 0.8f + 1);
+                instances.get(0).transform.setToScaling(samplesSmoothed[pos] * 0.8f + 1, samplesSmoothed[pos] * 0.8f + 1, samplesSmoothed[pos] * 0.8f + 1);
                 instances.get(0).transform.rotate(new Vector3(1, 0, 0), degrees);
                 instances.get(0).transform.rotate(new Vector3(0, 1, 0), degrees);
                 instances.get(0).transform.rotate(new Vector3(0, 0, 1), degrees);
 
-                fadeColor = new Color().fromHsv(160 - averageSamplesNormalised[pos] * 120, 1f, 1).add(0, 0, 0, 1);
+                fadeColor = new Color().fromHsv(160 - samplesSmoothed[pos] * 120, 1f, 1).add(0, 0, 0, 1);
 
                 environment.remove(prevLight);
                 prevLight = new DirectionalLight().set(fadeColor.r, fadeColor.g, fadeColor.b, -1f, -0.8f, -0.2f);
@@ -271,12 +251,12 @@ public class ThreeDScreen extends BaseVisualiser implements Screen{
 
         float fadeFactor = radius / 51f + 1;
 
-        instances.get(pos).transform.translate(0, averageSamplesNormalised[Mpos - radius * step] * 4 / fadeFactor - modelYPoses.get(pos), 0);
+        instances.get(pos).transform.translate(0, samplesSmoothed[Mpos - radius * step] * 4 / fadeFactor - modelYPoses.get(pos), 0);
 
-        fadeColor = new Color().fromHsv(-averageSamplesNormalised[Mpos - radius * step] * 180 / fadeFactor, 0.75f, 0.85f).add(0, 0, 0, 1);
+        fadeColor = new Color().fromHsv(-samplesSmoothed[Mpos - radius * step] * 180 / fadeFactor, 0.75f, 0.85f).add(0, 0, 0, 1);
         instances.get(pos).materials.get(0).set(ColorAttribute.createDiffuse(fadeColor));
 
-        modelYPoses.set(pos, averageSamplesNormalised[Mpos - radius * step] * 4 / fadeFactor);
+        modelYPoses.set(pos, samplesSmoothed[Mpos - radius * step] * 4 / fadeFactor);
     }
 
     private void rubensTransform(int pos) {
@@ -303,9 +283,28 @@ public class ThreeDScreen extends BaseVisualiser implements Screen{
         }
     }
 
+    public static void init() {
+        paletteNames = new String[]{"Default"};
+        typeNames = new String[]{"Muffin", "Flat"};
+
+        settings = new String[]{"Type", "Pallet"};
+        settingTypes = new String[]{"int", "int"};
+        settingMaxValues = new float[]{typeNames.length, paletteNames.length};
+    }
+
+    public static String getName(){
+        return "3D";
+    }
+
+    public static void setSettings(float[] newSettings) {
+        type = (int) newSettings[0];
+        palette = (int) newSettings[1];
+    }
+
     @Override
     public void resize(int width, int height) {
-
+        viewport.update(width, height);
+        cam.update();
     }
 
     @Override

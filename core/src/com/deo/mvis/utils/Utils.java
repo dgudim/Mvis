@@ -13,6 +13,9 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import com.deo.mvis.postprocessing.PostProcessor;
 import com.deo.mvis.postprocessing.effects.Bloom;
 
+import static com.deo.mvis.Launcher.HEIGHT;
+import static com.deo.mvis.Launcher.WIDTH;
+
 public class Utils {
 
     private int step;
@@ -26,7 +29,7 @@ public class Utils {
 
     public float maxSaturation = 1;
 
-    public Utils(int FPS, int step, float[] samples, int bloomPasses, float bloomIntensity, float bloomSaturation, boolean enableBloom){
+    public Utils(int FPS, int step, float[] samples, int bloomPasses, float bloomIntensity, float bloomSaturation, boolean enableBloom) {
         this.step = step;
         this.FPS = FPS;
         this.samples = samples;
@@ -43,34 +46,34 @@ public class Utils {
         blurProcessor.addEffect(bloom);
     }
 
-    public void bloomBegin(boolean syncToMusic, int pos){
-        if(enableBloom) {
+    public void bloomBegin(boolean syncToMusic, int pos) {
+        if (enableBloom) {
             if (syncToMusic) {
-                bloom.setBloomSaturation(Math.abs(samples[pos])*maxSaturation + 1);
+                bloom.setBloomSaturation(Math.abs(samples[pos]) * maxSaturation + 1);
             }
             blurProcessor.capture();
         }
     }
 
-    public void bloomRender(){
-        if(enableBloom) {
+    public void bloomRender() {
+        if (enableBloom) {
             blurProcessor.render();
         }
     }
 
-    public void setBatchProjMat(Matrix4 mat){
+    public void setBatchProjMat(Matrix4 mat) {
         batch.setProjectionMatrix(mat);
     }
 
-    public void setBloomIntensity(float intensity){
+    public void setBloomIntensity(float intensity) {
         bloom.setBloomIntensity(intensity);
     }
 
-    public void setBloomSaturation(float saturation){
+    public void setBloomSaturation(float saturation) {
         bloom.setBloomSaturation(saturation);
     }
 
-    public void makeAScreenShot(int recorderFrame){
+    public void makeAScreenShot(int recorderFrame) {
 
         byte[] pixels = ScreenUtils.getFrameBufferPixels(0, 0, Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight(), true);
 
@@ -85,13 +88,13 @@ public class Utils {
     }
 
     // a method fod displaying render debug data
-    public void displayData(int recorderFrame, int frame){
+    public void displayData(int recorderFrame, int frame) {
         batch.begin();
-        font.draw(batch, String.format("% 2f", recorderFrame / (float) FPS) + "s", 100, 120);
+        font.draw(batch, String.format("% 2f", recorderFrame / (float) FPS) + "s", -WIDTH / 2f + 100, -HEIGHT / 2f + 120);
         boolean normal = frame / (float) 44100 == recorderFrame / (float) FPS;
-        font.draw(batch, frame + "fr " + recorderFrame + "fr " + normal, 100, 170);
-        font.draw(batch, frame / (float) samples.length * 100 + "%", 100, 70);
-        font.draw(batch, computeTime(recorderFrame) + "h", 100, 220);
+        font.draw(batch, frame + "fr " + recorderFrame + "fr " + normal, -WIDTH / 2f + 100, -HEIGHT / 2f + 170);
+        font.draw(batch, frame / (float) samples.length * 100 + "%", -WIDTH / 2f + 100, -HEIGHT / 2f + 70);
+        font.draw(batch, computeTime(recorderFrame) + "h", -WIDTH / 2f + 100, -HEIGHT / 2f + 220);
         batch.end();
     }
 
@@ -103,7 +106,7 @@ public class Utils {
         return (MathUtils.random(max - min) + min);
     }
 
-    public void dispose(){
+    public void dispose() {
         blurProcessor.dispose();
         font.dispose();
         batch.dispose();

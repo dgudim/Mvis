@@ -74,5 +74,6 @@ project(":core") {
         api "com.badlogicgames.gdx:gdx:$gdxVersion"
         api "com.badlogicgames.gdx:gdx-box2d:$gdxVersion"
         implementation 'pl.edu.icm:JLargeArrays:1.5'
+        implementation 'net.oneandone.reflections8:reflections8:0.11.7'
     }
 }

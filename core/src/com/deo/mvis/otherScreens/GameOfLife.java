@@ -1,25 +1,15 @@
 package com.deo.mvis.otherScreens;
 
-import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Pixmap;
-import com.badlogic.gdx.graphics.PixmapIO;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.utils.BufferUtils;
-import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.deo.mvis.postprocessing.PostProcessor;
-import com.deo.mvis.postprocessing.effects.Bloom;
-import com.deo.mvis.utils.MusicWave;
-import com.deo.mvis.utils.ShaderLoader;
 import com.deo.mvis.visualisers.BaseVisualiser;
 
 import static com.badlogic.gdx.graphics.GL20.GL_COLOR_BUFFER_BIT;
@@ -30,8 +20,8 @@ public class GameOfLife extends BaseVisualiser implements Screen {
 
     private final int fieldWidth = 800;
     private final int fieldHeight = 450;
-    private int oneDRuleHeight = 100;
-    private boolean oneDRuleEnabled = true;
+    private static int oneDRuleHeight = 100;
+    private static boolean oneDRuleEnabled = true;
 
     private boolean[][] cells;
     private Vector3[][] colorMask;
@@ -39,7 +29,8 @@ public class GameOfLife extends BaseVisualiser implements Screen {
 
     private Vector2 dimensions;
 
-    private int currentPallete;
+    private static int palette = 0;
+    private static int type;
 
     private int drawSquareSize = 10;
 
@@ -47,8 +38,6 @@ public class GameOfLife extends BaseVisualiser implements Screen {
 
         camera = new OrthographicCamera(1600, 900);
         viewport = new ScreenViewport(camera);
-
-        currentPallete = 6;
 
         cells = new boolean[fieldWidth][fieldHeight];
         colorMask = new Vector3[fieldWidth][fieldHeight];
@@ -181,12 +170,12 @@ public class GameOfLife extends BaseVisualiser implements Screen {
         utils.bloomRender();
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.EQUALS)) {
-            currentPallete++;
+            palette++;
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.MINUS)) {
-            currentPallete--;
-            if (currentPallete == -1) {
-                currentPallete = 8;
+            palette--;
+            if (palette == -1) {
+                palette = 8;
             }
         }
         if (Gdx.input.isKeyPressed(Input.Keys.Q)) {
@@ -328,9 +317,9 @@ public class GameOfLife extends BaseVisualiser implements Screen {
     }
 
     private Vector3 shiftColor(Vector3 prevColor, int progress) {
-        switch (currentPallete) {
+        switch (palette) {
             default:
-                currentPallete = 0;
+                palette = 0;
                 return prevColor;
             case (8):
                 if (prevColor.x > 0.8f && prevColor.y > 0.8f && prevColor.z > 0.8f) {
@@ -447,6 +436,26 @@ public class GameOfLife extends BaseVisualiser implements Screen {
                 }
                 return prevColor;
         }
+    }
+
+    public static void init() {
+        paletteNames = new String[]{"Cyan-purple", "Cyan fadeout", "Purple fadeout", "Pink-green", "Rainbow water", "Pastel rainbow", "Long fadeout(pastel rainbow)", "winter", "Long cyan fadeout"};
+        typeNames = new String[]{"Normal"};
+
+        settings = new String[]{"Type", "Pallet", "Bottom enabled", "Bottom rule height"};
+        settingTypes = new String[]{"int", "int", "boolean", "int"};
+        settingMaxValues = new float[]{typeNames.length, paletteNames.length, 1, HEIGHT/2f};
+    }
+
+    public static String getName() {
+        return "Game of life";
+    }
+
+    public static void setSettings(float[] newSettings) {
+        type = (int) newSettings[0];
+        palette = (int) newSettings[1];
+        oneDRuleEnabled = newSettings[2] > 0;
+        oneDRuleHeight = (int) newSettings[3];
     }
 
     @Override

@@ -9,12 +9,16 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
+import static com.deo.mvis.Launcher.HEIGHT;
+
 public class RingScreen extends BaseVisualiser implements Screen {
 
     private Array<Float> radiuses, radiuses2;
     private Array<Vector2> positions;
     private Array<Vector3> colors;
-    private float fadeout, ringGrowSpeed;
+    private static float fadeout, ringGrowSpeed;
+
+    private static int palette, type;
 
     public RingScreen() {
 
@@ -100,6 +104,26 @@ public class RingScreen extends BaseVisualiser implements Screen {
                 colors.removeIndex(i);
             }
         }
+    }
+
+    public static void init() {
+        paletteNames = new String[]{"Default"};
+        typeNames = new String[]{"Default"};
+
+        settings = new String[]{"Type", "Pallet", "Ring grow speed", "Fadeout"};
+        settingTypes = new String[]{"int", "int", "float", "float"};
+        settingMaxValues = new float[]{typeNames.length, paletteNames.length, 1, 1};
+    }
+
+    public static String getName(){
+        return "Ring";
+    }
+
+    public static void setSettings(float[] newSettings) {
+        type = (int) newSettings[0];
+        palette = (int) newSettings[1];
+        ringGrowSpeed = newSettings[2];
+        fadeout = newSettings[3];
     }
 
     @Override
