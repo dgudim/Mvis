@@ -188,6 +188,10 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
                 prevLight = new DirectionalLight().set(0, 1, 1, -1f, -0.8f, -0.2f);
                 environment.add(prevLight);
 
+                if(type == GRID){
+                   visualiserQuality = 100;
+                }
+
                 for (int x = 0; x < 101 * visualiserQuality/100f ; x++) {
                     for (int z = 0; z < 101 * visualiserQuality/100f; z++) {
                         Model model2 = modelBuilder.createBox(0.5f * 100/visualiserQuality, 8f, 0.5f * 100/visualiserQuality,
