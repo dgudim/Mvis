@@ -32,12 +32,12 @@ public class Utils {
 
     public float maxSaturation = 1;
 
-    public Utils(int FPS, int step, float[] samples, int bloomPasses, float bloomIntensity, float bloomSaturation, boolean enableBloom) {
+    public Utils(int FPS, int step, float[] samples, int bloomPasses, float bloomIntensity, float bloomSaturation, boolean enableBloom, SpriteBatch batch) {
         this.step = step;
         this.FPS = FPS;
         this.samples = samples;
         this.enableBloom = enableBloom;
-        batch = new SpriteBatch();
+        this.batch = batch;
         font = new BitmapFont(Gdx.files.internal("font2(old).fnt"));
 
         ShaderLoader.BasePath = "shaders/";
@@ -140,7 +140,6 @@ public class Utils {
     public void dispose() {
         blurProcessor.dispose();
         font.dispose();
-        batch.dispose();
     }
 
 }

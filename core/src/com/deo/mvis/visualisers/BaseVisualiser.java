@@ -118,7 +118,7 @@ public class BaseVisualiser {
 
         numOfSamples = samplesRaw.length;
 
-        utils = new Utils(FPS, step, samplesSmoothed, 3, 1, 1, true);
+        utils = new Utils(FPS, step, samplesSmoothed, 3, 1, 1, true, batch);
 
         if (!render) {
             music.setOnCompletionListener(new Music.OnCompletionListener() {
