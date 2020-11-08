@@ -21,6 +21,7 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.CheckBox;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.List;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
@@ -364,7 +365,7 @@ public class MenuScreen implements Screen {
         pixmap.dispose();
 
         Pixmap pixmap2 = new Pixmap(100, 30, Pixmap.Format.RGBA8888);
-        pixmap2.setColor(Color.valueOf("#00000077"));
+        pixmap2.setColor(Color.valueOf("#000000AA"));
         pixmap2.fill();
         TextureRegionDrawable BarBackgroundGrey = new TextureRegionDrawable(new TextureRegion(new Texture(pixmap2)));
         pixmap2.dispose();
@@ -386,6 +387,10 @@ public class MenuScreen implements Screen {
         final SelectBox<String> typeSelector = new SelectBox<>(selectBoxStyle);
         final SelectBox<String> musicSelector = new SelectBox<>(selectBoxStyle);
 
+        Label.LabelStyle labelStyle = new Label.LabelStyle();
+        labelStyle.font = font_small;
+        final Label musicFolderLabel = new Label("Place music into:\n"+Gdx.files.external("/").file().getAbsolutePath()+"/Mvis", labelStyle);
+
         Array<String> availableMusic = new Array<>();
         availableMusic.add("Up and away", "liquid cinema");
         final Array<FileHandle> availableMusicFiles = new Array<>();
@@ -393,20 +398,24 @@ public class MenuScreen implements Screen {
 
         File musicFolder = Gdx.files.external("Mvis").file();
         File musicFolder2 = Gdx.files.external("!Deltacore").file();
-        try{
+        try {
             for (File m : musicFolder2.listFiles()) {
-                if(m.getName().endsWith(".wav")) {
+                if (m.getName().endsWith(".wav")) {
                     availableMusic.add(m.getName().replace(".wav", ""));
                     availableMusicFiles.add(Gdx.files.external("!Deltacore/" + m.getName()));
                 }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        try {
             for (File m : musicFolder.listFiles()) {
-                if(m.getName().endsWith(".wav")) {
+                if (m.getName().endsWith(".wav")) {
                     availableMusic.add(m.getName().replace(".wav", ""));
                     availableMusicFiles.add(Gdx.files.external("Mvis/" + m.getName()));
                 }
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -460,24 +469,28 @@ public class MenuScreen implements Screen {
             }
         });
 
+        ScrollPane scrollPane = new ScrollPane(settingsTable);
+        scrollPane.setBounds(10, -HEIGHT / 2f, WIDTH / 2f - 10, HEIGHT / 2f + 45);
+        scrollPane.setVisible(false);
+
         for (int i = 2; i < settingTypes.length; i++) {
             switch (settingTypes[i]) {
                 case ("int"):
                 case ("float"):
 
                     float step = 0.001f;
-                    if(settingTypes[i].equals("int")){
+                    if (settingTypes[i].equals("int")) {
                         step = 1;
                     }
 
                     Table setting = uiComposer.addSlider("sliderDefaultSmall", settingMinValues[i], settingMaxValues[i],
-                            step, settingNames[i] + ": ", "", name + "_" + i, settingTypes[i]);
+                            step, settingNames[i] + ": ", "", name + "_" + i, settingTypes[i], scrollPane);
 
                     final Slider slider = (Slider) setting.getCells().get(0).getActor();
 
-                    if(!getBoolean(name + "_" + i+"_changed")) {
+                    if (!getBoolean(name + "_" + i + "_changed")) {
                         slider.setValue(defaultSettings[i]);
-                    }else{
+                    } else {
                         newSettings[i] = slider.getValue();
                     }
 
@@ -486,7 +499,7 @@ public class MenuScreen implements Screen {
                         @Override
                         public void changed(ChangeEvent event, Actor actor) {
                             newSettings[finalI] = slider.getValue();
-                            putBoolean(finalName + "_" + finalI+"_changed", true);
+                            putBoolean(finalName + "_" + finalI + "_changed", true);
                         }
                     });
 
@@ -496,9 +509,9 @@ public class MenuScreen implements Screen {
 
                     final CheckBox setting2 = uiComposer.addCheckBox("checkBoxDefault", settingNames[i], name + "_" + i);
 
-                    if(!getBoolean(name + "_" + i+"_changed")) {
-                        setting2.setChecked(defaultSettings[i]>0);
-                    }else{
+                    if (!getBoolean(name + "_" + i + "_changed")) {
+                        setting2.setChecked(defaultSettings[i] > 0);
+                    } else {
                         int set = 0;
                         if (setting2.isChecked()) {
                             set = 1;
@@ -515,7 +528,7 @@ public class MenuScreen implements Screen {
                                 set = 1;
                             }
                             newSettings[finalI1] = set;
-                            putBoolean(finalName + "_" + finalI1+"_changed", true);
+                            putBoolean(finalName + "_" + finalI1 + "_changed", true);
                         }
                     });
 
@@ -525,14 +538,11 @@ public class MenuScreen implements Screen {
             }
         }
 
+        settingsTable.add(musicFolderLabel).width(WIDTH / 2f - 22).padBottom(5).row();
         settingsTable.add(musicSelector).width(WIDTH / 2f - 22).padBottom(5).row();
         settingsTable.add(typeSelector).width(WIDTH / 2f - 22).padBottom(5).row();
         settingsTable.add(paletteSelector).width(WIDTH / 2f - 22).padBottom(5).row();
         settingsTable.add(visualiserStartButton).width(330).height(75);
-
-        ScrollPane scrollPane = new ScrollPane(settingsTable);
-        scrollPane.setBounds(10, -HEIGHT / 2f, WIDTH / 2f - 10, HEIGHT / 2f + 45);
-        scrollPane.setVisible(false);
 
         settings.add(scrollPane);
         stage.addActor(scrollPane);
@@ -571,7 +581,7 @@ public class MenuScreen implements Screen {
         musicWave.dispose();
         font_small.dispose();
         assetManager.dispose();
-        if(Gdx.input.getInputProcessor().equals(stage)) {
+        if (Gdx.input.getInputProcessor().equals(stage)) {
             Gdx.input.setInputProcessor(null);
         }
     }

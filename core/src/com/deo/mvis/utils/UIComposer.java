@@ -307,9 +307,8 @@ public class UIComposer {
         return checkBox;
     }
 
-    /*
-    public Table addSlider(String style, int min, int max, float step, final String text, final String postText, final String valueKey, final ScrollPane scrollHolder) {
-        Table slider = addSlider(style, min, max, step, text, postText, valueKey);
+    public Table addSlider(String style, float min, float max, float step, final String text, final String postText, final String valueKey, final String type, final ScrollPane scrollHolder) {
+        Table slider = addSlider(style, min, max, step, text, postText, valueKey, type);
         slider.getCells().get(0).getActor().addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
@@ -318,7 +317,6 @@ public class UIComposer {
         });
         return slider;
     }
-     */
 
     public Table addSlider(String style, float min, float max, float step, final String text, final String postText, final String valueKey, final String type) {
         Table cell = new Table();
@@ -331,7 +329,7 @@ public class UIComposer {
             valueText = String.valueOf((int)getFloat(valueKey));
         }
 
-        final Label textLabel = addText(text + valueText + postText, (BitmapFont) assetManager.get("font2(old).fnt"), 0.48f);
+        final Label textLabel = addText(text + valueText + postText, (BitmapFont) assetManager.get("font2(old).fnt"), 0.58f);
         slider.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeListener.ChangeEvent event, Actor actor) {
