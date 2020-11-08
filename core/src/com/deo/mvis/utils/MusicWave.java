@@ -95,26 +95,24 @@ public class MusicWave {
 
     public float[] normaliseSamples(boolean cutoff, boolean absolute, float[] samples) {
         float maxValue = 0;
-        float[] newSamples = new float[samples.length];
         for (float sample : samples) {
             if (Math.abs(sample) > maxValue) {
                 maxValue = Math.abs(sample);
             }
         }
         for (int i = 0; i < samples.length; i++) {
-            newSamples[i] = samples[i] / maxValue;
+            samples[i] = samples[i] / maxValue;
             if (cutoff) {
-                newSamples[i] = Math.max(samples[i], 0);
+                samples[i] = Math.max(samples[i], 0);
             }
             if (absolute) {
-                newSamples[i] = Math.abs(samples[i]);
+                samples[i] = Math.abs(samples[i]);
             }
         }
-        return newSamples;
+        return samples;
     }
 
     public float[] smoothSamples(float[] samples, int smoothingFactor, int smoothingSampleRange) {
-        float[] newSamples = new float[samples.length];
         for (int i = 0; i < smoothingFactor; i++) {
             for (int i2 = smoothingSampleRange; i2 < samples.length - smoothingSampleRange; i2++) {
                 float sum = samples[i2]; // middle sample
@@ -122,10 +120,10 @@ public class MusicWave {
                     sum = sum + samples[i2 + i3] + samples[i2 - i3];
                     // samples to the left and to the right
                 }
-                newSamples[i2] = sum / (float) (smoothingSampleRange + 1); //smooth out the sample
+                samples[i2] = sum / (float) (smoothingSampleRange + 1); //smooth out the sample
             }
         }
-        return normaliseSamples(false, false, newSamples);
+        return normaliseSamples(false, false, samples);
     }
 
     public float[] multiplySamples(float[] samples, float factor) {
@@ -221,6 +219,10 @@ public class MusicWave {
 
     public void dispose(){
         music.dispose();
+        samples = null;
+        leftChannelSamples = null;
+        rightChannelSamples = null;
+        System.gc();
     }
 
 }

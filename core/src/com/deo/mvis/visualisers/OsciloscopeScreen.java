@@ -1,6 +1,8 @@
 package com.deo.mvis.visualisers;
 
+import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.MathUtils;
@@ -45,10 +47,8 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
     private static int type = 0;
     private static int palette = 100;
 
-    public OsciloscopeScreen() {
-
-        camera = new OrthographicCamera(1600, 900);
-        viewport = new ScreenViewport(camera);
+    public OsciloscopeScreen(Game game) {
+        super(game);
 
         dots = new Array<>();
         colors = new Array<>();
@@ -110,7 +110,7 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
 
     @Override
     public void show() {
-
+        super.show();
     }
 
     @Override
@@ -124,7 +124,6 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
         }
 
         renderer.setProjectionMatrix(camera.combined);
-        utils.setBatchProjMat(camera.combined);
 
         utils.bloomBegin(true, pos);
 
@@ -158,8 +157,12 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
 
         if (render) {
             utils.makeAScreenShot(recorderFrame);
-            utils.displayData(recorderFrame, frame);
+            utils.displayData(recorderFrame, frame, camera.combined);
         }
+
+        batch.begin();
+        drawExitButton();
+        batch.end();
     }
 
     private void addCoords(int pos) {

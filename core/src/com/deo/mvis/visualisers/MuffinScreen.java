@@ -1,7 +1,9 @@
 package com.deo.mvis.visualisers;
 
+import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -18,6 +20,7 @@ import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
@@ -50,7 +53,8 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
     private static boolean flushSpriteBatch = false;
     private static int palette;
 
-    public MuffinScreen() {
+    public MuffinScreen(Game game) {
+        super(game);
 
         cam = new PerspectiveCamera(67, WIDTH, HEIGHT);
         cam.position.set(10f, 10f, 10f);
@@ -79,7 +83,7 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
 
     @Override
     public void show() {
-
+        super.show();
     }
 
     @Override
@@ -114,8 +118,12 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
 
         if (render) {
             utils.makeAScreenShot(recorderFrame);
-            utils.displayData(recorderFrame, frame);
+            utils.displayData(recorderFrame, frame, cam.combined);
         }
+
+        batch.begin();
+        drawExitButton();
+        batch.end();
 
         if (pos > step * 51 && !preloaded) {
             preloaded = true;

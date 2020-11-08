@@ -1,7 +1,9 @@
 package com.deo.mvis.visualisers;
 
+import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -25,14 +27,15 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
     private final int DOUBLE_CHANNEL = 3;
 
     private static boolean exponential = false;
+    private static float branchLength = 40;
+    private static float maxAngle = 45;
+    private static int maxIterations = 10;
 
     private static int type;
     public static int palette;
 
-    public MushroomScreen() {
-
-        camera = new OrthographicCamera(1600, 900);
-        viewport = new ScreenViewport(camera);
+    public MushroomScreen(Game game) {
+        super(game);
 
         branches = new Array<>();
         colors = new Array<>();
@@ -44,7 +47,7 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
 
     @Override
     public void show() {
-
+        super.show();
     }
 
     @Override
@@ -57,12 +60,12 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
         int iterations;
         int pos;
         if (!render) {
-            angle = rSamplesNormalised[(int) (music.getPosition() * 44100)] * 45;
-            iterations = (int) (lSamplesNormalised[(int) (music.getPosition() * 44100)] * 10) + 5;
+            angle = rSamplesNormalised[(int) (music.getPosition() * 44100)] * maxAngle;
+            iterations = (int) (lSamplesNormalised[(int) (music.getPosition() * 44100)] * maxIterations) + 5;
             pos = (int) (music.getPosition() * 44100);
         } else {
-            angle = rSamplesNormalised[frame] * 45;
-            iterations = (int) (lSamplesNormalised[frame] * 10) + 5;
+            angle = rSamplesNormalised[frame] * maxAngle;
+            iterations = (int) (lSamplesNormalised[frame] * maxIterations) + 5;
             pos = frame;
             frame += step;
             recorderFrame++;
@@ -70,29 +73,28 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
 
         switch (type) {
             case (SINGLE):
-                buildMushroom(-90, angle, 40, iterations, 0, -100);
+                buildMushroom(-90, angle, branchLength, iterations, 0, -100);
                 break;
             case (DOUBLE):
-                buildMushroom(-90, angle, 40, iterations, 0, 0);
-                buildMushroom(90, angle, 40, iterations, 0, 0);
+                buildMushroom(-90, angle, branchLength, iterations, 0, 0);
+                buildMushroom(90, angle, branchLength, iterations, 0, 0);
                 break;
             case (DOUBLE_CHANNEL):
                 angle = rSamplesNormalised[(int) (music.getPosition() * 44100)] * 45;
-                iterations = (int) (rSamplesNormalised[(int) (music.getPosition() * 44100)] * 10) + 5;
-                buildMushroom(-90, angle, 40, iterations, 0, 0);
+                iterations = (int) (rSamplesNormalised[(int) (music.getPosition() * 44100)] * maxIterations) + 5;
+                buildMushroom(-90, angle, branchLength, iterations, 0, 0);
                 angle = lSamplesNormalised[(int) (music.getPosition() * 44100)] * 45;
-                iterations = (int) (lSamplesNormalised[(int) (music.getPosition() * 44100)] * 10) + 5;
-                buildMushroom(90, angle, 40, iterations, 0, 0);
+                iterations = (int) (lSamplesNormalised[(int) (music.getPosition() * 44100)] * maxIterations) + 5;
+                buildMushroom(90, angle, branchLength, iterations, 0, 0);
                 break;
             case (TRIPLE):
-                buildMushroom(150, angle, 40, iterations, 0, 0);
-                buildMushroom(270, angle, 40, iterations, 0, 0);
-                buildMushroom(390, angle, 40, iterations, 0, 0);
+                buildMushroom(150, angle, branchLength, iterations, 0, 0);
+                buildMushroom(270, angle, branchLength, iterations, 0, 0);
+                buildMushroom(390, angle, branchLength, iterations, 0, 0);
                 break;
         }
 
         renderer.setProjectionMatrix(camera.combined);
-        utils.setBatchProjMat(camera.combined);
 
         utils.bloomBegin(true, pos);
 
@@ -107,8 +109,13 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
 
         if (render) {
             utils.makeAScreenShot(recorderFrame);
-            utils.displayData(recorderFrame, frame);
+            utils.displayData(recorderFrame, frame, camera.combined);
         }
+
+        batch.begin();
+        drawExitButton();
+        batch.end();
+
     }
 
     private void fadeOut() {
@@ -173,13 +180,13 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
         paletteNames = new String[]{"Default"};
         typeNames = new String[]{"Single", "Double", "Triple", "Double channel"};
 
-        settings = new String[]{"Type", "Pallet", "Exponential"};
-        settingTypes = new String[]{"int", "int", "boolean"};
+        settings = new String[]{"Type", "Pallet", "Exponential", "Branch length", "Max iterations (+5)", "Max angle"};
+        settingTypes = new String[]{"int", "int", "boolean", "float", "int", "float"};
 
-        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 1};
-        settingMinValues = new float[]{0, 0, 0};
+        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 1, 80, 25, 90};
+        settingMinValues = new float[]{0, 0, 0, 1, 1, 5};
 
-        defaultSettings = new float[]{0, 0, 0};
+        defaultSettings = new float[]{0, 0, 0, 40, 10, 45};
     }
 
     public static String getName() {
@@ -190,6 +197,9 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
         type = (int) newSettings[0];
         palette = (int) newSettings[1];
         exponential = newSettings[2] > 0;
+        branchLength = newSettings[3];
+        maxIterations = (int) newSettings[4];
+        maxAngle = newSettings[5];
     }
 
     @Override

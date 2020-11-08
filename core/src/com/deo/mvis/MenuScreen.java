@@ -46,6 +46,7 @@ import com.deo.mvis.visualisers.OsciloscopeScreen;
 import com.deo.mvis.visualisers.RingScreen;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -89,9 +90,20 @@ public class MenuScreen implements Screen {
 
     Set<Class<? extends BaseVisualiser>> visualiserClasses;
 
-    MenuScreen(final Game game) {
+    public MenuScreen(final Game game) {
 
         this.game = game;
+
+        assetManager = new AssetManager();
+
+        assetManager.load("menuButtons.atlas", TextureAtlas.class);
+        assetManager.load("ui.atlas", TextureAtlas.class);
+        assetManager.load("font2(old).fnt", BitmapFont.class);
+        assetManager.load("font2.fnt", BitmapFont.class);
+
+        while (!assetManager.isFinished()) {
+            assetManager.update();
+        }
 
         settings = new Array<>();
 
@@ -99,7 +111,7 @@ public class MenuScreen implements Screen {
 
         music = musicWave.getMusic();
 
-        averageSamples = musicWave.smoothSamples(musicWave.getSamples(), 2, 32);
+        averageSamples = musicWave.smoothSamples(musicWave.getSamples().clone(), 2, 32);
 
         music.setOnCompletionListener(new Music.OnCompletionListener() {
             @Override
@@ -120,17 +132,6 @@ public class MenuScreen implements Screen {
         camera = new OrthographicCamera(1600, 900);
         viewport = new ScreenViewport(camera);
         batch = new SpriteBatch();
-
-        assetManager = new AssetManager();
-
-        assetManager.load("menuButtons.atlas", TextureAtlas.class);
-        assetManager.load("ui.atlas", TextureAtlas.class);
-        assetManager.load("font2(old).fnt", BitmapFont.class);
-        assetManager.load("font2.fnt", BitmapFont.class);
-
-        while (!assetManager.isFinished()) {
-            assetManager.update();
-        }
 
         font = assetManager.get("font2.fnt");
         font.getData().scale(0.5f);
@@ -391,7 +392,14 @@ public class MenuScreen implements Screen {
         availableMusicFiles.add(Gdx.files.internal("away.wav"), Gdx.files.internal("liquid.wav"));
 
         File musicFolder = Gdx.files.external("Mvis").file();
+        File musicFolder2 = Gdx.files.external("!Deltacore").file();
         try{
+            for (File m : musicFolder2.listFiles()) {
+                if(m.getName().endsWith(".wav")) {
+                    availableMusic.add(m.getName().replace(".wav", ""));
+                    availableMusicFiles.add(Gdx.files.external("!Deltacore/" + m.getName()));
+                }
+            }
             for (File m : musicFolder.listFiles()) {
                 if(m.getName().endsWith(".wav")) {
                     availableMusic.add(m.getName().replace(".wav", ""));
@@ -405,6 +413,10 @@ public class MenuScreen implements Screen {
         musicSelector.setItems(availableMusic);
         paletteSelector.setItems(paletteNames);
         typeSelector.setItems(typeNames);
+
+        musicSelector.setMaxListCount(7);
+        paletteSelector.setMaxListCount(7);
+        typeSelector.setMaxListCount(7);
 
         typeSelector.setSelectedIndex(getInteger("type" + name));
         newSettings[0] = getInteger("type" + name);
@@ -440,7 +452,7 @@ public class MenuScreen implements Screen {
                 try {
                     visualiser.getMethod("setSettings", newSettings.getClass()).invoke(visualiser, newSettings);
                     visualiser.getMethod("setMusic", FileHandle.class).invoke(visualiser, availableMusicFiles.get(musicSelector.getSelectedIndex()));
-                    game.setScreen((Screen) visualiser.newInstance());
+                    game.setScreen((Screen) visualiser.getConstructor(Game.class).newInstance(game));
                     MenuScreen.this.dispose();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -557,8 +569,10 @@ public class MenuScreen implements Screen {
         batch.dispose();
         renderer.dispose();
         musicWave.dispose();
-        assetManager.dispose();
         font_small.dispose();
-        Gdx.input.setInputProcessor(null);
+        assetManager.dispose();
+        if(Gdx.input.getInputProcessor().equals(stage)) {
+            Gdx.input.setInputProcessor(null);
+        }
     }
 }

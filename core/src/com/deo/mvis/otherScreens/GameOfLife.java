@@ -1,8 +1,10 @@
 package com.deo.mvis.otherScreens;
 
+import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -34,10 +36,8 @@ public class GameOfLife extends BaseVisualiser implements Screen {
 
     private int drawSquareSize = 10;
 
-    public GameOfLife() {
-
-        camera = new OrthographicCamera(1600, 900);
-        viewport = new ScreenViewport(camera);
+    public GameOfLife(Game game) {
+        super(game);
 
         cells = new boolean[fieldWidth][fieldHeight];
         colorMask = new Vector3[fieldWidth][fieldHeight];
@@ -97,14 +97,18 @@ public class GameOfLife extends BaseVisualiser implements Screen {
             frame += step;
             recorderFrame++;
             utils.makeAScreenShot(recorderFrame);
-            utils.displayData(recorderFrame, frame);
+            utils.displayData(recorderFrame, frame, camera.combined);
         }
+
+        batch.begin();
+        drawExitButton();
+        batch.end();
 
     }
 
     @Override
     public void show() {
-
+        super.show();
     }
 
     private void alive(final int xPos, final int yPos) {
@@ -139,7 +143,6 @@ public class GameOfLife extends BaseVisualiser implements Screen {
             pos = (int) (music.getPosition() * 44100);
         }
 
-        utils.setBatchProjMat(camera.combined);
         renderer.setProjectionMatrix(camera.combined);
 
         utils.bloomBegin(true, pos);

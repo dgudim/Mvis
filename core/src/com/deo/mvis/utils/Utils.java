@@ -68,10 +68,6 @@ public class Utils {
         this.enableBloom = enableBloom;
     }
 
-    public void setBatchProjMat(Matrix4 mat) {
-        batch.setProjectionMatrix(mat);
-    }
-
     public void setBloomIntensity(float intensity) {
         bloom.setBloomIntensity(intensity);
     }
@@ -95,7 +91,8 @@ public class Utils {
     }
 
     // a method fod displaying render debug data
-    public void displayData(int recorderFrame, int frame) {
+    public void displayData(int recorderFrame, int frame, Matrix4 projMat) {
+        batch.setProjectionMatrix(projMat);
         batch.begin();
         font.draw(batch, String.format("% 2f", recorderFrame / (float) FPS) + "s", -WIDTH / 2f + 100, -HEIGHT / 2f + 120);
         boolean normal = frame / (float) 44100 == recorderFrame / (float) FPS;

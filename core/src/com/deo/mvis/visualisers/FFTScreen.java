@@ -1,7 +1,9 @@
 package com.deo.mvis.visualisers;
 
+import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -38,10 +40,8 @@ public class FFTScreen extends BaseVisualiser implements Screen {
 
     private final int fftSize = 512;
 
-    public FFTScreen() {
-
-        camera = new OrthographicCamera(1600, 900);
-        viewport = new ScreenViewport(camera);
+    public FFTScreen(Game game) {
+        super(game);
 
         fft = new FloatFFT_1D(fftSize);
 
@@ -59,7 +59,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
 
     @Override
     public void show() {
-
+        super.show();
     }
 
     @Override
@@ -94,8 +94,12 @@ public class FFTScreen extends BaseVisualiser implements Screen {
 
         if (render) {
             utils.makeAScreenShot(recorderFrame);
-            utils.displayData(recorderFrame, frame);
+            utils.displayData(recorderFrame, frame, camera.combined);
         }
+
+        batch.begin();
+        drawExitButton();
+        batch.end();
 
     }
 
