@@ -45,7 +45,7 @@ public class MontageScreen implements Screen {
 
         batch = new SpriteBatch();
 
-        com.deo.mvis.utils.MusicWave musicWave = new MusicWave(null);
+        MusicWave musicWave = new MusicWave(null, false);
 
         float[] samples = musicWave.getSamples();
 

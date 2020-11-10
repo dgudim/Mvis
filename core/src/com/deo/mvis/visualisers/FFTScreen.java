@@ -32,7 +32,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
     private Array<Color> littleTrianglesColors;
 
     private final int DEFAULT = 0;
-    private final int TRIANGLE = 1;
+    private static final int TRIANGLE = 1;
     private static float triangleFlyingSpeed = 75;
 
     private static int type;
@@ -41,7 +41,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
     private final int fftSize = 512;
 
     public FFTScreen(Game game) {
-        super(game);
+        super(game, new boolean[]{type == TRIANGLE, false, false});
 
         fft = new FloatFFT_1D(fftSize);
 
@@ -52,7 +52,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
         littleTrianglesSpeeds = new Array<>();
         littleTrianglesColors = new Array<>();
 
-        if(render) {
+        if (render) {
             triangleFlyingSpeed *= 1.7f;
         }
     }
@@ -87,8 +87,8 @@ public class FFTScreen extends BaseVisualiser implements Screen {
             }
         }
 
-        samples[samples.length-1] = Math.abs(samples[samples.length-1]);
-        samples[samples.length-2] = Math.abs(samples[samples.length-2]);
+        samples[samples.length - 1] = Math.abs(samples[samples.length - 1]);
+        samples[samples.length - 2] = Math.abs(samples[samples.length - 2]);
 
         displayFFT(samples, pos);
 
@@ -143,8 +143,8 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                     renderer.setColor(littleTrianglesColors.get(i));
                     renderer.triangle(triangle[0], triangle[1], triangle[2], triangle[3], triangle[4], triangle[5]);
 
-                    float xSpeed = littleTrianglesSpeeds.get(i).x * samplesSmoothed[pos]*triangleFlyingSpeed;
-                    float ySpeed = littleTrianglesSpeeds.get(i).y * samplesSmoothed[pos]*triangleFlyingSpeed;
+                    float xSpeed = littleTrianglesSpeeds.get(i).x * samplesSmoothed[pos] * triangleFlyingSpeed;
+                    float ySpeed = littleTrianglesSpeeds.get(i).y * samplesSmoothed[pos] * triangleFlyingSpeed;
 
                     littleTriangles.set(i, littleTriangles.get(i).add(xSpeed, ySpeed, 0.7f));
 
@@ -163,8 +163,8 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                     float max = Math.max(Math.abs(x), Math.abs(y));
 
                     littleTriangles.add(new Vector3(x, y, 0));
-                    littleTrianglesSpeeds.add(new Vector2(x/max, y/max));
-                    littleTrianglesColors.add(new Color().fromHsv(samplesRaw[pos]*120-60, 0.75f, 0.9f));
+                    littleTrianglesSpeeds.add(new Vector2(x / max, y / max));
+                    littleTrianglesColors.add(new Color().fromHsv(samplesRaw[pos] * 120 - 60, 0.75f, 0.9f));
                 }
 
                 for (int i = 0; i < fftSize - 2; i++) {
@@ -229,7 +229,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
         defaultSettings = new float[]{0, 0, 75};
     }
 
-    public static String getName(){
+    public static String getName() {
         return "Frequency spectrum";
     }
 
@@ -241,9 +241,9 @@ public class FFTScreen extends BaseVisualiser implements Screen {
 
     @Override
     public void resize(int width, int height) {
-        if(type == TRIANGLE) {
+        if (type == TRIANGLE) {
             super.resize(width, height, -90, false);
-        }else{
+        } else {
             super.resize(width, height, 0, true);
         }
     }

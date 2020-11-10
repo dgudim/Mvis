@@ -38,7 +38,7 @@ public class MontageSelectionScreen implements Screen {
 
         this.game = game;
 
-        com.deo.mvis.utils.MusicWave musicWave = new MusicWave(null);
+        MusicWave musicWave = new MusicWave(null, false);
 
         float[] samples = musicWave.getSamples();
 

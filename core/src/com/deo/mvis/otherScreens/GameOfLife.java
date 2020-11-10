@@ -37,7 +37,7 @@ public class GameOfLife extends BaseVisualiser implements Screen {
     private int drawSquareSize = 10;
 
     public GameOfLife(Game game) {
-        super(game);
+        super(game, new boolean[]{false, false, false});
 
         cells = new boolean[fieldWidth][fieldHeight];
         colorMask = new Vector3[fieldWidth][fieldHeight];

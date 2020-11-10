@@ -27,7 +27,7 @@ public class VideoScreen implements Screen {
         step = 44100 / FPS;
         musicProgress = 0;
 
-        com.deo.mvis.utils.MusicWave musicWave = new MusicWave(null);
+        MusicWave musicWave = new MusicWave(null, false);
 
         float[] samples = musicWave.getSamples();
 

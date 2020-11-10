@@ -67,7 +67,7 @@ public class BaseVisualiser {
 
     private AssetManager assetManager;
 
-    public BaseVisualiser(final Game game) {
+    public BaseVisualiser(final Game game, boolean[] requiredSamples) {
 
         camera = new OrthographicCamera(1600, 900);
         viewport = new ScreenViewport(camera);
@@ -104,19 +104,29 @@ public class BaseVisualiser {
 
         batch = new SpriteBatch();
 
-        musicWave = new MusicWave(musicFile);
+        musicWave = new MusicWave(musicFile, requiredSamples[1] || requiredSamples[2]);
         music = musicWave.getMusic();
 
-        samplesRaw = musicWave.normaliseSamples(false, false, musicWave.getSamples().clone());
         samplesSmoothed = musicWave.smoothSamples(musicWave.getSamples().clone(), 2, 32);
 
-        rSamplesNormalised = musicWave.normaliseSamples(false, false, musicWave.getRightChannelSamples());
-        lSamplesNormalised = musicWave.normaliseSamples(false, false, musicWave.getLeftChannelSamples());
+        if (requiredSamples[0]) {
+            samplesRaw = musicWave.normaliseSamples(false, false, musicWave.getSamples().clone());
+        }
 
-        rSamplesNormalisedSmoothed = musicWave.smoothSamples(musicWave.getRightChannelSamples().clone(), 2, 32);
-        lSamplesNormalisedSmoothed = musicWave.smoothSamples(musicWave.getLeftChannelSamples().clone(), 2, 32);
+        if (requiredSamples[1]) {
+            lSamplesNormalised = musicWave.normaliseSamples(false, false, musicWave.getLeftChannelSamples());
+            rSamplesNormalised = musicWave.normaliseSamples(false, false, musicWave.getRightChannelSamples());
+        }
 
-        numOfSamples = samplesRaw.length;
+        if (requiredSamples[2] && requiredSamples[1]) {
+            lSamplesNormalisedSmoothed = musicWave.smoothSamples(musicWave.getLeftChannelSamples().clone(), 2, 32);
+            rSamplesNormalisedSmoothed = musicWave.smoothSamples(musicWave.getRightChannelSamples().clone(), 2, 32);
+        } else if(requiredSamples[2]){
+            lSamplesNormalisedSmoothed = musicWave.smoothSamples(musicWave.getLeftChannelSamples(), 2, 32);
+            rSamplesNormalisedSmoothed = musicWave.smoothSamples(musicWave.getRightChannelSamples(), 2, 32);
+        }
+
+        numOfSamples = samplesSmoothed.length;
 
         utils = new Utils(FPS, step, samplesSmoothed, 3, 1, 1, true, batch);
 
@@ -138,7 +148,7 @@ public class BaseVisualiser {
 
     public void drawExitButton() {
 
-        if(!musicStarted && transparency == 0){
+        if (!musicStarted && transparency == 0) {
             music.play();
             musicStarted = true;
         }
@@ -146,7 +156,7 @@ public class BaseVisualiser {
         exit.setColor(1, 1, 1, transparency);
         stage.draw();
         stage.act();
-        transparency = MathUtils.clamp(transparency - 0.01f, 0, 1);
+        transparency = MathUtils.clamp(transparency - 0.5f * Gdx.graphics.getDeltaTime(), 0, 1);
     }
 
     public void resize(int width, int height, int yOffset, boolean maxScale) {

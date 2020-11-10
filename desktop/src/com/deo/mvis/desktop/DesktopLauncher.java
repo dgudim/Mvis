@@ -17,7 +17,7 @@ public class DesktopLauncher {
 
 		cfg.width = WIDTH;
 		cfg.height = HEIGHT;
-		cfg.fullscreen = true;
+		cfg.fullscreen = false;
 		cfg.foregroundFPS = 7680;
 
 		cfg.samples = 0;

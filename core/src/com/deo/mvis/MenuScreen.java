@@ -108,7 +108,7 @@ public class MenuScreen implements Screen {
 
         settings = new Array<>();
 
-        musicWave = new MusicWave(Gdx.files.internal("liquid.wav"));
+        musicWave = new MusicWave(Gdx.files.internal("liquid.wav"), false);
 
         music = musicWave.getMusic();
 
@@ -232,8 +232,8 @@ public class MenuScreen implements Screen {
         renderer.triangle(triangle[0], triangle[1], triangle[2], triangle[3], triangle[4], triangle[5]);
 
         renderer.setColor(0, 0, 0, 0.55f);
-        float width = viewport.getScreenWidth();
-        float height = viewport.getScreenHeight();
+        float width = viewport.getScreenWidth() * camera.zoom;
+        float height = viewport.getScreenHeight() * camera.zoom;
         renderer.rect(-width / 2, -height / 2, width, height);
 
         triangleAngle += 10 * delta;
@@ -303,8 +303,8 @@ public class MenuScreen implements Screen {
         }
 
 
-        float overHead = viewport.getScreenHeight() - HEIGHT;
-        float overHeadHorizontal = viewport.getScreenWidth() - WIDTH;
+        float overHead = viewport.getScreenHeight() * camera.zoom - HEIGHT;
+        float overHeadHorizontal = viewport.getScreenWidth() * camera.zoom - WIDTH;
 
         renderer.setColor(Color.BLACK);
         renderer.rect(-WIDTH / 2f + 5 - overHeadHorizontal, HEIGHT / 2f - 275, WIDTH + overHeadHorizontal * 2, 20);
@@ -389,7 +389,7 @@ public class MenuScreen implements Screen {
 
         Label.LabelStyle labelStyle = new Label.LabelStyle();
         labelStyle.font = font_small;
-        final Label musicFolderLabel = new Label("Place music into:\n"+Gdx.files.external("/").file().getAbsolutePath()+"/Mvis", labelStyle);
+        final Label musicFolderLabel = new Label("Place music into:\n" + Gdx.files.external("/").file().getAbsolutePath().replace("Users", "Users/") + "/Mvis", labelStyle);
 
         Array<String> availableMusic = new Array<>();
         availableMusic.add("Up and away", "liquid cinema");

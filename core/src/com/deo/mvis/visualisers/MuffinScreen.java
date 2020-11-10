@@ -46,15 +46,14 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
 
     private final int SINGULAR = 0;
     private final int GRID = 1;
-    private final int RUBENSTUBE = 2;
+    private static final int RUBENSTUBE = 2;
 
     private static int type = 1;
     private static float visualiserQuality = 100f;
-    private static boolean flushSpriteBatch = false;
     private static int palette;
 
     public MuffinScreen(Game game) {
-        super(game);
+        super(game, new boolean[]{false, type == RUBENSTUBE, false});
 
         cam = new PerspectiveCamera(67, WIDTH, HEIGHT);
         cam.position.set(10f, 10f, 10f);
@@ -107,18 +106,16 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
 
         utils.bloomBegin(true, pos);
         modelBatch.begin(cam);
+
         for (int i = instances.size - 1; i >= 0; i--) {
             modelBatch.render(instances.get(i), environment);
-            if (flushSpriteBatch) {
-                modelBatch.flush();
-            }
         }
         modelBatch.end();
         utils.bloomRender();
 
         if (render) {
             utils.makeAScreenShot(recorderFrame);
-            utils.displayData(recorderFrame, frame, cam.combined);
+            utils.displayData(recorderFrame, frame, camera.combined);
         }
 
         batch.begin();
@@ -207,6 +204,16 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
                         modelYPoses.add(0f);
 
                     }
+                }
+
+                if(type == GRID) {
+                    Model filler = modelBuilder.createBox(300, 15f, 300,
+                            new Material(ColorAttribute.createDiffuse(Color.valueOf("#000000"))),
+                            VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal);
+                    ModelInstance fillerInstance = new ModelInstance(filler);
+                    fillerInstance.transform.translate(0, -20.8f, 0);
+                    models.add(filler);
+                    instances.add(fillerInstance);
                 }
 
                 cam.position.set(0f, 9f, 0f);
@@ -301,13 +308,13 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
         paletteNames = new String[]{"Default"};
         typeNames = new String[]{"Cube", "Muffin", "Flat"};
 
-        settings = new String[]{"Type", "Pallet", "VisualiserQuality", "Batch flush (looks better, but runs slower)"};
+        settings = new String[]{"Type", "Pallet", "VisualiserQuality"};
         settingTypes = new String[]{"int", "int", "int", "boolean"};
 
-        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 100, 1};
-        settingMinValues = new float[]{0, 0, 1, 0};
+        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 100};
+        settingMinValues = new float[]{0, 0, 1};
 
-        defaultSettings = new float[]{0, 0, 100, 0};
+        defaultSettings = new float[]{0, 0, 100};
     }
 
     public static String getName() {
@@ -318,13 +325,12 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
         type = (int) newSettings[0];
         palette = (int) newSettings[1];
         visualiserQuality = newSettings[2];
-        flushSpriteBatch = newSettings[3]>0;
     }
 
     @Override
     public void resize(int width, int height) {
+        super.resize(width, height, 0, true);
         viewport.update(width, height);
-        cam.update();
     }
 
     @Override

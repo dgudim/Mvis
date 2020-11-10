@@ -19,7 +19,7 @@ public class MusicWave {
     private float[] rightChannelSamples;
     private Music music;
 
-    public MusicWave(FileHandle musicFile) {
+    public MusicWave(FileHandle musicFile, boolean requiresChannelSamples) {
 
         try {
 
@@ -34,13 +34,18 @@ public class MusicWave {
             float[][] twoChannelSamples = getUnscaledAmplitude(bytes, channels);
 
             float[] averageChannelAmplitude = new float[twoChannelSamples[0].length];
-            leftChannelSamples = new float[twoChannelSamples[0].length];
-            rightChannelSamples = new float[twoChannelSamples[1].length];
+
+            if(requiresChannelSamples) {
+                leftChannelSamples = new float[twoChannelSamples[0].length];
+                rightChannelSamples = new float[twoChannelSamples[1].length];
+            }
 
             for (int i = 0; i < averageChannelAmplitude.length; i++) {
                 averageChannelAmplitude[i] = Math.abs(twoChannelSamples[0][i] + twoChannelSamples[1][i]) / 2.0f;
-                leftChannelSamples[i] = twoChannelSamples[0][i];
-                rightChannelSamples[i] = twoChannelSamples[1][i];
+                if(requiresChannelSamples) {
+                    leftChannelSamples[i] = twoChannelSamples[0][i];
+                    rightChannelSamples[i] = twoChannelSamples[1][i];
+                }
             }
 
             samples = averageChannelAmplitude;

@@ -35,7 +35,7 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
     public static int palette;
 
     public MushroomScreen(Game game) {
-        super(game);
+        super(game, new boolean[]{false, false, true});
 
         branches = new Array<>();
         colors = new Array<>();
@@ -60,12 +60,12 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
         int iterations;
         int pos;
         if (!render) {
-            angle = rSamplesNormalised[(int) (music.getPosition() * 44100)] * maxAngle;
-            iterations = (int) (lSamplesNormalised[(int) (music.getPosition() * 44100)] * maxIterations) + 5;
+            angle = rSamplesNormalisedSmoothed[(int) (music.getPosition() * 44100)] * maxAngle;
+            iterations = (int) (lSamplesNormalisedSmoothed[(int) (music.getPosition() * 44100)] * maxIterations) + 5;
             pos = (int) (music.getPosition() * 44100);
         } else {
-            angle = rSamplesNormalised[frame] * maxAngle;
-            iterations = (int) (lSamplesNormalised[frame] * maxIterations) + 5;
+            angle = rSamplesNormalisedSmoothed[frame] * maxAngle;
+            iterations = (int) (lSamplesNormalisedSmoothed[frame] * maxIterations) + 5;
             pos = frame;
             frame += step;
             recorderFrame++;
@@ -80,11 +80,11 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
                 buildMushroom(90, angle, branchLength, iterations, 0, 0);
                 break;
             case (DOUBLE_CHANNEL):
-                angle = rSamplesNormalised[(int) (music.getPosition() * 44100)] * 45;
-                iterations = (int) (rSamplesNormalised[(int) (music.getPosition() * 44100)] * maxIterations) + 5;
+                angle = rSamplesNormalisedSmoothed[(int) (music.getPosition() * 44100)] * 45;
+                iterations = (int) (rSamplesNormalisedSmoothed[(int) (music.getPosition() * 44100)] * maxIterations) + 5;
                 buildMushroom(-90, angle, branchLength, iterations, 0, 0);
-                angle = lSamplesNormalised[(int) (music.getPosition() * 44100)] * 45;
-                iterations = (int) (lSamplesNormalised[(int) (music.getPosition() * 44100)] * maxIterations) + 5;
+                angle = lSamplesNormalisedSmoothed[(int) (music.getPosition() * 44100)] * 45;
+                iterations = (int) (lSamplesNormalisedSmoothed[(int) (music.getPosition() * 44100)] * maxIterations) + 5;
                 buildMushroom(90, angle, branchLength, iterations, 0, 0);
                 break;
             case (TRIPLE):

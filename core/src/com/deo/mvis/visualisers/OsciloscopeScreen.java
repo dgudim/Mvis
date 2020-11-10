@@ -33,7 +33,7 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
     public final int RADIAL_BUBBLE = 3;
     public final int SHAPES = 4;
     public final int SINUS = 5;
-    public final int FREQUENCY = 6;
+    public static final int FREQUENCY = 6;
 
     public final int LIME = 100;
     public final int FIRE = 101;
@@ -48,7 +48,7 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
     private static int palette = 100;
 
     public OsciloscopeScreen(Game game) {
-        super(game);
+        super(game, new boolean[]{type == FREQUENCY, !(type == FREQUENCY), false});
 
         dots = new Array<>();
         colors = new Array<>();

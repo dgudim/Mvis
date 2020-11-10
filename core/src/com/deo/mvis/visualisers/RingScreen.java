@@ -24,7 +24,7 @@ public class RingScreen extends BaseVisualiser implements Screen {
     private static int palette, type;
 
     public RingScreen(Game game) {
-        super(game);
+        super(game, new boolean[]{false, true, false});
 
         radiuses = new Array<>();
         radiuses2 = new Array<>();
@@ -33,9 +33,6 @@ public class RingScreen extends BaseVisualiser implements Screen {
 
         musicWave.multiplySamples(samplesRaw, 3);
 
-        if (!render) {
-            music.play();
-        }
     }
 
     @Override
