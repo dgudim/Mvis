@@ -309,7 +309,7 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
         typeNames = new String[]{"Cube", "Muffin", "Flat"};
 
         settings = new String[]{"Type", "Pallet", "VisualiserQuality"};
-        settingTypes = new String[]{"int", "int", "int", "boolean"};
+        settingTypes = new String[]{"int", "int", "int"};
 
         settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 100};
         settingMinValues = new float[]{0, 0, 1};

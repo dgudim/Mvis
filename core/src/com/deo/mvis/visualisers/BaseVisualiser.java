@@ -156,7 +156,9 @@ public class BaseVisualiser {
         exit.setColor(1, 1, 1, transparency);
         stage.draw();
         stage.act();
-        transparency = MathUtils.clamp(transparency - 0.5f * Gdx.graphics.getDeltaTime(), 0, 1);
+        if(Gdx.graphics.getDeltaTime() < 1f) {
+            transparency = MathUtils.clamp(transparency - 0.5f * Gdx.graphics.getDeltaTime(), 0, 1);
+        }
     }
 
     public void resize(int width, int height, int yOffset, boolean maxScale) {

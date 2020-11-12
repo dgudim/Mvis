@@ -58,6 +58,7 @@ import static com.deo.mvis.utils.Utils.getBoolean;
 import static com.deo.mvis.utils.Utils.getFloat;
 import static com.deo.mvis.utils.Utils.getInteger;
 import static com.deo.mvis.utils.Utils.putBoolean;
+import static com.deo.mvis.utils.Utils.putFloat;
 import static com.deo.mvis.utils.Utils.putInteger;
 
 public class MenuScreen implements Screen {
@@ -166,6 +167,7 @@ public class MenuScreen implements Screen {
 
                 TextButton visualiserStartButton = uiComposer.addTextButton("defaultLight", (String) aClass.getMethod("getName").invoke(aClass), 0.45f);
                 visualiserStartButton.setColor(Color.LIGHT_GRAY);
+
                 if (row) {
                     visualisersTable.add(visualiserStartButton).width(370).height(100).pad(7).row();
                 } else {
@@ -449,11 +451,14 @@ public class MenuScreen implements Screen {
             }
         });
 
-        Table settingsTable = new Table();
+        final Table settingsTable = new Table();
         settingsTable.align(Align.bottom);
 
         TextButton visualiserStartButton = uiComposer.addTextButton("defaultLight", "Launch visualiser", 0.45f);
         visualiserStartButton.setColor(Color.LIGHT_GRAY);
+
+        TextButton settingsResetButton = uiComposer.addTextButton("defaultLight", "Reset to defaults", 0.45f);
+        settingsResetButton.setColor(Color.LIGHT_GRAY);
 
         visualiserStartButton.addListener(new ClickListener() {
             @Override
@@ -463,6 +468,36 @@ public class MenuScreen implements Screen {
                     visualiser.getMethod("setMusic", FileHandle.class).invoke(visualiser, availableMusicFiles.get(musicSelector.getSelectedIndex()));
                     game.setScreen((Screen) visualiser.getConstructor(Game.class).newInstance(game));
                     MenuScreen.this.dispose();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        final float[] finalDefaultSettings = defaultSettings;
+        final String[] finalSettingTypes = settingTypes;
+        settingsResetButton.addListener(new ClickListener(){
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                try {
+
+                    for(int i = 2; i< finalSettingTypes.length; i++){
+                        switch (finalSettingTypes[i]) {
+                            case ("int"):
+                            case ("float"):
+                                putFloat(finalName + "_" + i, finalDefaultSettings[i]);
+                                Table sliderTable = (Table) settingsTable.getCells().get(i-2).getActor();
+                                Slider slider = (Slider)sliderTable.getCells().get(0).getActor();
+                                slider.setValue(finalDefaultSettings[i]);
+                                break;
+                            case("boolean"):
+                                putBoolean(finalName + "_" + i, finalDefaultSettings[i]>0);
+                                CheckBox checkBox= (CheckBox) settingsTable.getCells().get(i-2).getActor();
+                                checkBox.setChecked(finalDefaultSettings[i]>0);
+                                break;
+                        }
+                    }
+
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -538,11 +573,16 @@ public class MenuScreen implements Screen {
             }
         }
 
-        settingsTable.add(musicFolderLabel).width(WIDTH / 2f - 22).padBottom(5).row();
-        settingsTable.add(musicSelector).width(WIDTH / 2f - 22).padBottom(5).row();
-        settingsTable.add(typeSelector).width(WIDTH / 2f - 22).padBottom(5).row();
-        settingsTable.add(paletteSelector).width(WIDTH / 2f - 22).padBottom(5).row();
-        settingsTable.add(visualiserStartButton).width(330).height(75);
+        settingsTable.add(musicFolderLabel).width(WIDTH / 2f - 22).padBottom(5).padLeft(7).align(Align.left).row();
+        settingsTable.add(musicSelector).width(WIDTH / 2f - 22).padBottom(5).padLeft(7).align(Align.left).row();
+        settingsTable.add(typeSelector).width(WIDTH / 2f - 22).padBottom(5).padLeft(7).align(Align.left).row();
+        settingsTable.add(paletteSelector).width(WIDTH / 2f - 22).padBottom(5).padLeft(7).align(Align.left).row();
+
+        Table middleTable = new Table();
+        middleTable.add(visualiserStartButton).width(330).height(75).padRight(5).padBottom(5).align(Align.left);
+        middleTable.add(settingsResetButton).width(330).height(75).padLeft(5).padBottom(5).align(Align.left);
+
+        settingsTable.add(middleTable);
 
         settings.add(scrollPane);
         stage.addActor(scrollPane);

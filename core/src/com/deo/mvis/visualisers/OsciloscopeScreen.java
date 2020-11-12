@@ -11,6 +11,7 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 import static com.deo.mvis.Launcher.HEIGHT;
+import static com.deo.mvis.Launcher.WIDTH;
 
 public class OsciloscopeScreen extends BaseVisualiser implements Screen {
 
@@ -258,9 +259,9 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
                     dots.add(new Vector3().set(i - 800, y, 0));
                     colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
                 }
-                dots.add(new Vector3().set(800, 0, 0));
+                dots.add(new Vector3().set(WIDTH/2f, 0, 0));
                 colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
-                dots.add(new Vector3().set(-800, 0, 0));
+                dots.add(new Vector3().set(-WIDTH/2f, 0, 0));
                 colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
                 break;
             case (FREQUENCY):

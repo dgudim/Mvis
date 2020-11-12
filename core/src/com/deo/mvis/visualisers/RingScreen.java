@@ -31,7 +31,7 @@ public class RingScreen extends BaseVisualiser implements Screen {
         positions = new Array<>();
         colors = new Array<>();
 
-        musicWave.multiplySamples(samplesRaw, 3);
+        utils.maxSaturation = 2;
 
     }
 

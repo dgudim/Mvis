@@ -302,7 +302,7 @@ public class UIComposer {
         if (checkBoxStyleNames.indexOf(style, false) == -1)
             throw new IllegalArgumentException("Style not loaded: " + style);
         final CheckBox checkBox = new CheckBox(text, checkBoxStyles.get(checkBoxStyleNames.indexOf(style, false)));
-        checkBox.getLabel().setFontScale(0.48f);
+        checkBox.getLabel().setFontScale(0.78f);
         checkBox.getImageCell().padRight(5);
         return checkBox;
     }
@@ -329,7 +329,7 @@ public class UIComposer {
             valueText = String.valueOf((int)getFloat(valueKey));
         }
 
-        final Label textLabel = addText(text + valueText + postText, (BitmapFont) assetManager.get("font2(old).fnt"), 0.58f);
+        final Label textLabel = addText(text + valueText + postText, (BitmapFont) assetManager.get("font2(old).fnt"), 0.78f);
         slider.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeListener.ChangeEvent event, Actor actor) {
@@ -341,7 +341,7 @@ public class UIComposer {
                 putFloat(valueKey, slider.getValue());
             }
         });
-        cell.add(slider).padRight(4);
+        cell.add(slider).width(150).padRight(4);
         cell.add(textLabel);
         return cell;
     }

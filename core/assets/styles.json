@@ -100,22 +100,22 @@
     "font": 0,
     "off": {
       "texture": "checkBox_disabled",
-      "size": [40, 40],
+      "size": [60, 60],
       "fontColor": "default"
     },
     "offOver":{
       "texture": "checkBox_disabled_over",
-      "size": [40, 40],
+      "size": [60, 60],
       "fontColor": "default"
     },
     "on":{
       "texture": "checkBox_enabled",
-      "size": [40, 40],
+      "size": [60, 60],
       "fontColor": "default"
     },
     "onOver":{
       "texture": "checkBox_enabled_over",
-      "size": [40, 40],
+      "size": [60, 60],
       "fontColor": "default"
     },
     "loadFrom": "ui.atlas"
