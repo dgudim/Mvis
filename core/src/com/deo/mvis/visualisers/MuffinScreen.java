@@ -24,8 +24,18 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
+
+import pl.edu.icm.jlargearrays.ConcurrencyUtils;
+
 import static com.deo.mvis.Launcher.HEIGHT;
 import static com.deo.mvis.Launcher.WIDTH;
+
+
 
 public class MuffinScreen extends BaseVisualiser implements Screen {
 
@@ -128,7 +138,7 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
 
     }
 
-    private void transform3d(int pos) {
+    private void transform3d(final int pos) {
         switch (type) {
             case (SINGULAR):
                 degrees += samplesSmoothed[pos] * 2;
@@ -154,9 +164,9 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
                 break;
             case (RUBENSTUBE):
 
-                rubensTransform(pos);
+               rubensTransform(pos);
 
-                break;
+               break;
         }
     }
 
@@ -185,19 +195,20 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
                 prevLight = new DirectionalLight().set(0, 1, 1, -1f, -0.8f, -0.2f);
                 environment.add(prevLight);
 
-                if(type == GRID){
-                   visualiserQuality = 100;
+                float visualiserQuality = MuffinScreen.visualiserQuality;
+                if (type == GRID) {
+                    visualiserQuality = 100;
                 }
 
-                for (int x = 0; x < 101 * visualiserQuality/100f ; x++) {
-                    for (int z = 0; z < 101 * visualiserQuality/100f; z++) {
-                        Model model2 = modelBuilder.createBox(0.5f * 100/visualiserQuality, 8f, 0.5f * 100/visualiserQuality,
+                for (int x = 0; x < 101 * visualiserQuality / 100f; x++) {
+                    for (int z = 0; z < 101 * visualiserQuality / 100f; z++) {
+                        Model model2 = modelBuilder.createBox(0.5f * 100 / visualiserQuality, 8f, 0.5f * 100 / visualiserQuality,
                                 new Material(ColorAttribute.createDiffuse(Color.valueOf("#00000000")), new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA)),
                                 VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal);
 
                         ModelInstance instance2 = new ModelInstance(model2);
 
-                        instance2.transform.translate(-x * 0.5f * 100/visualiserQuality, -17, -z * 0.5f * 100/visualiserQuality);
+                        instance2.transform.translate(-x * 0.5f * 100 / visualiserQuality, -17, -z * 0.5f * 100 / visualiserQuality);
 
                         models.add(model2);
                         instances.add(instance2);
@@ -206,7 +217,7 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
                     }
                 }
 
-                if(type == GRID) {
+                if (type == GRID) {
                     Model filler = modelBuilder.createBox(300, 15f, 300,
                             new Material(ColorAttribute.createDiffuse(Color.valueOf("#000000"))),
                             VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal);
@@ -230,7 +241,7 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
         if (!preloaded) {
             float prevPos = 0;
             Array<Integer> positions = new Array<>();
-            for (float i = 0; i < 360; i += 0.5f * 100/visualiserQuality) {
+            for (float i = 0; i < 360; i += 0.5f * 100 / visualiserQuality) {
                 float x = -MathUtils.cosDeg(i) * radius + 49.5f;
                 float y = -MathUtils.sinDeg(i) * radius + 49.5f;
                 float x2 = x;
@@ -282,9 +293,9 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
 
     private void rubensTransform(int pos) {
         try {
-            for (int x = 0; x < 101 * visualiserQuality/100f; x++) {
-                for (int y = 0; y < 101 * visualiserQuality/100f; y++) {
-                    int arrayPos = (int)Math.ceil(101 * visualiserQuality/100f) * x + y;
+            for (int x = 0; x < 101 * visualiserQuality / 100f; x++) {
+                for (int y = 0; y < 101 * visualiserQuality / 100f; y++) {
+                    int arrayPos = (int) Math.ceil(101 * visualiserQuality / 100f) * x + y;
 
                     float height = (rSamplesNormalised[pos - x * step / 512] + lSamplesNormalised[pos - y * step / 512]);
 
@@ -308,13 +319,13 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
         paletteNames = new String[]{"Default"};
         typeNames = new String[]{"Cube", "Muffin", "Flat"};
 
-        settings = new String[]{"Type", "Pallet", "VisualiserQuality"};
-        settingTypes = new String[]{"int", "int", "int"};
+        settings = new String[]{"Type", "Pallet", "VisualiserQuality", "Render"};
+        settingTypes = new String[]{"int", "int", "int", "boolean"};
 
-        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 100};
-        settingMinValues = new float[]{0, 0, 1};
+        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 100, 1};
+        settingMinValues = new float[]{0, 0, 1, 0};
 
-        defaultSettings = new float[]{0, 0, 100};
+        defaultSettings = new float[]{0, 0, 100, 0};
     }
 
     public static String getName() {
@@ -325,6 +336,7 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
         type = (int) newSettings[0];
         palette = (int) newSettings[1];
         visualiserQuality = newSettings[2];
+        render = newSettings[3] > 0;
     }
 
     @Override
@@ -350,10 +362,10 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
 
     @Override
     public void dispose() {
+        super.dispose();
         for (int i = 0; i < models.size; i++) {
             models.get(i).dispose();
         }
         models.clear();
-        utils.dispose();
     }
 }

@@ -1,5 +1,6 @@
 package com.deo.mvis;
 
+import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
@@ -10,6 +11,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.PixmapIO;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -34,6 +36,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.BufferUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.deo.mvis.jtransforms.fft.FloatFFT_1D;
 import com.deo.mvis.otherScreens.GameOfLife;
@@ -94,6 +97,21 @@ public class MenuScreen implements Screen {
 
     public MenuScreen(final Game game) {
 
+        FileHandle destination;
+        FileHandle destinationMusic;
+        if (Gdx.app.getType() == Application.ApplicationType.Android) {
+            destination = Gdx.files.external("Mvis/");
+            destinationMusic = Gdx.files.external("Mvis/liquid.wav");
+        } else {
+            destination = Gdx.files.external("!Deltacore");
+            destinationMusic = Gdx.files.external("!Deltacore/liquid.wav");
+        }
+
+        if (!destinationMusic.exists()) {
+            Gdx.files.internal("away.wav").copyTo(destination);
+            Gdx.files.internal("liquid.wav").copyTo(destination);
+        }
+
         this.game = game;
 
         assetManager = new AssetManager();
@@ -109,7 +127,7 @@ public class MenuScreen implements Screen {
 
         settings = new Array<>();
 
-        musicWave = new MusicWave(Gdx.files.internal("liquid.wav"), false);
+        musicWave = new MusicWave(destinationMusic, false);
 
         music = musicWave.getMusic();
 
@@ -311,10 +329,12 @@ public class MenuScreen implements Screen {
         renderer.setColor(Color.BLACK);
         renderer.rect(-WIDTH / 2f + 5 - overHeadHorizontal, HEIGHT / 2f - 275, WIDTH + overHeadHorizontal * 2, 20);
         renderer.rect(-5, -HEIGHT / 2f + 5 - overHead, 20, HEIGHT - 280 + overHead);
+        renderer.rect(-WIDTH / 2f + 5 - overHeadHorizontal, HEIGHT / 2f - 400, WIDTH + overHeadHorizontal * 2, 20);
 
         renderer.setColor(Color.CORAL);
         renderer.rect(-WIDTH / 2f - overHeadHorizontal, HEIGHT / 2f - 280, WIDTH + overHeadHorizontal * 2, 20);
         renderer.rect(-10, -HEIGHT / 2f - overHead, 20, HEIGHT - 280 + overHead);
+        renderer.rect(-WIDTH / 2f - overHeadHorizontal, HEIGHT / 2f - 405, WIDTH + overHeadHorizontal * 2, 20);
 
         renderer.end();
 
@@ -396,7 +416,6 @@ public class MenuScreen implements Screen {
         Array<String> availableMusic = new Array<>();
         availableMusic.add("Up and away", "liquid cinema");
         final Array<FileHandle> availableMusicFiles = new Array<>();
-        availableMusicFiles.add(Gdx.files.internal("away.wav"), Gdx.files.internal("liquid.wav"));
 
         File musicFolder = Gdx.files.external("Mvis").file();
         File musicFolder2 = Gdx.files.external("!Deltacore").file();
@@ -464,6 +483,7 @@ public class MenuScreen implements Screen {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 try {
+                    music.stop();
                     visualiser.getMethod("setSettings", newSettings.getClass()).invoke(visualiser, newSettings);
                     visualiser.getMethod("setMusic", FileHandle.class).invoke(visualiser, availableMusicFiles.get(musicSelector.getSelectedIndex()));
                     game.setScreen((Screen) visualiser.getConstructor(Game.class).newInstance(game));
@@ -476,24 +496,24 @@ public class MenuScreen implements Screen {
 
         final float[] finalDefaultSettings = defaultSettings;
         final String[] finalSettingTypes = settingTypes;
-        settingsResetButton.addListener(new ClickListener(){
+        settingsResetButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 try {
 
-                    for(int i = 2; i< finalSettingTypes.length; i++){
+                    for (int i = 2; i < finalSettingTypes.length; i++) {
                         switch (finalSettingTypes[i]) {
                             case ("int"):
                             case ("float"):
                                 putFloat(finalName + "_" + i, finalDefaultSettings[i]);
-                                Table sliderTable = (Table) settingsTable.getCells().get(i-2).getActor();
-                                Slider slider = (Slider)sliderTable.getCells().get(0).getActor();
+                                Table sliderTable = (Table) settingsTable.getCells().get(i - 2).getActor();
+                                Slider slider = (Slider) sliderTable.getCells().get(0).getActor();
                                 slider.setValue(finalDefaultSettings[i]);
                                 break;
-                            case("boolean"):
-                                putBoolean(finalName + "_" + i, finalDefaultSettings[i]>0);
-                                CheckBox checkBox= (CheckBox) settingsTable.getCells().get(i-2).getActor();
-                                checkBox.setChecked(finalDefaultSettings[i]>0);
+                            case ("boolean"):
+                                putBoolean(finalName + "_" + i, finalDefaultSettings[i] > 0);
+                                CheckBox checkBox = (CheckBox) settingsTable.getCells().get(i - 2).getActor();
+                                checkBox.setChecked(finalDefaultSettings[i] > 0);
                                 break;
                         }
                     }
@@ -518,16 +538,17 @@ public class MenuScreen implements Screen {
                         step = 1;
                     }
 
+                    if (!getBoolean(name + "_" + i + "_changed")) {
+                        putBoolean(name + "_" + i + "_changed", true);
+                        putFloat(name + "_" + i, defaultSettings[i]);
+                    }
+
                     Table setting = uiComposer.addSlider("sliderDefaultSmall", settingMinValues[i], settingMaxValues[i],
                             step, settingNames[i] + ": ", "", name + "_" + i, settingTypes[i], scrollPane);
 
                     final Slider slider = (Slider) setting.getCells().get(0).getActor();
 
-                    if (!getBoolean(name + "_" + i + "_changed")) {
-                        slider.setValue(defaultSettings[i]);
-                    } else {
-                        newSettings[i] = slider.getValue();
-                    }
+                    newSettings[i] = slider.getValue();
 
                     final int finalI = i;
                     slider.addListener(new ChangeListener() {
@@ -542,17 +563,18 @@ public class MenuScreen implements Screen {
                     break;
                 case ("boolean"):
 
+                    if (!getBoolean(name + "_" + i + "_changed")) {
+                        putBoolean(name + "_" + i + "_changed", true);
+                        putBoolean(name + "_" + i, defaultSettings[i] > 0);
+                    }
+
                     final CheckBox setting2 = uiComposer.addCheckBox("checkBoxDefault", settingNames[i], name + "_" + i);
 
-                    if (!getBoolean(name + "_" + i + "_changed")) {
-                        setting2.setChecked(defaultSettings[i] > 0);
-                    } else {
-                        int set = 0;
-                        if (setting2.isChecked()) {
-                            set = 1;
-                        }
-                        newSettings[i] = set;
+                    int set = 0;
+                    if (setting2.isChecked()) {
+                        set = 1;
                     }
+                    newSettings[i] = set;
 
                     final int finalI1 = i;
                     setting2.addListener(new ChangeListener() {

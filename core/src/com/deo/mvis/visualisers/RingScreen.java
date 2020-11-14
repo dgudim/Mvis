@@ -109,13 +109,13 @@ public class RingScreen extends BaseVisualiser implements Screen {
         paletteNames = new String[]{"Default"};
         typeNames = new String[]{"Default"};
 
-        settings = new String[]{"Type", "Pallet", "Ring grow speed", "Fadeout"};
-        settingTypes = new String[]{"int", "int", "float", "float"};
+        settings = new String[]{"Type", "Pallet", "Ring grow speed", "Fadeout", "Render"};
+        settingTypes = new String[]{"int", "int", "float", "float", "boolean"};
 
-        settingMaxValues = new float[]{typeNames.length-1, paletteNames.length-1, 25, 0.05f};
-        settingMinValues = new float[]{0, 0, 5, 0.0005f};
+        settingMaxValues = new float[]{typeNames.length-1, paletteNames.length-1, 25, 0.05f, 1};
+        settingMinValues = new float[]{0, 0, 5, 0.0005f, 0};
 
-        defaultSettings = new float[]{0, 0, ringGrowSpeed, fadeout};
+        defaultSettings = new float[]{0, 0, ringGrowSpeed, fadeout, 0};
     }
 
     public static String getName(){
@@ -127,6 +127,7 @@ public class RingScreen extends BaseVisualiser implements Screen {
         palette = (int) newSettings[1] + 100;
         ringGrowSpeed = newSettings[2];
         fadeout = newSettings[3];
+        render = newSettings[4] > 0;
     }
 
     @Override

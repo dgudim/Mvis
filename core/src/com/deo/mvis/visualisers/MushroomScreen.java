@@ -19,7 +19,7 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
 
     private Array<Array<Vector2>> branches;
     private Array<Vector3> colors;
-    private static float fadeout;
+    private static float fadeout = 0.08f;
 
     private final int SINGLE = 0;
     private final int DOUBLE = 1;
@@ -27,9 +27,12 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
     private final int DOUBLE_CHANNEL = 3;
 
     private static boolean exponential = false;
-    private static float branchLength = 40;
+    private static float branchLength = 45;
     private static float maxAngle = 45;
-    private static int maxIterations = 10;
+    private static int maxIterations = 7;
+    private static int baseIterations = 5;
+    private static float baseAngle = 5;
+    private static float maxSaturation = 3;
 
     private static int type;
     public static int palette;
@@ -39,9 +42,8 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
 
         branches = new Array<>();
         colors = new Array<>();
-        fadeout = 0.05f;
 
-        utils.maxSaturation = 3;
+        utils.maxSaturation = maxSaturation;
         utils.setBloomIntensity(3);
     }
 
@@ -60,12 +62,12 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
         int iterations;
         int pos;
         if (!render) {
-            angle = rSamplesNormalisedSmoothed[(int) (music.getPosition() * 44100)] * maxAngle;
-            iterations = (int) (lSamplesNormalisedSmoothed[(int) (music.getPosition() * 44100)] * maxIterations) + 5;
+            angle = samplesSmoothed[(int) (music.getPosition() * 44100)] * maxAngle + baseAngle;
+            iterations = (int) (lSamplesNormalisedSmoothed[(int) (music.getPosition() * 44100)] * maxIterations) + baseIterations;
             pos = (int) (music.getPosition() * 44100);
         } else {
-            angle = rSamplesNormalisedSmoothed[frame] * maxAngle;
-            iterations = (int) (lSamplesNormalisedSmoothed[frame] * maxIterations) + 5;
+            angle = samplesSmoothed[frame] * maxAngle + baseAngle;
+            iterations = (int) (lSamplesNormalisedSmoothed[frame] * maxIterations) + baseIterations;
             pos = frame;
             frame += step;
             recorderFrame++;
@@ -80,11 +82,11 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
                 buildMushroom(90, angle, branchLength, iterations, 0, 0);
                 break;
             case (DOUBLE_CHANNEL):
-                angle = rSamplesNormalisedSmoothed[(int) (music.getPosition() * 44100)] * 45;
-                iterations = (int) (rSamplesNormalisedSmoothed[(int) (music.getPosition() * 44100)] * maxIterations) + 5;
+                angle = rSamplesNormalisedSmoothed[(int) (music.getPosition() * 44100)] * maxAngle + baseAngle;
+                iterations = (int) (rSamplesNormalisedSmoothed[(int) (music.getPosition() * 44100)] * maxIterations) + baseIterations;
                 buildMushroom(-90, angle, branchLength, iterations, 0, 0);
-                angle = lSamplesNormalisedSmoothed[(int) (music.getPosition() * 44100)] * 45;
-                iterations = (int) (lSamplesNormalisedSmoothed[(int) (music.getPosition() * 44100)] * maxIterations) + 5;
+                angle = lSamplesNormalisedSmoothed[(int) (music.getPosition() * 44100)] * maxAngle + baseAngle;
+                iterations = (int) (lSamplesNormalisedSmoothed[(int) (music.getPosition() * 44100)] * maxIterations) + baseIterations;
                 buildMushroom(90, angle, branchLength, iterations, 0, 0);
                 break;
             case (TRIPLE):
@@ -100,7 +102,7 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
 
         renderer.begin();
         for (int i = 0; i < branches.size; i++) {
-            renderer.setColor(colors.get(i).x, colors.get(i).y, (branches.get(i).get(0).y - 100) / 900f, 1);
+            renderer.setColor(colors.get(i).x, colors.get(i).y, MathUtils.clamp((branches.get(i).get(0).y + HEIGHT / 2f) / HEIGHT - 0.3f, 0, 1), 1);
             renderer.line(branches.get(i).get(0), branches.get(i).get(1));
         }
         renderer.end();
@@ -180,13 +182,13 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
         paletteNames = new String[]{"Default"};
         typeNames = new String[]{"Single", "Double", "Triple", "Double channel"};
 
-        settings = new String[]{"Type", "Pallet", "Exponential", "Branch length", "Max iterations (+5)", "Max angle"};
-        settingTypes = new String[]{"int", "int", "boolean", "float", "int", "float"};
+        settings = new String[]{"Type", "Pallet", "Exponential", "Branch length", "Max iterations (+5)", "Max angle", "Base iterations", "Base angle", "Fadeout", "Max bloom saturation", "Render"};
+        settingTypes = new String[]{"int", "int", "boolean", "float", "int", "float", "int", "float", "float", "float", "boolean"};
 
-        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 1, 80, 25, 90};
-        settingMinValues = new float[]{0, 0, 0, 1, 1, 5};
+        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 1, 80, 10, 90, 7, 45, 0.1f, 5, 1};
+        settingMinValues = new float[]{0, 0, 0, 1, 1, 5, 1, 0, 0.0005f, 0, 0};
 
-        defaultSettings = new float[]{0, 0, 0, 40, 10, 45};
+        defaultSettings = new float[]{0, 0, 0, 45, 7, 45, 5, 5, 0.08f, 3, 0};
     }
 
     public static String getName() {
@@ -200,6 +202,9 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
         branchLength = newSettings[3];
         maxIterations = (int) newSettings[4];
         maxAngle = newSettings[5];
+        baseIterations = (int) newSettings[6];
+        baseAngle = newSettings[6];
+        render = newSettings[7] > 0;
     }
 
     @Override

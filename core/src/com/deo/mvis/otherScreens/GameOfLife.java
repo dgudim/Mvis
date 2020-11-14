@@ -445,13 +445,13 @@ public class GameOfLife extends BaseVisualiser implements Screen {
         paletteNames = new String[]{"Cyan-purple", "Cyan fadeout", "Purple fadeout", "Pink-green", "Rainbow water", "Pastel rainbow", "Long fadeout(pastel rainbow)", "winter", "Long cyan fadeout"};
         typeNames = new String[]{"Normal"};
 
-        settings = new String[]{"Type", "Pallet", "Bottom enabled", "Bottom rule height"};
-        settingTypes = new String[]{"int", "int", "boolean", "int"};
+        settings = new String[]{"Type", "Pallet", "Bottom enabled", "Bottom rule height", "Render"};
+        settingTypes = new String[]{"int", "int", "boolean", "int", "boolean"};
 
-        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 1, fieldHeight - 1};
-        settingMinValues = new float[]{0, 0, 0, 0};
+        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 1, fieldHeight - 50, 1};
+        settingMinValues = new float[]{0, 0, 0, 0, 0};
 
-        defaultSettings = new float[]{0, 0, 1, oneDRuleHeight};
+        defaultSettings = new float[]{0, 0, 1, oneDRuleHeight, 0};
     }
 
     public static String getName() {
@@ -463,6 +463,7 @@ public class GameOfLife extends BaseVisualiser implements Screen {
         palette = (int) newSettings[1];
         oneDRuleEnabled = newSettings[2] > 0;
         oneDRuleHeight = (int) newSettings[3];
+        render = newSettings[4] > 0;
     }
 
     @Override

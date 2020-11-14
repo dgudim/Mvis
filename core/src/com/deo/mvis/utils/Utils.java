@@ -3,6 +3,7 @@ package com.deo.mvis.utils;
 import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Preferences;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.PixmapIO;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -84,9 +85,16 @@ public class Utils {
             pixels[i4 - 1] = (byte) 255;
         }
 
+        FileHandle file;
+        if(Gdx.app.getType() == Application.ApplicationType.Android){
+            file = Gdx.files.external("Mvis/rendered/pict" + recorderFrame + ".png");
+        }else{
+            file = Gdx.files.external("GollyRender/pict" + recorderFrame + ".png");
+        }
+
         Pixmap pixmap = new Pixmap(Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight(), Pixmap.Format.RGBA8888);
         BufferUtils.copy(pixels, 0, pixmap.getPixels(), pixels.length);
-        PixmapIO.writePNG(Gdx.files.external("GollyRender/pict" + recorderFrame + ".png"), pixmap);
+        PixmapIO.writePNG(file, pixmap);
         pixmap.dispose();
     }
 

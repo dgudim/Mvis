@@ -43,7 +43,7 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
     private Color palletColor;
     private Vector3 palletFadeoutPattern;
 
-    private float maxSaturation = 4;
+    private static float maxSaturation = 4;
 
     private static int type = 0;
     private static int palette = 100;
@@ -259,19 +259,18 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
                     dots.add(new Vector3().set(i - 800, y, 0));
                     colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
                 }
-                dots.add(new Vector3().set(WIDTH/2f, 0, 0));
+                dots.add(new Vector3().set(WIDTH / 2f, 0, 0));
                 colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
-                dots.add(new Vector3().set(-WIDTH/2f, 0, 0));
+                dots.add(new Vector3().set(-WIDTH / 2f, 0, 0));
                 colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
                 break;
             case (FREQUENCY):
                 if (!render) {
-                    freqDisplayRenderAngle = 0;
                     if (pos >= freqDisplaySamples / 2) {
                         for (int i = 0; i < freqDisplaySamples; i++) {
                             freqDisplayRenderAngle += angleStep;
-                            x = -MathUtils.cosDeg(freqDisplayRenderAngle) * samplesRaw[pos - freqDisplaySamples / 2 + i] * 350;
-                            y = -MathUtils.sinDeg(freqDisplayRenderAngle) * samplesRaw[pos - freqDisplaySamples / 2 + i] * 350;
+                            x = -MathUtils.cosDeg(freqDisplayRenderAngle) * samplesRaw[pos - freqDisplaySamples / 2 + i] * (HEIGHT / 2f - 10);
+                            y = -MathUtils.sinDeg(freqDisplayRenderAngle) * samplesRaw[pos - freqDisplaySamples / 2 + i] * (HEIGHT / 2f - 10);
                             dots.add(new Vector3().set(x, y, 0));
                             colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
                         }
@@ -337,13 +336,13 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
         paletteNames = new String[]{"Lime", "Fire", "Water"};
         typeNames = new String[]{"Oscilloscope", "Radial", "Bubble", "Bubble2", "Shapes", "Sinus", "Frequency in circle"};
 
-        settings = new String[]{"Type", "Pallet", "Fadeout", "Frequency display samples", "Radial visualiser amplitude"};
-        settingTypes = new String[]{"int", "int", "float", "int", "float"};
+        settings = new String[]{"Type", "Pallet", "Fadeout", "Frequency display samples", "Radial visualiser amplitude", "Max bloom saturation", "Render"};
+        settingTypes = new String[]{"int", "int", "float", "int", "float", "float", "boolean"};
 
-        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 0.05f, 1024, 450};
-        settingMinValues = new float[]{0, 0, 0.0005f, 256, 15};
+        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 0.05f, 1024, 450, 4, 1};
+        settingMinValues = new float[]{0, 0, 0.0005f, 256, 15, 0, 0};
 
-        defaultSettings = new float[]{0, 0, fadeout, freqDisplaySamples, radialAmplitude};
+        defaultSettings = new float[]{0, 0, fadeout, freqDisplaySamples, radialAmplitude, 1, 0};
     }
 
     public static String getName() {
@@ -356,6 +355,8 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
         fadeout = newSettings[2];
         freqDisplaySamples = (int) newSettings[3];
         radialAmplitude = (int) newSettings[4];
+        maxSaturation = newSettings[5];
+        render = newSettings[6] > 0;
     }
 
     @Override

@@ -36,7 +36,7 @@ public class BaseVisualiser {
 
     final int FPS = 30;
     public final int step = 44100 / FPS;
-    public final boolean render = false;
+    public static boolean render = false;
     public int frame;
     public int recorderFrame;
 
@@ -91,6 +91,7 @@ public class BaseVisualiser {
         exit.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
+                music.stop();
                 game.setScreen(new MenuScreen(game));
                 dispose();
             }
@@ -148,7 +149,7 @@ public class BaseVisualiser {
 
     public void drawExitButton() {
 
-        if (!musicStarted && transparency == 0) {
+        if (!musicStarted && transparency == 0 && !render) {
             music.play();
             musicStarted = true;
         }

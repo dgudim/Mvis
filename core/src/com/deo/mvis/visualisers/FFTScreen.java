@@ -34,6 +34,10 @@ public class FFTScreen extends BaseVisualiser implements Screen {
     private final int DEFAULT = 0;
     private static final int TRIANGLE = 1;
     private static float triangleFlyingSpeed = 75;
+    private static float fftHeight = 1;
+    private static float colorAmplitude = 1;
+    private static float colorShift = 0;
+    private static float colorShift2 = 0;
 
     private static int type;
     private static int palette;
@@ -122,13 +126,13 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                     int index = i + 2;
                     displaySamples[i] += samples[index] / 16;
 
-                    renderer.setColor(new Color().fromHsv(displaySamples[i] / 2048, 0.75f, 0.9f));
-                    renderer.rect(-i * step, 0, step, displaySamples[i] / 512);
-                    renderer.rect(+i * step, 0, step, displaySamples[i] / 512);
+                    renderer.setColor(new Color().fromHsv(displaySamples[i] / 2048 * colorAmplitude + colorShift + colorShift2, 0.75f, 0.9f));
+                    renderer.rect(-i * step, 0, step, displaySamples[i] / 512 * fftHeight);
+                    renderer.rect(+i * step, 0, step, displaySamples[i] / 512 * fftHeight);
 
-                    renderer.setColor(new Color().fromHsv(-displaySamples[i] / 2048, 0.75f, 0.9f));
-                    renderer.rect(-i * step, 0, step, -displaySamples[i] / 512);
-                    renderer.rect(+i * step, 0, step, -displaySamples[i] / 512);
+                    renderer.setColor(new Color().fromHsv(-displaySamples[i] / 2048 * colorAmplitude + colorShift - colorShift2, 0.75f, 0.9f));
+                    renderer.rect(-i * step, 0, step, -displaySamples[i] / 512 * fftHeight);
+                    renderer.rect(+i * step, 0, step, -displaySamples[i] / 512 * fftHeight);
 
                     displaySamples[i] /= 2f;
                 }
@@ -170,7 +174,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                 for (int i = 0; i < fftSize - 2; i++) {
                     float[] triangle = calculateTriangle(0, 0, fftSize - i, -30);
 
-                    renderer.setColor(new Color().fromHsv(displaySamples[i] / 256, 0.75f, 0.9f));
+                    renderer.setColor(new Color().fromHsv(displaySamples[i] / 256 * colorAmplitude + colorShift - colorShift2, 0.75f, 0.9f));
                     renderer.triangle(triangle[0], triangle[1], triangle[2], triangle[3], triangle[4], triangle[5]);
                 }
 
@@ -211,8 +215,8 @@ public class FFTScreen extends BaseVisualiser implements Screen {
 
     private void renderFFTForTriangle(float triangleStep, float L) {
         for (int i = 0; i < fftSize - 2; i++) {
-            renderer.setColor(new Color().fromHsv(displaySamples[i] / 2048 - 60, 0.75f, 0.9f));
-            renderer.rect(i * triangleStep - L / 2f, 256, triangleStep, displaySamples[i] / 512);
+            renderer.setColor(new Color().fromHsv((displaySamples[i] / 2048 - 60) * colorAmplitude + colorShift - colorShift2, 0.75f, 0.9f));
+            renderer.rect(i * triangleStep - L / 2f, 256, triangleStep, displaySamples[i] / 512 * fftHeight);
         }
     }
 
@@ -220,13 +224,13 @@ public class FFTScreen extends BaseVisualiser implements Screen {
         paletteNames = new String[]{"Default"};
         typeNames = new String[]{"Basic", "Triangle"};
 
-        settings = new String[]{"Type", "Pallet", "Triangle flying speed"};
-        settingTypes = new String[]{"int", "int", "float"};
+        settings = new String[]{"Type", "Pallet", "Triangle flying speed", "Max fft height", "Color shift", "Color difference", "Color amplitude", "Render"};
+        settingTypes = new String[]{"int", "int", "float", "float", "float", "float", "float", "boolean"};
 
-        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 200};
-        settingMinValues = new float[]{0, 0, 0};
+        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 200, 4, 180, 180, 7, 1};
+        settingMinValues = new float[]{0, 0, 0, 1, 0, 0, 1, 0};
 
-        defaultSettings = new float[]{0, 0, 75};
+        defaultSettings = new float[]{0, 0, 75, 1, 0, 0, 1, 0};
     }
 
     public static String getName() {
@@ -237,6 +241,11 @@ public class FFTScreen extends BaseVisualiser implements Screen {
         type = (int) newSettings[0];
         palette = (int) newSettings[1];
         triangleFlyingSpeed = newSettings[2];
+        fftHeight = newSettings[3];
+        colorShift = newSettings[4];
+        colorShift2 = newSettings[5];
+        colorAmplitude = newSettings[6];
+        render = newSettings[7] > 0;
     }
 
     @Override

@@ -17,6 +17,7 @@ public class AndroidLauncher extends AndroidApplication {
         config.useCompass = false;
         config.useGyroscope = false;
         config.hideStatusBar = true;
+        config.useWakelock = true;
         initialize(new Launcher(), config);
         if (this.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             this.requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
