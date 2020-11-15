@@ -77,7 +77,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
             recorderFrame++;
             pos = frame;
         } else {
-            pos = (int) (music.getPosition() * 44100);
+            pos = (int) (music.getPosition() * sampleRate);
         }
 
         float[] samples = musicWave.getSamplesForFFT(pos, fftSize);

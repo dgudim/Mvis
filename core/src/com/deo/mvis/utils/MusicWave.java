@@ -1,6 +1,5 @@
 package com.deo.mvis.utils;
 
-import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.files.FileHandle;
@@ -18,14 +17,19 @@ public class MusicWave {
     private float[] leftChannelSamples;
     private float[] rightChannelSamples;
     private Music music;
+    public int sampleRate;
 
     public MusicWave(FileHandle musicFile, boolean requiresChannelSamples) {
 
         try {
 
             InputStream wavStream = musicFile.read();
+
             WavInfo header = readHeader(wavStream);
             byte[] bytes = readWavPcm(header, wavStream);
+
+            sampleRate = header.sampleRate;
+
             int channels = 1;
             if (header.isStereo) {
                 channels = 2;

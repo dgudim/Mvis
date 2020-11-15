@@ -119,7 +119,7 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
 
         int pos;
         if (!render) {
-            pos = (int) (music.getPosition() * 44100);
+            pos = (int) (music.getPosition() * sampleRate);
         } else {
             pos = frame;
         }
@@ -132,7 +132,7 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
 
         if (!render) {
 
-            addCoords((int) (music.getPosition() * 44100));
+            addCoords((int) (music.getPosition() * sampleRate));
             render();
 
             if (!(type == STANDARD || type == RADIAL)) {
@@ -277,8 +277,8 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
                     }
                 } else {
                     freqDisplayRenderAngle += angleStep;
-                    x = -MathUtils.cosDeg(freqDisplayRenderAngle) * samplesRaw[pos] * 350;
-                    y = -MathUtils.sinDeg(freqDisplayRenderAngle) * samplesRaw[pos] * 350;
+                    x = -MathUtils.cosDeg(freqDisplayRenderAngle) * samplesRaw[pos] * (HEIGHT / 2f - 10);
+                    y = -MathUtils.sinDeg(freqDisplayRenderAngle) * samplesRaw[pos] * (HEIGHT / 2f - 10);
                     dots.add(new Vector3().set(x, y, 0));
                     colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
                 }

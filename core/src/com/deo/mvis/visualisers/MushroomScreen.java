@@ -62,9 +62,9 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
         int iterations;
         int pos;
         if (!render) {
-            angle = samplesSmoothed[(int) (music.getPosition() * 44100)] * maxAngle + baseAngle;
-            iterations = (int) (lSamplesNormalisedSmoothed[(int) (music.getPosition() * 44100)] * maxIterations) + baseIterations;
-            pos = (int) (music.getPosition() * 44100);
+            angle = samplesSmoothed[(int) (music.getPosition() * sampleRate)] * maxAngle + baseAngle;
+            iterations = (int) (lSamplesNormalisedSmoothed[(int) (music.getPosition() * sampleRate)] * maxIterations) + baseIterations;
+            pos = (int) (music.getPosition() * sampleRate);
         } else {
             angle = samplesSmoothed[frame] * maxAngle + baseAngle;
             iterations = (int) (lSamplesNormalisedSmoothed[frame] * maxIterations) + baseIterations;
@@ -82,11 +82,11 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
                 buildMushroom(90, angle, branchLength, iterations, 0, 0);
                 break;
             case (DOUBLE_CHANNEL):
-                angle = rSamplesNormalisedSmoothed[(int) (music.getPosition() * 44100)] * maxAngle + baseAngle;
-                iterations = (int) (rSamplesNormalisedSmoothed[(int) (music.getPosition() * 44100)] * maxIterations) + baseIterations;
+                angle = rSamplesNormalisedSmoothed[(int) (music.getPosition() * sampleRate)] * maxAngle + baseAngle;
+                iterations = (int) (rSamplesNormalisedSmoothed[(int) (music.getPosition() * sampleRate)] * maxIterations) + baseIterations;
                 buildMushroom(-90, angle, branchLength, iterations, 0, 0);
-                angle = lSamplesNormalisedSmoothed[(int) (music.getPosition() * 44100)] * maxAngle + baseAngle;
-                iterations = (int) (lSamplesNormalisedSmoothed[(int) (music.getPosition() * 44100)] * maxIterations) + baseIterations;
+                angle = lSamplesNormalisedSmoothed[(int) (music.getPosition() * sampleRate)] * maxAngle + baseAngle;
+                iterations = (int) (lSamplesNormalisedSmoothed[(int) (music.getPosition() * sampleRate)] * maxIterations) + baseIterations;
                 buildMushroom(90, angle, branchLength, iterations, 0, 0);
                 break;
             case (TRIPLE):
@@ -182,7 +182,18 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
         paletteNames = new String[]{"Default"};
         typeNames = new String[]{"Single", "Double", "Triple", "Double channel"};
 
-        settings = new String[]{"Type", "Pallet", "Exponential", "Branch length", "Max iterations (+5)", "Max angle", "Base iterations", "Base angle", "Fadeout", "Max bloom saturation", "Render"};
+        settings = new String[]{
+                "Type",
+                "Pallet",
+                "Exponential",
+                "Branch length",
+                "Max iterations (+5)",
+                "Max angle",
+                "Base iterations",
+                "Base angle",
+                "Fadeout",
+                "Max bloom saturation",
+                "Render"};
         settingTypes = new String[]{"int", "int", "boolean", "float", "int", "float", "int", "float", "float", "float", "boolean"};
 
         settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 1, 80, 10, 90, 7, 45, 0.1f, 5, 1};
@@ -196,15 +207,21 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
     }
 
     public static void setSettings(float[] newSettings) {
+
         type = (int) newSettings[0];
         palette = (int) newSettings[1];
         exponential = newSettings[2] > 0;
+
         branchLength = newSettings[3];
         maxIterations = (int) newSettings[4];
         maxAngle = newSettings[5];
+
         baseIterations = (int) newSettings[6];
-        baseAngle = newSettings[6];
-        render = newSettings[7] > 0;
+        baseAngle = newSettings[7];
+
+        fadeout = newSettings[8];
+        maxSaturation = newSettings[9];
+        render = newSettings[10] > 0;
     }
 
     @Override

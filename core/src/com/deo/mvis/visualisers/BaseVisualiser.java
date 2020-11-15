@@ -35,7 +35,7 @@ public class BaseVisualiser {
     public SpriteBatch batch;
 
     final int FPS = 30;
-    public final int step = 44100 / FPS;
+    public final int step;
     public static boolean render = false;
     public int frame;
     public int recorderFrame;
@@ -58,6 +58,7 @@ public class BaseVisualiser {
     public static float[] settingMaxValues, settingMinValues, defaultSettings;
 
     int numOfSamples;
+    public int sampleRate;
 
     public static FileHandle musicFile = Gdx.files.internal("away.wav");
 
@@ -106,6 +107,8 @@ public class BaseVisualiser {
         batch = new SpriteBatch();
 
         musicWave = new MusicWave(musicFile, requiredSamples[1] || requiredSamples[2]);
+        sampleRate = musicWave.sampleRate;
+        step = sampleRate / FPS;
         music = musicWave.getMusic();
 
         samplesSmoothed = musicWave.smoothSamples(musicWave.getSamples().clone(), 2, 32);

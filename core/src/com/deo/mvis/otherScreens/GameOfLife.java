@@ -74,7 +74,7 @@ public class GameOfLife extends BaseVisualiser implements Screen {
 
         float limit;
         if (!render) {
-            limit = (samplesSmoothed[(int) (music.getPosition() * 44100)]) * 5;
+            limit = (samplesSmoothed[(int) (music.getPosition() * sampleRate)]) * 5;
         } else {
             limit = (samplesSmoothed[frame]) * 5;
         }
@@ -140,7 +140,7 @@ public class GameOfLife extends BaseVisualiser implements Screen {
         if (render) {
             pos = frame;
         } else {
-            pos = (int) (music.getPosition() * 44100);
+            pos = (int) (music.getPosition() * sampleRate);
         }
 
         renderer.setProjectionMatrix(camera.combined);

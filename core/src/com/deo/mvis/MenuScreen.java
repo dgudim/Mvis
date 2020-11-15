@@ -412,7 +412,6 @@ public class MenuScreen implements Screen {
         final Label musicFolderLabel = new Label("Place music into:\n" + Gdx.files.external("/").file().getAbsolutePath().replace("Users", "Users/") + "/Mvis", labelStyle);
 
         Array<String> availableMusic = new Array<>();
-        availableMusic.add("Up and away", "liquid cinema");
         final Array<FileHandle> availableMusicFiles = new Array<>();
 
         File musicFolder = Gdx.files.external("Mvis").file();
@@ -432,9 +431,9 @@ public class MenuScreen implements Screen {
         paletteSelector.setItems(paletteNames);
         typeSelector.setItems(typeNames);
 
-        musicSelector.setMaxListCount(7);
+        musicSelector.setMaxListCount(5);
+        typeSelector.setMaxListCount(6);
         paletteSelector.setMaxListCount(7);
-        typeSelector.setMaxListCount(7);
 
         typeSelector.setSelectedIndex(getInteger("type" + name));
         newSettings[0] = getInteger("type" + name);

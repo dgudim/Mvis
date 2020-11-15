@@ -109,7 +109,7 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
             recorderFrame++;
             pos = frame;
         } else {
-            pos = (int) (music.getPosition() * 44100);
+            pos = (int) (music.getPosition() * sampleRate);
         }
 
         transform3d(pos);
