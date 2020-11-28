@@ -99,7 +99,7 @@ public class MenuScreen implements Screen {
 
         FileHandle destinationFolder = Gdx.files.external("Mvis/");
 
-        if(!destinationFolder.exists()){
+        if (!destinationFolder.exists()) {
             destinationFolder.mkdirs();
         }
 
@@ -435,7 +435,7 @@ public class MenuScreen implements Screen {
         typeSelector.setMaxListCount(6);
         paletteSelector.setMaxListCount(7);
 
-        int selectedMusic = MathUtils.clamp(0, availableMusic.size, getInteger("music" + name));
+        int selectedMusic = MathUtils.clamp(getInteger("music" + name), 0, availableMusic.size - 1);
 
         typeSelector.setSelectedIndex(selectedMusic);
         typeSelector.setSelectedIndex(getInteger("type" + name));
