@@ -437,7 +437,7 @@ public class MenuScreen implements Screen {
 
         int selectedMusic = MathUtils.clamp(getInteger("music" + name), 0, availableMusic.size - 1);
 
-        typeSelector.setSelectedIndex(selectedMusic);
+        musicSelector.setSelectedIndex(selectedMusic);
         typeSelector.setSelectedIndex(getInteger("type" + name));
         newSettings[0] = getInteger("type" + name);
         paletteSelector.setSelectedIndex(getInteger("palette" + name));

@@ -53,6 +53,8 @@ public class FFTScreen extends BaseVisualiser implements Screen {
     private static float spawnThreshold = 30.7f;
     private static float minSpawnDelay = 10;
     private static boolean invertColors = false;
+    private static float waterfallColorAmplitude = 1;
+    private static float waterfallColorShift = 0;
 
     private static int type;
     private static int palette;
@@ -136,7 +138,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
 
         utils.bloomBegin(true, pos);
 
-        if(!(type == DEFAULT && waterfall)) {
+        if (!(type == DEFAULT && waterfall)) {
             if (!outline) {
                 renderer.begin(ShapeRenderer.ShapeType.Filled);
             } else {
@@ -146,9 +148,9 @@ public class FFTScreen extends BaseVisualiser implements Screen {
 
         float delta;
 
-        if(render){
-            delta = 1/(float)FPS;
-        }else{
+        if (render) {
+            delta = 1 / (float) FPS;
+        } else {
             delta = Gdx.graphics.getDeltaTime();
         }
 
@@ -176,9 +178,9 @@ public class FFTScreen extends BaseVisualiser implements Screen {
 
                     if (waterfall) {
                         if (displaySamples[i] > spawnThreshold * 100 && shardTimers[i] <= 0 && i % numOfHoles == 0) {
-                            float colorHSV = -displaySamples[i] / 2048 * colorAmplitude + colorShift - colorShift2;
-                            if(invertColors){
-                                colorHSV = displaySamples[i] / 2048 * colorAmplitude + colorShift + colorShift2;
+                            float colorHSV = -displaySamples[i] / 2048 * waterfallColorAmplitude + colorShift - waterfallColorShift;
+                            if (invertColors) {
+                                colorHSV = displaySamples[i] / 2048 * waterfallColorAmplitude + colorShift + waterfallColorShift;
                             }
                             glassShards.add(new GradientShape().buildGradientPolygon(displaySamples[i] / (2024 - maxRadius * 100), gradientSteps, 90, -i * step + step / 2f, 0, faces, 0, new Color().fromHsv(colorHSV, 0.75f, 1), Color.CLEAR, 1 / (samplesSmoothed[pos] + 0.5f)));
                             glassShards.add(new GradientShape().buildGradientPolygon(displaySamples[i] / (2024 - maxRadius * 100), gradientSteps, 90, i * step + step / 2f, 0, faces, 0, new Color().fromHsv(colorHSV, 0.75f, 1), Color.CLEAR, 1 / (samplesSmoothed[pos] + 0.5f)));
@@ -280,17 +282,18 @@ public class FFTScreen extends BaseVisualiser implements Screen {
         typeNames = new String[]{"Basic", "Triangle"};
 
         settings = new String[]{"Type", "Pallet", "Triangle flying speed", "Max fft height", "Color shift", "Color difference", "Color amplitude",
-                "Outline", "Waterfall", "Number of holes", "Faces", "Max radius", "Flying Speed", "Gradient steps", "Spawn threshold", "Min spawn delay", "Invert colors", "Render"};
+                "Outline", "Waterfall", "Number of holes", "Faces", "Max radius", "Flying Speed",
+                "Gradient steps", "Spawn threshold", "Min spawn delay", "Waterfall color amplitude", "Waterfall color shift", "Invert colors", "Render"};
         settingTypes = new String[]{"int", "int", "float", "float", "float", "float", "float",
-                "boolean", "boolean", "int", "int", "float", "float", "int", "float", "float", "boolean", "boolean"};
+                "boolean", "boolean", "int", "int", "float", "float", "int", "float", "float", "float", "float", "boolean", "boolean"};
 
         settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 200, 4, 180, 180, 7,
-                1, 1, 25, 15, 20.2f, 50, 15, 60, 30, 1, 1};
+                1, 1, 25, 15, 20.2f, 50, 15, 60, 30, 7, 180, 1, 1};
         settingMinValues = new float[]{0, 0, 0, 1, 0, 0, 1,
-                0, 0, 1, 3, 0, 5, 1, 10, 0, 0, 0};
+                0, 0, 1, 3, 0, 5, 1, 10, 0, 1, 0, 0, 0};
 
         defaultSettings = new float[]{0, 0, 75, 1, 0, 0, 1,
-                0, 0, 11, 6, 5.2f, 35, 5, 30.7f, 10, 1, 0};
+                0, 0, 11, 6, 5.2f, 35, 5, 30.7f, 10, 1, 0, 1, 0};
     }
 
     public static String getName() {
@@ -314,8 +317,10 @@ public class FFTScreen extends BaseVisualiser implements Screen {
         gradientSteps = (int) newSettings[13];
         spawnThreshold = newSettings[14];
         minSpawnDelay = newSettings[15];
-        invertColors = newSettings[16] > 0;
-        render = newSettings[17] > 0;
+        waterfallColorAmplitude = newSettings[16];
+        waterfallColorShift = newSettings[17];
+        invertColors = newSettings[18] > 0;
+        render = newSettings[19] > 0;
     }
 
     @Override
