@@ -435,6 +435,9 @@ public class MenuScreen implements Screen {
         typeSelector.setMaxListCount(6);
         paletteSelector.setMaxListCount(7);
 
+        int selectedMusic = MathUtils.clamp(0, availableMusic.size, getInteger("music" + name));
+
+        typeSelector.setSelectedIndex(selectedMusic);
         typeSelector.setSelectedIndex(getInteger("type" + name));
         newSettings[0] = getInteger("type" + name);
         paletteSelector.setSelectedIndex(getInteger("palette" + name));
@@ -454,6 +457,13 @@ public class MenuScreen implements Screen {
             public void changed(ChangeEvent event, Actor actor) {
                 newSettings[1] = paletteSelector.getSelectedIndex();
                 putInteger("palette" + finalName, (int) newSettings[1]);
+            }
+        });
+
+        musicSelector.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                putInteger("music" + finalName, musicSelector.getSelectedIndex());
             }
         });
 
