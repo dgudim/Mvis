@@ -83,7 +83,7 @@ public class MontageSelectionScreen implements Screen {
             threshold -= 0.001;
         }
 
-        font = new BitmapFont(Gdx.files.internal("core/assets/font2(old).fnt"));
+        font = new BitmapFont(Gdx.files.internal("font2(old).fnt"));
 
     }
 

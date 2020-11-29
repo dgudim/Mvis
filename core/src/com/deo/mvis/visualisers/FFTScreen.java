@@ -3,19 +3,19 @@ package com.deo.mvis.visualisers;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.badlogic.gdx.utils.JsonReader;
+import com.badlogic.gdx.utils.JsonValue;
 import com.deo.mvis.jtransforms.fft.FloatFFT_1D;
 import com.deo.mvis.utils.GradientShape;
+import com.deo.mvis.utils.SyncedWord;
 
 import java.util.Arrays;
 
@@ -39,11 +39,13 @@ public class FFTScreen extends BaseVisualiser implements Screen {
     private final int DEFAULT = 0;
     private static final int TRIANGLE = 1;
     private static float triangleFlyingSpeed = 75;
+
     private static float fftHeight = 1;
     private static float colorAmplitude = 1;
     private static float colorShift = 0;
     private static float colorShift2 = 0;
     private static boolean outline = false;
+
     private static boolean waterfall = false;
     private static int numOfHoles = 11;
     private static int faces = 6;
@@ -55,6 +57,10 @@ public class FFTScreen extends BaseVisualiser implements Screen {
     private static boolean invertColors = false;
     private static float waterfallColorAmplitude = 1;
     private static float waterfallColorShift = 0;
+
+    private static boolean displayLyrics = false;
+    private boolean lyricsAvailable = false;
+    private Array<SyncedWord> songWords;
 
     private static int type;
     private static int palette;
@@ -75,6 +81,16 @@ public class FFTScreen extends BaseVisualiser implements Screen {
         littleTrianglesSpeeds = new Array<>();
         littleTrianglesColors = new Array<>();
         glassShards = new Array<>();
+
+        songWords = new Array<>();
+
+        if (Gdx.files.external("Mvis/" + musicFile.nameWithoutExtension() + ".txt").exists() && displayLyrics) {
+            JsonValue lyricsJson = new JsonReader().parse(Gdx.files.external("Mvis/" + musicFile.nameWithoutExtension() + ".txt").readString());
+            for (int i = 0; i < lyricsJson.size - 1; i++) {
+                songWords.add(new SyncedWord(0, 700, Integer.parseInt(lyricsJson.get(i).name), Integer.parseInt(lyricsJson.get(i + 1).name), lyricsJson.get(i).asString(), new BitmapFont(Gdx.files.internal("font2(old).fnt"))));
+            }
+            lyricsAvailable = true;
+        }
 
         if (render) {
             triangleFlyingSpeed *= 1.7f;
@@ -153,6 +169,14 @@ public class FFTScreen extends BaseVisualiser implements Screen {
         } else {
             delta = Gdx.graphics.getDeltaTime();
         }
+
+        batch.begin();
+        if (lyricsAvailable) {
+            for (int i = 0; i < songWords.size; i++) {
+                songWords.get(i).drawAndUpdate(music.getPosition(), batch ,new Color().fromHsv(displaySamples[0] / 2048 * colorAmplitude + colorShift + waterfallColorShift, 0.75f, 1));
+            }
+        }
+        batch.end();
 
         switch (type) {
             case (DEFAULT):
@@ -283,17 +307,17 @@ public class FFTScreen extends BaseVisualiser implements Screen {
 
         settings = new String[]{"Type", "Pallet", "Triangle flying speed", "Max fft height", "Color shift", "Color difference", "Color amplitude",
                 "Outline", "Waterfall", "Number of holes", "Faces", "Max radius", "Flying Speed",
-                "Gradient steps", "Spawn threshold", "Min spawn delay", "Waterfall color amplitude", "Waterfall color shift", "Invert colors", "Render"};
+                "Gradient steps", "Spawn threshold", "Min spawn delay", "Waterfall color amplitude", "Waterfall color shift", "Invert colors", "Display lyrics", "Render"};
         settingTypes = new String[]{"int", "int", "float", "float", "float", "float", "float",
-                "boolean", "boolean", "int", "int", "float", "float", "int", "float", "float", "float", "float", "boolean", "boolean"};
+                "boolean", "boolean", "int", "int", "float", "float", "int", "float", "float", "float", "float", "boolean", "boolean", "boolean"};
 
         settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 200, 4, 180, 180, 7,
-                1, 1, 25, 15, 20.2f, 50, 15, 60, 30, 7, 180, 1, 1};
+                1, 1, 25, 15, 20.2f, 50, 15, 60, 30, 7, 180, 1, 1, 1};
         settingMinValues = new float[]{0, 0, 0, 1, 0, 0, 1,
-                0, 0, 1, 3, 0, 5, 1, 10, 0, 1, 0, 0, 0};
+                0, 0, 1, 3, 0, 5, 1, 10, 0, 1, 0, 0, 0, 0};
 
         defaultSettings = new float[]{0, 0, 75, 1, 0, 0, 1,
-                0, 0, 11, 6, 5.2f, 35, 5, 30.7f, 10, 1, 0, 1, 0};
+                0, 0, 11, 6, 5.2f, 35, 5, 30.7f, 10, 1, 0, 1, 0, 0};
     }
 
     public static String getName() {
@@ -320,7 +344,8 @@ public class FFTScreen extends BaseVisualiser implements Screen {
         waterfallColorAmplitude = newSettings[16];
         waterfallColorShift = newSettings[17];
         invertColors = newSettings[18] > 0;
-        render = newSettings[19] > 0;
+        displayLyrics = newSettings[19] > 0;
+        render = newSettings[20] > 0;
     }
 
     @Override
@@ -347,5 +372,8 @@ public class FFTScreen extends BaseVisualiser implements Screen {
     @Override
     public void dispose() {
         super.dispose();
+        for (int i = 0; i < songWords.size; i++) {
+            songWords.get(i).dispose();
+        }
     }
 }

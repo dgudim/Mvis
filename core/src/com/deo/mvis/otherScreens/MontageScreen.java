@@ -78,7 +78,7 @@ public class MontageScreen implements Screen {
 
         images = new Texture[imageCount];
         for (int i = 0; i < imageCount; i++) {
-            images[i] = new Texture(Gdx.files.internal("core/assets/images/pict" + i) + ".jpg");
+            images[i] = new Texture(Gdx.files.internal("images/pict" + i) + ".jpg");
         }
 
         image = new Image(images[getRandomInRange(0, imageCount - 1)]);

@@ -50,7 +50,6 @@ import com.deo.mvis.visualisers.OsciloscopeScreen;
 import com.deo.mvis.visualisers.RingScreen;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -58,7 +57,6 @@ import java.util.Set;
 import static com.deo.mvis.Launcher.HEIGHT;
 import static com.deo.mvis.Launcher.WIDTH;
 import static com.deo.mvis.utils.Utils.getBoolean;
-import static com.deo.mvis.utils.Utils.getFloat;
 import static com.deo.mvis.utils.Utils.getInteger;
 import static com.deo.mvis.utils.Utils.putBoolean;
 import static com.deo.mvis.utils.Utils.putFloat;
