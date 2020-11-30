@@ -28,12 +28,17 @@ public class SyncedWord {
         this.x = x;
         this.y = y;
 
+        font.setUseIntegerPositions(false);
+
         fadeoutSpeed = MathUtils.clamp(1 / (float) (nextTimestamp - timestamp) * 1.3f, 0.00015f, 1000000);
+
+        //System.out.println(timestamp+"   "+nextTimestamp+"   "+text);
     }
 
     public void drawAndUpdate(float currentSongPos, SpriteBatch batch, Color color) {
-        if(!dispose) {
-            if (timestamp - 1000/fadeInSpeed <= currentSongPos * 1000 && !displayed) {
+        //System.out.println(text + "   "+timestamp+"   "+currentSongPos*1000);
+        if (!dispose) {
+            if (timestamp - 1000 / fadeInSpeed <= currentSongPos * 1000 && !displayed) {
                 displayed = true;
             }
             if (displayed && !hasFadedIn) {
@@ -42,9 +47,9 @@ public class SyncedWord {
             }
             if (displayed) {
                 font.setColor(color.r * 0.5f, color.g * 0.5f, color.b * 0.5f, alpha);
-                font.draw(batch, text, x + 2, y + 2, WIDTH, 1, false);
+                font.draw(batch, text, x + 2, y + 2 - (alpha - 1) * 10, WIDTH, 1, false);
                 font.setColor(color.r, color.g, color.b, alpha);
-                font.draw(batch, text, x, y, WIDTH, 1, false);
+                font.draw(batch, text, x, y - (1 - alpha) * 10, WIDTH, 1, false);
                 if (hasFadedIn) {
                     alpha = MathUtils.clamp(alpha - fadeoutSpeed * 700 * Gdx.graphics.getDeltaTime(), 0, 1);
                 }

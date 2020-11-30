@@ -13,6 +13,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.deo.mvis.jtransforms.fft.FloatFFT_1D;
 import com.deo.mvis.utils.GradientShape;
 import com.deo.mvis.utils.SyncedWord;
@@ -57,6 +58,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
     private static boolean invertColors = false;
     private static float waterfallColorAmplitude = 1;
     private static float waterfallColorShift = 0;
+    private static float baseRadius = 0;
 
     private static boolean displayLyrics = false;
     private boolean lyricsAvailable = false;
@@ -64,6 +66,9 @@ public class FFTScreen extends BaseVisualiser implements Screen {
 
     private static int type;
     private static int palette;
+
+    private final int FIRE = 1;
+    private final int BANANA = 2;
 
     private final int fftSize = 512;
 
@@ -87,9 +92,26 @@ public class FFTScreen extends BaseVisualiser implements Screen {
         if (Gdx.files.external("Mvis/" + musicFile.nameWithoutExtension() + ".txt").exists() && displayLyrics) {
             JsonValue lyricsJson = new JsonReader().parse(Gdx.files.external("Mvis/" + musicFile.nameWithoutExtension() + ".txt").readString());
             for (int i = 0; i < lyricsJson.size - 1; i++) {
-                songWords.add(new SyncedWord(0, 700, Integer.parseInt(lyricsJson.get(i).name), Integer.parseInt(lyricsJson.get(i + 1).name), lyricsJson.get(i).asString(), new BitmapFont(Gdx.files.internal("font2(old).fnt"))));
+                songWords.add(new SyncedWord(-WIDTH/2f, 300, Integer.parseInt(lyricsJson.get(i).name), Integer.parseInt(lyricsJson.get(i + 1).name), lyricsJson.get(i).asString(), new BitmapFont(Gdx.files.internal("font2(old).fnt"))));
             }
             lyricsAvailable = true;
+        }
+
+        switch (palette){
+            case (FIRE):
+                colorShift = 14.21f;
+                colorShift2 = 18.947f;
+                colorAmplitude = 3;
+                waterfallColorAmplitude = 7;
+                waterfallColorShift = 7.895f;
+                break;
+            case (BANANA):
+                colorShift = 164.2f;
+                colorShift2 = 97.9f;
+                colorAmplitude = 1.79f;
+                waterfallColorAmplitude = 7;
+                waterfallColorShift = 140;
+                break;
         }
 
         if (render) {
@@ -151,6 +173,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
         float triangleStep = WIDTH / L - .07f;
 
         renderer.setProjectionMatrix(camera.combined);
+        batch.setProjectionMatrix(camera.combined);
 
         utils.bloomBegin(true, pos);
 
@@ -206,8 +229,8 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                             if (invertColors) {
                                 colorHSV = displaySamples[i] / 2048 * waterfallColorAmplitude + colorShift + waterfallColorShift;
                             }
-                            glassShards.add(new GradientShape().buildGradientPolygon(displaySamples[i] / (2024 - maxRadius * 100), gradientSteps, 90, -i * step + step / 2f, 0, faces, 0, new Color().fromHsv(colorHSV, 0.75f, 1), Color.CLEAR, 1 / (samplesSmoothed[pos] + 0.5f)));
-                            glassShards.add(new GradientShape().buildGradientPolygon(displaySamples[i] / (2024 - maxRadius * 100), gradientSteps, 90, i * step + step / 2f, 0, faces, 0, new Color().fromHsv(colorHSV, 0.75f, 1), Color.CLEAR, 1 / (samplesSmoothed[pos] + 0.5f)));
+                            glassShards.add(new GradientShape().buildGradientPolygon(displaySamples[i] / (2024 - maxRadius * 100) + baseRadius, gradientSteps, 90, -i * step + step / 2f, 0, faces, 0, new Color().fromHsv(colorHSV, 0.75f, 1), Color.CLEAR, 1 / (samplesSmoothed[pos] + 0.5f)));
+                            glassShards.add(new GradientShape().buildGradientPolygon(displaySamples[i] / (2024 - maxRadius * 100) + baseRadius, gradientSteps, 90, i * step + step / 2f, 0, faces, 0, new Color().fromHsv(colorHSV, 0.75f, 1), Color.CLEAR, 1 / (samplesSmoothed[pos] + 0.5f)));
                             shardTimers[i] = minSpawnDelay * delta;
                         }
 
@@ -219,12 +242,12 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                     displaySamples[i] += samples[index] / 16;
 
                     renderer.setColor(new Color().fromHsv(displaySamples[i] / 2048 * colorAmplitude + colorShift + colorShift2, 0.75f, 0.9f));
-                    renderer.rect(-i * step, 0, step, displaySamples[i] / 512 * fftHeight);
-                    renderer.rect(+i * step, 0, step, displaySamples[i] / 512 * fftHeight);
+                    renderer.rect(-i * step, 0, step, displaySamples[i] / 512 * fftHeight + 0.5f);
+                    renderer.rect(+i * step, 0, step, displaySamples[i] / 512 * fftHeight + 0.5f);
 
                     renderer.setColor(new Color().fromHsv(-displaySamples[i] / 2048 * colorAmplitude + colorShift - colorShift2, 0.75f, 0.9f));
-                    renderer.rect(-i * step, 0, step, -displaySamples[i] / 512 * fftHeight);
-                    renderer.rect(+i * step, 0, step, -displaySamples[i] / 512 * fftHeight);
+                    renderer.rect(-i * step, 0, step, -displaySamples[i] / 512 * fftHeight + 0.5f);
+                    renderer.rect(+i * step, 0, step, -displaySamples[i] / 512 * fftHeight + 0.5f);
 
                     displaySamples[i] /= 2f;
                 }
@@ -302,22 +325,23 @@ public class FFTScreen extends BaseVisualiser implements Screen {
     }
 
     public static void init() {
-        paletteNames = new String[]{"Default"};
+        paletteNames = new String[]{"Default", "Chemical fire", "Purple banana"};
         typeNames = new String[]{"Basic", "Triangle"};
 
         settings = new String[]{"Type", "Pallet", "Triangle flying speed", "Max fft height", "Color shift", "Color difference", "Color amplitude",
-                "Outline", "Waterfall", "Number of holes", "Faces", "Max radius", "Flying Speed",
-                "Gradient steps", "Spawn threshold", "Min spawn delay", "Waterfall color amplitude", "Waterfall color shift", "Invert colors", "Display lyrics", "Render"};
+                "Outline", "Waterfall", "Number of holes", "Faces", "Base radius", "Max radius", "Flying Speed",
+                "Gradient steps", "Spawn threshold", "Min spawn delay", "Waterfall color amplitude", "Waterfall color shift", "Invert colors",
+                "Display lyrics", "Render"};
         settingTypes = new String[]{"int", "int", "float", "float", "float", "float", "float",
-                "boolean", "boolean", "int", "int", "float", "float", "int", "float", "float", "float", "float", "boolean", "boolean", "boolean"};
+                "boolean", "boolean", "int", "int", "float", "float", "float", "int", "float", "float", "float", "float", "boolean", "boolean", "boolean"};
 
         settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 200, 4, 180, 180, 7,
-                1, 1, 25, 15, 20.2f, 50, 15, 60, 30, 7, 180, 1, 1, 1};
+                1, 1, 25, 15, 10, 20.2f, 50, 15, 60, 30, 7, 180, 1, 1, 1};
         settingMinValues = new float[]{0, 0, 0, 1, 0, 0, 1,
-                0, 0, 1, 3, 0, 5, 1, 10, 0, 1, 0, 0, 0, 0};
+                0, 0, 1, 3, 0, 0, 5, 1, 10, 0, 1, 0, 0, 0, 0};
 
         defaultSettings = new float[]{0, 0, 75, 1, 0, 0, 1,
-                0, 0, 11, 6, 5.2f, 35, 5, 30.7f, 10, 1, 0, 1, 0, 0};
+                0, 0, 11, 6, 0, 5.2f, 35, 5, 30.7f, 10, 1, 0, 1, 0, 0};
     }
 
     public static String getName() {
@@ -336,16 +360,17 @@ public class FFTScreen extends BaseVisualiser implements Screen {
         waterfall = newSettings[8] > 0;
         numOfHoles = (int) newSettings[9];
         faces = (int) newSettings[10];
-        maxRadius = newSettings[11];
-        flyingSpeed = newSettings[12];
-        gradientSteps = (int) newSettings[13];
-        spawnThreshold = newSettings[14];
-        minSpawnDelay = newSettings[15];
-        waterfallColorAmplitude = newSettings[16];
-        waterfallColorShift = newSettings[17];
-        invertColors = newSettings[18] > 0;
-        displayLyrics = newSettings[19] > 0;
-        render = newSettings[20] > 0;
+        baseRadius = newSettings[11];
+        maxRadius = newSettings[12];
+        flyingSpeed = newSettings[13];
+        gradientSteps = (int) newSettings[14];
+        spawnThreshold = newSettings[15];
+        minSpawnDelay = newSettings[16];
+        waterfallColorAmplitude = newSettings[17];
+        waterfallColorShift = newSettings[18];
+        invertColors = newSettings[19] > 0;
+        displayLyrics = newSettings[20] > 0;
+        render = newSettings[21] > 0;
     }
 
     @Override

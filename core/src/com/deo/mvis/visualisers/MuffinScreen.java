@@ -342,7 +342,6 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
     @Override
     public void resize(int width, int height) {
         super.resize(width, height, 0, true);
-        viewport.update(width, height);
     }
 
     @Override

@@ -125,7 +125,7 @@ public class BaseVisualiser {
         if (requiredSamples[2] && requiredSamples[1]) {
             lSamplesNormalisedSmoothed = musicWave.smoothSamples(musicWave.getLeftChannelSamples().clone(), 2, 32);
             rSamplesNormalisedSmoothed = musicWave.smoothSamples(musicWave.getRightChannelSamples().clone(), 2, 32);
-        } else if(requiredSamples[2]){
+        } else if (requiredSamples[2]) {
             lSamplesNormalisedSmoothed = musicWave.smoothSamples(musicWave.getLeftChannelSamples(), 2, 32);
             rSamplesNormalisedSmoothed = musicWave.smoothSamples(musicWave.getRightChannelSamples(), 2, 32);
         }
@@ -160,7 +160,7 @@ public class BaseVisualiser {
         exit.setColor(1, 1, 1, transparency);
         stage.draw();
         stage.act();
-        if(Gdx.graphics.getDeltaTime() < 1f) {
+        if (Gdx.graphics.getDeltaTime() < 1f) {
             transparency = MathUtils.clamp(transparency - 0.5f * Gdx.graphics.getDeltaTime(), 0, 1);
         }
     }
@@ -168,8 +168,8 @@ public class BaseVisualiser {
     public void resize(int width, int height, int yOffset, boolean maxScale) {
         viewport.update(width, height);
         camera.position.set(0, yOffset, 0);
-        float tempScaleH = height / 900f;
-        float tempScaleW = width / 1600f;
+        float tempScaleH = height / (float) HEIGHT;
+        float tempScaleW = width / (float) WIDTH;
         float zoom = Math.min(tempScaleH, tempScaleW);
         float additionalZoom = 0.5f;
         if (maxScale) {
