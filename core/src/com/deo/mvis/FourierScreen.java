@@ -11,6 +11,9 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Array;
 
 import static com.badlogic.gdx.graphics.GL20.GL_COLOR_BUFFER_BIT;
+import static com.deo.mvis.BaseEngine.HEIGHT;
+import static com.deo.mvis.BaseEngine.WIDTH;
+import static com.deo.mvis.Utils.getRandomInRange;
 
 public class FourierScreen implements Screen {
 
@@ -73,8 +76,8 @@ public class FourierScreen implements Screen {
         if(isDrawing) {
             for (int passes = 0; passes < (1 / step) * speed; passes++) {
 
-                float prevX = MainScreen.WIDTH / 2f;
-                float prevY = MainScreen.HEIGHT / 2f;
+                float prevX = WIDTH / 2f;
+                float prevY = HEIGHT / 2f;
                 float currentX = 0;
                 float currentY = 0;
 
@@ -119,10 +122,6 @@ public class FourierScreen implements Screen {
             currentColor = new Color().fromHsv(getRandomInRange(1, 360), 0.5f, 1).add(0, 0, 0, 1);
         }
 
-    }
-
-    public static int getRandomInRange(int min, int max) {
-        return (MathUtils.random(max - min) + min);
     }
 
     @Override

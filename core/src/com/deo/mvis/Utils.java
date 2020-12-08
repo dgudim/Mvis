@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.PixmapIO;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.BufferUtils;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.deo.mvis.postprocessing.PostProcessor;
@@ -89,6 +90,10 @@ public class Utils {
 
     private float computeTime(int recorderFrame) {
         return Gdx.graphics.getDeltaTime() * (samples.length / (float) step - recorderFrame) / 3600;
+    }
+
+    public static int getRandomInRange(int min, int max) {
+        return (MathUtils.random(max - min) + min);
     }
 
 }

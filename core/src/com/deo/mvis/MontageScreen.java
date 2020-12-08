@@ -14,7 +14,7 @@ import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.ScreenUtils;
 
 import static com.badlogic.gdx.graphics.GL20.GL_COLOR_BUFFER_BIT;
-import static com.deo.mvis.FourierScreen.getRandomInRange;
+import static com.deo.mvis.Utils.getRandomInRange;
 
 public class MontageScreen implements Screen {
 

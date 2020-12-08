@@ -5,13 +5,19 @@ import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration;
 import com.deo.mvis.BaseEngine;
 import com.deo.mvis.MainScreen;
 
+import static com.deo.mvis.BaseEngine.HEIGHT;
+import static com.deo.mvis.BaseEngine.WIDTH;
+
 public class DesktopLauncher {
+
+
+
 	public static void main (String[] arg) {
 		LwjglApplicationConfiguration cfg = new LwjglApplicationConfiguration();
 		cfg.title = "Mvis";
 
-		cfg.width = MainScreen.WIDTH;
-		cfg.height = MainScreen.HEIGHT;
+		cfg.width = WIDTH;
+		cfg.height = HEIGHT;
 		cfg.fullscreen = true;
 		cfg.foregroundFPS = 7680;
 

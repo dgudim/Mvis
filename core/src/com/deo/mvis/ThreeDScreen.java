@@ -27,6 +27,9 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 
+import static com.deo.mvis.BaseEngine.HEIGHT;
+import static com.deo.mvis.BaseEngine.WIDTH;
+
 public class ThreeDScreen implements Screen {
 
     private PerspectiveCamera cam;
@@ -73,7 +76,7 @@ public class ThreeDScreen implements Screen {
         lSamplesNormalised = musicWave.smoothSamples(musicWave.getLeftChannelSamples(), 1, 32);
         averageSamplesNormalised = musicWave.smoothSamples(musicWave.getSamples(), 2, 32);
 
-        cam = new PerspectiveCamera(67, MainScreen.WIDTH, MainScreen.HEIGHT);
+        cam = new PerspectiveCamera(67, WIDTH, HEIGHT);
         cam.position.set(10f, 10f, 10f);
         cam.lookAt(0, 0, 0);
         cam.near = 1f;
