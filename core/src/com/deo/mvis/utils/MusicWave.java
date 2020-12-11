@@ -19,19 +19,15 @@ public class MusicWave {
     private float[] rightChannelSamples;
     private Music music;
 
-    public MusicWave() {
+    public MusicWave(FileHandle musicFile) {
 
-        FileHandle file;
-
-        if(Gdx.app.getType() == Application.ApplicationType.Android) {
-            file = Gdx.files.internal("away.wav");
-        }else{
-            file = Gdx.files.external("!DeltaCore/upandaway.wav");
+        if(musicFile == null){
+            musicFile = Gdx.files.internal("away.wav");
         }
 
         try {
 
-            InputStream wavStream = file.read();
+            InputStream wavStream = musicFile.read();
             WavInfo header = readHeader(wavStream);
             byte[] bytes = readWavPcm(header, wavStream);
             int channels = 1;
@@ -53,7 +49,7 @@ public class MusicWave {
 
             samples = averageChannelAmplitude;
 
-            music = Gdx.audio.newMusic(file);
+            music = Gdx.audio.newMusic(musicFile);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -172,7 +168,7 @@ public class MusicWave {
         }
     }
 
-    public WavInfo readHeader(InputStream wavStream) throws IOException {
+    private WavInfo readHeader(InputStream wavStream) throws IOException {
 
         ByteBuffer buffer = ByteBuffer.allocate(HEADER_SIZE);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
@@ -219,7 +215,7 @@ public class MusicWave {
         return new WavInfo(rate, bits, channels == 2, dataSize);
     }
 
-    public static byte[] readWavPcm(WavInfo info, InputStream stream) throws IOException {
+    private byte[] readWavPcm(WavInfo info, InputStream stream) throws IOException {
 
         byte[] data = new byte[info.dataSize];
         stream.read(data, 0, data.length);

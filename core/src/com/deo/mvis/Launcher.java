@@ -1,6 +1,7 @@
 package com.deo.mvis;
 import com.badlogic.gdx.Game;
 import com.deo.mvis.otherScreens.GameOfLife;
+import com.deo.mvis.visualisers.FFTScreen;
 import com.deo.mvis.visualisers.RingScreen;
 
 public final class Launcher extends Game {
@@ -10,6 +11,6 @@ public final class Launcher extends Game {
 
     @Override
     public void create() {
-        this.setScreen(new GameOfLife());
+        this.setScreen(new MenuScreen(this));
     }
 }

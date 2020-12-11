@@ -31,7 +31,7 @@ public class MindustryScreen implements Screen {
         musicProgress = 0;
         frame = 0;
 
-        com.deo.mvis.utils.MusicWave musicWave = new MusicWave();
+        com.deo.mvis.utils.MusicWave musicWave = new MusicWave(null);
 
         float[] samples = musicWave.getSamples();
 

@@ -37,7 +37,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
 
     private final int fftSize = 512;
 
-    FFTScreen() {
+    public FFTScreen() {
 
         camera = new OrthographicCamera(1600, 900);
         viewport = new ScreenViewport(camera);
@@ -85,6 +85,9 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                 samples[i] = (Math.abs(neighbours) + Math.abs(samples[i])) / 5f;
             }
         }
+
+        samples[samples.length-1] = Math.abs(samples[samples.length-1]);
+        samples[samples.length-2] = Math.abs(samples[samples.length-2]);
 
         displayFFT(samples, pos);
 

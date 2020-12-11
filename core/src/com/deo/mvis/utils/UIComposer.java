@@ -15,17 +15,11 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Slider;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
-import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
-
-import static com.deo.flapd.utils.DUtils.getBoolean;
-import static com.deo.flapd.utils.DUtils.getFloat;
-import static com.deo.flapd.utils.DUtils.putBoolean;
-import static com.deo.flapd.utils.DUtils.putFloat;
 
 public class UIComposer {
 
@@ -50,7 +44,7 @@ public class UIComposer {
     }
 
     public void loadStyles(String... styleNames){
-        JsonValue styles = new JsonReader().parse(Gdx.files.internal("shop/styles.json"));
+        JsonValue styles = new JsonReader().parse(Gdx.files.internal("styles.json"));
         Array<BitmapFont> fonts = new Array<>();
         String[] fontNames = styles.get("fonts").asStringArray();
         Array<String> dependencies = new Array<>();
@@ -286,6 +280,7 @@ public class UIComposer {
         checkBoxStyleNames.add(assignmentName);
     }
 
+    /*
     public CheckBox addCheckBox(String style, String text, final String valueKey){
         final CheckBox checkBox = addCheckBox(style, text);
         checkBox.setChecked(getBoolean(valueKey));
@@ -297,6 +292,7 @@ public class UIComposer {
         });
         return checkBox;
     }
+     */
 
     public CheckBox addCheckBox(String style, String text){
         if (checkBoxStyleNames.indexOf(style, false) == -1) throw new IllegalArgumentException("Style not loaded: "+style);
@@ -306,6 +302,7 @@ public class UIComposer {
         return checkBox;
     }
 
+    /*
     public Table addSlider(String style, int min, int max, float step, final String text, final String postText, final String valueKey, final ScrollPane scrollHolder) {
         Table slider = addSlider(style, min, max, step, text, postText, valueKey);
         slider.getCells().get(0).getActor().addListener(new ChangeListener() {
@@ -316,7 +313,9 @@ public class UIComposer {
         });
         return slider;
     }
+     */
 
+    /*
     public Table addSlider(String style, int min, int max, float step, final String text, final String postText, final String valueKey){
         Table cell = new Table();
         final Slider slider = addSlider(style, min, max, step);
@@ -333,6 +332,7 @@ public class UIComposer {
         cell.add(textLabel);
         return cell;
     }
+     */
 
     public Slider addSlider(String style, int min, int max, float step){
         if (sliderStyleNames.indexOf(style, false) == -1) throw new IllegalArgumentException("Style not loaded: "+style);
@@ -347,7 +347,7 @@ public class UIComposer {
     public Table addButton(String style, String text, float fontScale){
         Table table = new Table();
         table.add(addButton(style));
-        table.add(addText(text, (BitmapFont)assetManager.get("fonts/font2(old).fnt"), fontScale));
+        table.add(addText(text, (BitmapFont)assetManager.get("font2(old).fnt"), fontScale));
         return table;
     }
 

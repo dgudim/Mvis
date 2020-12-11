@@ -40,7 +40,7 @@ public class BaseVisualiser {
         renderer = new ShapeRenderer();
         renderer.setAutoShapeType(true);
 
-        musicWave = new MusicWave();
+        musicWave = new MusicWave(null);
         music = musicWave.getMusic();
 
         samplesRaw = musicWave.normaliseSamples(false, false, musicWave.getSamples());

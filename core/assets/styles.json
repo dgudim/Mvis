@@ -1,5 +1,5 @@
 {
-  "fonts": ["fonts/font2(old).fnt", "fonts/font2.fnt"],
+  "fonts": ["font2(old).fnt", "font2.fnt"],
   "separateTextures": [],
 
   "trello":{
@@ -16,7 +16,7 @@
       "texture": "trello_enabled",
       "size": [60, 60]
     },
-    "loadFrom": "menuButtons/buttons.atlas"
+    "loadFrom": "buttons.atlas"
   },
 
   "gitHub":{
@@ -33,7 +33,7 @@
       "texture": "gitHub_enabled",
       "size": [60, 60]
     },
-    "loadFrom": "menuButtons/buttons.atlas"
+    "loadFrom": "buttons.atlas"
   },
 
   "questionButton":{
@@ -50,7 +50,7 @@
       "texture": "question_enabled",
       "size": [60, 60]
     },
-    "loadFrom": "shop/workshop.atlas"
+    "loadFrom": "workshop.atlas"
   },
 
   "defaultLight":{
@@ -59,24 +59,24 @@
     "up": {
       "texture": "button_blank",
       "size": ["default", "default"],
-      "fontColor": "#3D4931"
+      "fontColor": "#FFFFFF"
     },
     "over":{
       "texture": "blank_over",
       "size": ["default", "default"],
-      "fontColor": "#3D5232"
+      "fontColor": "#FFFFFF"
     },
     "down":{
       "texture": "blank_enabled",
       "size": ["default", "default"],
-      "fontColor": "#22370E"
+      "fontColor": "#FFFFFF"
     },
-    "loadFrom": "menuButtons/menuButtons.atlas"
+    "loadFrom": "menuButtons.atlas"
   },
 
   "defaultDark":{
     "type": "textButtonStyle",
-    "font": 1,
+    "font": 0,
     "up": {
       "texture": "blank2_disabled",
       "size": ["default", "default"],
@@ -92,7 +92,7 @@
       "size": ["default", "default"],
       "fontColor": "#31FF25"
     },
-    "loadFrom": "menuButtons/menuButtons.atlas"
+    "loadFrom": "menuButtons.atlas"
   },
 
   "checkBoxDefault":{
@@ -118,7 +118,7 @@
       "size": [40, 40],
       "fontColor": "default"
     },
-    "loadFrom": "shop/ui.atlas"
+    "loadFrom": "ui.atlas"
   },
 
   "checkBoxSmall":{
@@ -144,7 +144,7 @@
       "size": [10, 10],
       "fontColor": "default"
     },
-    "loadFrom": "shop/ui.atlas"
+    "loadFrom": "ui.atlas"
   },
 
   "arrowRightSmall":{
@@ -170,7 +170,7 @@
       "size": [10, 10],
       "fontColor": "default"
     },
-    "loadFrom": "shop/ui.atlas"
+    "loadFrom": "ui.atlas"
   },
 
   "arrowLeftSmall":{
@@ -196,7 +196,7 @@
       "size": [10, 10],
       "fontColor": "default"
     },
-    "loadFrom": "shop/ui.atlas"
+    "loadFrom": "ui.atlas"
   },
 
   "sliderDefaultBig":{
@@ -217,7 +217,7 @@
       "texture": "progressBarKnob_over",
       "size": [37.5, 62.5]
     },
-    "loadFrom": "shop/ui.atlas"
+    "loadFrom": "ui.atlas"
   },
 
   "sliderDefaultNormal":{
@@ -238,7 +238,7 @@
       "texture": "progressBarKnob_over",
       "size": [27.5, 42.5]
     },
-    "loadFrom": "shop/ui.atlas"
+    "loadFrom": "ui.atlas"
   },
 
   "sliderDefaultSmall":{
@@ -259,12 +259,12 @@
       "texture": "progressBarKnob_over",
       "size": [6, 10]
     },
-    "loadFrom": "shop/ui.atlas"
+    "loadFrom": "ui.atlas"
   },
 
   "workshopGreen":{
     "type": "textButtonStyle",
-    "font": 1,
+    "font": 0,
     "up": {
       "texture": "blank_shopButton_disabled",
       "size": ["default", "default"],
@@ -280,12 +280,12 @@
       "size": ["default", "default"],
       "fontColor": "#22370E"
     },
-    "loadFrom": "shop/workshop.atlas"
+    "loadFrom": "workshop.atlas"
   },
 
   "workshopRed":{
     "type": "textButtonStyle",
-    "font": 1,
+    "font": 0,
     "up": {
       "texture": "blank_shopButton_red_disabled",
       "size": ["default", "default"],
@@ -301,12 +301,12 @@
       "size": ["default", "default"],
       "fontColor": "#37220E"
     },
-    "loadFrom": "shop/workshop.atlas"
+    "loadFrom": "workshop.atlas"
   },
 
   "workshopCyan":{
     "type": "textButtonStyle",
-    "font": 1,
+    "font": 0,
     "up": {
       "texture": "blank_shopButton_cyan_disabled",
       "size": ["default", "default"],
@@ -322,12 +322,12 @@
       "size": ["default", "default"],
       "fontColor": "#0E3732"
     },
-    "loadFrom": "shop/workshop.atlas"
+    "loadFrom": "workshop.atlas"
   },
 
   "workshopPurple":{
     "type": "textButtonStyle",
-    "font": 1,
+    "font": 0,
     "up": {
       "texture": "blank_shopButton_purple_disabled",
       "size": ["default", "default"],
@@ -343,6 +343,6 @@
       "size": ["default", "default"],
       "fontColor": "#1C0929"
     },
-    "loadFrom": "shop/workshop.atlas"
+    "loadFrom": "workshop.atlas"
   }
 }

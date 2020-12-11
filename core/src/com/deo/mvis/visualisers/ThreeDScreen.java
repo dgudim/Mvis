@@ -64,7 +64,7 @@ public class ThreeDScreen extends BaseVisualiser implements Screen{
 
     ThreeDScreen() {
 
-        MusicWave musicWave = new MusicWave();
+        MusicWave musicWave = new MusicWave(null);
         music = musicWave.getMusic();
 
         rSamplesNormalised = musicWave.smoothSamples(musicWave.getRightChannelSamples(), 1, 32);
