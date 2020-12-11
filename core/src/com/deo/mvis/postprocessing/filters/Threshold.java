@@ -16,7 +16,7 @@
 
 package com.deo.mvis.postprocessing.filters;
 
-import com.deo.mvis.ShaderLoader;
+import com.deo.mvis.utils.ShaderLoader;
 
 public final class Threshold extends Filter<Threshold> {
 

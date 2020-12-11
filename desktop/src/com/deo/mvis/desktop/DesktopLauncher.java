@@ -2,11 +2,10 @@ package com.deo.mvis.desktop;
 
 import com.badlogic.gdx.backends.lwjgl.LwjglApplication;
 import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration;
-import com.deo.mvis.BaseEngine;
-import com.deo.mvis.MainScreen;
+import com.deo.mvis.Launcher;
 
-import static com.deo.mvis.BaseEngine.HEIGHT;
-import static com.deo.mvis.BaseEngine.WIDTH;
+import static com.deo.mvis.Launcher.HEIGHT;
+import static com.deo.mvis.Launcher.WIDTH;
 
 public class DesktopLauncher {
 
@@ -22,6 +21,6 @@ public class DesktopLauncher {
 		cfg.foregroundFPS = 7680;
 
 		cfg.samples = 0;
-		new LwjglApplication(new BaseEngine(), cfg);
+		new LwjglApplication(new Launcher(), cfg);
 	}
 }

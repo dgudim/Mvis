@@ -18,7 +18,7 @@ package com.deo.mvis.postprocessing.filters;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
-import com.deo.mvis.ShaderLoader;
+import com.deo.mvis.utils.ShaderLoader;
 
 public final class Combine extends Filter<Combine> {
 
