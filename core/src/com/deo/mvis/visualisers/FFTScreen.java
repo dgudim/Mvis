@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
@@ -69,6 +70,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
 
     private final int FIRE = 1;
     private final int BANANA = 2;
+    private final int GRASS = 3;
 
     private final int fftSize = 512;
 
@@ -92,12 +94,12 @@ public class FFTScreen extends BaseVisualiser implements Screen {
         if (Gdx.files.external("Mvis/" + musicFile.nameWithoutExtension() + ".txt").exists() && displayLyrics) {
             JsonValue lyricsJson = new JsonReader().parse(Gdx.files.external("Mvis/" + musicFile.nameWithoutExtension() + ".txt").readString());
             for (int i = 0; i < lyricsJson.size - 1; i++) {
-                songWords.add(new SyncedWord(-WIDTH/2f, 300, Integer.parseInt(lyricsJson.get(i).name), Integer.parseInt(lyricsJson.get(i + 1).name), lyricsJson.get(i).asString(), new BitmapFont(Gdx.files.internal("font2(old).fnt"))));
+                songWords.add(new SyncedWord(-WIDTH / 2f, 300, Integer.parseInt(lyricsJson.get(i).name), Integer.parseInt(lyricsJson.get(i + 1).name), lyricsJson.get(i).asString(), new BitmapFont(Gdx.files.internal("font2(old).fnt"))));
             }
             lyricsAvailable = true;
         }
 
-        switch (palette){
+        switch (palette) {
             case (FIRE):
                 colorShift = 14.21f;
                 colorShift2 = 18.947f;
@@ -112,6 +114,14 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                 waterfallColorAmplitude = 7;
                 waterfallColorShift = 140;
                 break;
+            case (GRASS):
+                colorShift = 143.7f;
+                colorShift2 = 33.1f;
+                colorAmplitude = 1.79f;
+                waterfallColorAmplitude = 7;
+                waterfallColorShift = 66.3f;
+                break;
+
         }
 
         if (render) {
@@ -143,8 +153,8 @@ public class FFTScreen extends BaseVisualiser implements Screen {
 
         for (int t = 0; t < 2; t++) {
             for (int i = 2; i < samples.length - 2; i++) {
-                float neighbours = samples[i - 2] + samples[i + 2] + samples[i - 1] + samples[i + 1];
-                samples[i] = (Math.abs(neighbours) + Math.abs(samples[i])) / 5f;
+                float neighbours = Math.abs(samples[i - 2]) + Math.abs(samples[i + 2]) + Math.abs(samples[i - 1]) + Math.abs(samples[i + 1]);
+                samples[i] = (neighbours + Math.abs(samples[i])) / 5f;
             }
         }
 
@@ -196,7 +206,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
         batch.begin();
         if (lyricsAvailable) {
             for (int i = 0; i < songWords.size; i++) {
-                songWords.get(i).drawAndUpdate(music.getPosition(), batch ,new Color().fromHsv(displaySamples[0] / 2048 * colorAmplitude + colorShift + waterfallColorShift, 0.75f, 1));
+                songWords.get(i).drawAndUpdate(music.getPosition(), batch, new Color().fromHsv(displaySamples[0] / 2048 * colorAmplitude + colorShift + waterfallColorShift, 0.75f, 1));
             }
         }
         batch.end();
@@ -241,15 +251,15 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                     int index = i + 5;
                     displaySamples[i] += samples[index] / 16;
 
-                    renderer.setColor(new Color().fromHsv(displaySamples[i] / 2048 * colorAmplitude + colorShift + colorShift2, 0.75f, 0.9f));
-                    renderer.rect(-i * step, 0, step, displaySamples[i] / 512 * fftHeight + 0.5f);
-                    renderer.rect(+i * step, 0, step, displaySamples[i] / 512 * fftHeight + 0.5f);
+                    renderer.setColor(new Color().fromHsv(MathUtils.clamp(displaySamples[i] / 2048 * colorAmplitude, 0, 130) + colorShift + colorShift2, 0.75f, 0.9f));
+                    renderer.rect(-i * step, 0, step, displaySamples[i] / 1024 * fftHeight + 0.5f);
+                    renderer.rect(+i * step, 0, step, displaySamples[i] / 1024 * fftHeight + 0.5f);
 
-                    renderer.setColor(new Color().fromHsv(-displaySamples[i] / 2048 * colorAmplitude + colorShift - colorShift2, 0.75f, 0.9f));
-                    renderer.rect(-i * step, 0, step, -displaySamples[i] / 512 * fftHeight + 0.5f);
-                    renderer.rect(+i * step, 0, step, -displaySamples[i] / 512 * fftHeight + 0.5f);
+                    renderer.setColor(new Color().fromHsv(-MathUtils.clamp(displaySamples[i] / 2048 * colorAmplitude, 0, 130) + colorShift - colorShift2, 0.75f, 0.9f));
+                    renderer.rect(-i * step, 0, step, -displaySamples[i] / 1024 * fftHeight + 0.5f);
+                    renderer.rect(+i * step, 0, step, -displaySamples[i] / 1024 * fftHeight + 0.5f);
 
-                    displaySamples[i] /= 2f;
+                    displaySamples[i] /= 1.3f;
                 }
 
                 break;
@@ -325,7 +335,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
     }
 
     public static void init() {
-        paletteNames = new String[]{"Default", "Chemical fire", "Purple banana"};
+        paletteNames = new String[]{"Default", "Chemical fire", "Purple banana", "Frozen grass"};
         typeNames = new String[]{"Basic", "Triangle"};
 
         settings = new String[]{"Type", "Pallet", "Triangle flying speed", "Max fft height", "Color shift", "Color difference", "Color amplitude",
@@ -355,7 +365,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
         fftHeight = newSettings[3];
         colorShift = newSettings[4];
         colorShift2 = newSettings[5];
-        colorAmplitude = newSettings[6];
+        colorAmplitude = newSettings[6] / 2f;
         outline = newSettings[7] > 0;
         waterfall = newSettings[8] > 0;
         numOfHoles = (int) newSettings[9];

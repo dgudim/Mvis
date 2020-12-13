@@ -20,7 +20,6 @@ public class DesktopLauncher {
 		cfg.fullscreen = true;
 		cfg.foregroundFPS = 7680;
 
-		cfg.samples = 0;
 		new LwjglApplication(new Launcher(), cfg);
 	}
 }

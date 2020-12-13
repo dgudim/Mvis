@@ -1,6 +1,5 @@
 package com.deo.mvis;
 
-import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
@@ -11,7 +10,6 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
-import com.badlogic.gdx.graphics.PixmapIO;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -36,7 +34,6 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.BufferUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.deo.mvis.jtransforms.fft.FloatFFT_1D;
 import com.deo.mvis.otherScreens.GameOfLife;
@@ -44,6 +41,7 @@ import com.deo.mvis.utils.MusicWave;
 import com.deo.mvis.utils.UIComposer;
 import com.deo.mvis.visualisers.BaseVisualiser;
 import com.deo.mvis.visualisers.FFTScreen;
+import com.deo.mvis.visualisers.FourierScreen;
 import com.deo.mvis.visualisers.MuffinScreen;
 import com.deo.mvis.visualisers.MushroomScreen;
 import com.deo.mvis.visualisers.OsciloscopeScreen;
@@ -58,6 +56,7 @@ import static com.deo.mvis.Launcher.HEIGHT;
 import static com.deo.mvis.Launcher.WIDTH;
 import static com.deo.mvis.utils.Utils.getBoolean;
 import static com.deo.mvis.utils.Utils.getInteger;
+import static com.deo.mvis.utils.Utils.getRandomInRange;
 import static com.deo.mvis.utils.Utils.putBoolean;
 import static com.deo.mvis.utils.Utils.putFloat;
 import static com.deo.mvis.utils.Utils.putInteger;
@@ -173,6 +172,7 @@ public class MenuScreen implements Screen {
         visualiserClasses.add(MushroomScreen.class);
         visualiserClasses.add(FFTScreen.class);
         visualiserClasses.add(GameOfLife.class);
+        visualiserClasses.add(FourierScreen.class);
 
         boolean row = false;
         int i = 0;
@@ -404,6 +404,7 @@ public class MenuScreen implements Screen {
         final SelectBox<String> paletteSelector = new SelectBox<>(selectBoxStyle);
         final SelectBox<String> typeSelector = new SelectBox<>(selectBoxStyle);
         final SelectBox<String> musicSelector = new SelectBox<>(selectBoxStyle);
+        final SelectBox<String> presetSelector = new SelectBox<>(selectBoxStyle);
 
         Label.LabelStyle labelStyle = new Label.LabelStyle();
         labelStyle.font = font_small;
@@ -412,7 +413,11 @@ public class MenuScreen implements Screen {
         Array<String> availableMusic = new Array<>();
         final Array<FileHandle> availableMusicFiles = new Array<>();
 
+        final Array<String> availablePresets = new Array<>();
+        final Array<FileHandle> availablePresetFiles = new Array<>();
+
         File musicFolder = Gdx.files.external("Mvis").file();
+        File presetsFolder = Gdx.files.external("Mvis/" + name).file();
 
         try {
             for (File m : musicFolder.listFiles()) {
@@ -425,13 +430,24 @@ public class MenuScreen implements Screen {
             e.printStackTrace();
         }
 
+        try {
+            for (File m : presetsFolder.listFiles()) {
+                availablePresets.add(m.getName());
+                availablePresetFiles.add(Gdx.files.external("Mvis/" + name + "/" + m.getName()));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         musicSelector.setItems(availableMusic);
         paletteSelector.setItems(paletteNames);
         typeSelector.setItems(typeNames);
+        presetSelector.setItems(availablePresets);
 
         musicSelector.setMaxListCount(5);
         typeSelector.setMaxListCount(6);
         paletteSelector.setMaxListCount(7);
+        presetSelector.setMaxListCount(8);
 
         int selectedMusic = MathUtils.clamp(getInteger("music" + name), 0, availableMusic.size - 1);
 
@@ -471,8 +487,39 @@ public class MenuScreen implements Screen {
         TextButton visualiserStartButton = uiComposer.addTextButton("defaultLight", "Launch visualiser", 0.45f);
         visualiserStartButton.setColor(Color.LIGHT_GRAY);
 
+        TextButton addPresetButton = uiComposer.addTextButton("defaultLight", "Save as a preset", 0.45f);
+        addPresetButton.setColor(Color.LIGHT_GRAY);
+
         TextButton settingsResetButton = uiComposer.addTextButton("defaultLight", "Reset to defaults", 0.45f);
         settingsResetButton.setColor(Color.LIGHT_GRAY);
+
+        addPresetButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                float key = 0;
+                StringBuilder exportedSettings = new StringBuilder();
+                exportedSettings.append(newSettings[2]);
+                for (int i = 3; i < newSettings.length; i++) {
+                    exportedSettings.append(",");
+                    exportedSettings.append(newSettings[i]);
+                    key += newSettings[i] % i;
+                }
+                FileHandle destinationFolder = Gdx.files.external("Mvis/" + finalName + "/");
+
+                if (!destinationFolder.exists()) {
+                    destinationFolder.mkdirs();
+                }
+
+                FileHandle destinationFile = Gdx.files.external("Mvis/" + finalName + "/" + key);
+                destinationFile.writeString(exportedSettings.toString(), false);
+
+                if(!availablePresets.contains(key + "", false)) {
+                    availablePresets.add(key + "");
+                    availablePresetFiles.add(destinationFile);
+                    presetSelector.setItems(availablePresets);
+                }
+            }
+        });
 
         visualiserStartButton.addListener(new ClickListener() {
             @Override
@@ -599,7 +646,9 @@ public class MenuScreen implements Screen {
         middleTable.add(visualiserStartButton).width(330).height(75).padRight(5).padBottom(5).align(Align.left);
         middleTable.add(settingsResetButton).width(330).height(75).padLeft(5).padBottom(5).align(Align.left);
 
-        settingsTable.add(middleTable);
+        settingsTable.add(middleTable).row();
+        settingsTable.add(addPresetButton).height(75).width(330).padBottom(5).row();
+        settingsTable.add(presetSelector).width(WIDTH / 2f - 22).padBottom(5).padLeft(7).align(Align.left);
 
         settings.add(scrollPane);
         stage.addActor(scrollPane);

@@ -1,5 +1,6 @@
 package com.deo.mvis;
 import com.badlogic.gdx.Game;
+import com.deo.mvis.visualisers.FourierScreen;
 
 public final class Launcher extends Game {
 
