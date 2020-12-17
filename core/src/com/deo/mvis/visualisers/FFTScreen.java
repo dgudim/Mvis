@@ -249,7 +249,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                     }
 
                     int index = i + 5;
-                    displaySamples[i] += samples[index] / 16;
+                    displaySamples[i] += samples[index] / 16 * (i * 0.01 + 1);
 
                     renderer.setColor(new Color().fromHsv(MathUtils.clamp(displaySamples[i] / 2048 * colorAmplitude, 0, 130) + colorShift + colorShift2, 0.75f, 0.9f));
                     renderer.rect(-i * step, 0, step, displaySamples[i] / 1024 * fftHeight + 0.5f);
@@ -259,7 +259,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                     renderer.rect(-i * step, 0, step, -displaySamples[i] / 1024 * fftHeight + 0.5f);
                     renderer.rect(+i * step, 0, step, -displaySamples[i] / 1024 * fftHeight + 0.5f);
 
-                    displaySamples[i] /= 1.3f;
+                    displaySamples[i] /= 1.7f;
                 }
 
                 break;
@@ -273,10 +273,10 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                     renderer.setColor(littleTrianglesColors.get(i));
                     renderer.triangle(triangle[0], triangle[1], triangle[2], triangle[3], triangle[4], triangle[5]);
 
-                    float xSpeed = littleTrianglesSpeeds.get(i).x * samplesSmoothed[pos] * triangleFlyingSpeed;
-                    float ySpeed = littleTrianglesSpeeds.get(i).y * samplesSmoothed[pos] * triangleFlyingSpeed;
+                    float xSpeed = littleTrianglesSpeeds.get(i).x * samplesSmoothed[pos] * triangleFlyingSpeed * delta * 30;
+                    float ySpeed = littleTrianglesSpeeds.get(i).y * samplesSmoothed[pos] * triangleFlyingSpeed * delta * 30;
 
-                    littleTriangles.set(i, littleTriangles.get(i).add(xSpeed, ySpeed, 0.7f));
+                    littleTriangles.set(i, littleTriangles.get(i).add(xSpeed, ySpeed, 37 * delta * (triangleFlyingSpeed / 49)));
 
                     if (littleTriangles.get(i).z > 30) {
                         littleTriangles.removeIndex(i);
@@ -302,10 +302,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
 
                     renderer.setColor(new Color().fromHsv(displaySamples[i] / 256 * colorAmplitude + colorShift - colorShift2, 0.75f, 0.9f));
                     renderer.triangle(triangle[0], triangle[1], triangle[2], triangle[3], triangle[4], triangle[5]);
-                }
-
-                for (int i = 0; i < fftSize - 5; i++) {
-                    displaySamples[i] += samples[i + 5] / 4;
+                    displaySamples[i] += samples[i + 5] / 16 * (i * 0.01 + 1);
                 }
 
                 renderFFTForTriangle(triangleStep, L);
@@ -315,7 +312,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                 renderFFTForTriangle(triangleStep, L);
 
                 for (int i = 0; i < fftSize - 5; i++) {
-                    displaySamples[i] /= 2f;
+                    displaySamples[i] /= 1.7f;
                 }
 
                 renderer.setTransformMatrix(new Matrix4().rotate(0, 0, 1, 0));
@@ -346,9 +343,9 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                 "boolean", "boolean", "int", "int", "float", "float", "float", "int", "float", "float", "float", "float", "boolean", "boolean", "boolean"};
 
         settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 200, 4, 180, 180, 7,
-                1, 1, 25, 15, 10, 20.2f, 50, 15, 60, 30, 7, 180, 1, 1, 1};
+                1, 1, 25, 15, 10, 20.2f, 50, 15, 60, 30, 17, 180, 1, 1, 1};
         settingMinValues = new float[]{0, 0, 0, 1, 0, 0, 1,
-                0, 0, 1, 3, 0, 0, 5, 1, 10, 0, 1, 0, 0, 0, 0};
+                0, 0, 1, 3, 0, 0, 5, 1, 0, 0, 1, 0, 0, 0, 0};
 
         defaultSettings = new float[]{0, 0, 75, 1, 0, 0, 1,
                 0, 0, 11, 6, 0, 5.2f, 35, 5, 30.7f, 10, 1, 0, 1, 0, 0};

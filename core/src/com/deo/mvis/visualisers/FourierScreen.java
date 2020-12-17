@@ -2,20 +2,16 @@ package com.deo.mvis.visualisers;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Vector;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
-import com.deo.mvis.jtransforms.fft.DoubleFFT_1D;
 import com.deo.mvis.jtransforms.fft.FloatFFT_1D;
 
-import static com.badlogic.gdx.graphics.GL20.GL_BLEND_SRC_ALPHA;
 import static com.badlogic.gdx.graphics.GL20.GL_COLOR_BUFFER_BIT;
 import static com.deo.mvis.Launcher.HEIGHT;
 import static com.deo.mvis.Launcher.WIDTH;
@@ -26,6 +22,7 @@ import static com.deo.mvis.utils.Utils.getRandomInRange;
 public class FourierScreen extends BaseVisualiser implements Screen {
 
     private float[] radiuses;
+    private float defaultRadius;
 
     private float[] currentAngles;
     private float[] currentAngles2;
@@ -58,7 +55,7 @@ public class FourierScreen extends BaseVisualiser implements Screen {
     private static boolean changeBranchLength = false;
     private static boolean additionalRotation = true;
     private static boolean enableTriangles = true;
-    private static float triangleAmplitude = 3;
+    private static float orbitAmplitude = 3;
     private static int triangleCount = 36;
     private static float triangleStep = 360 / (float) triangleCount;
     private static boolean enableWallFire = true;
@@ -70,24 +67,28 @@ public class FourierScreen extends BaseVisualiser implements Screen {
     private static float syncedColorAmplitude = 50;
     private static float baseColorOffset = 0;
     private static float colorOffset = 0;
+    private static float starGateSizeModifier = 1;
+    private static float fftSizeModifier = 1;
+    private static float triangleSizeModifier = 1;
+    private static float flyingBallsSizeModifier = 1;
     float offsetAngle;
 
     public FourierScreen(Game game) {
-        super(game, new boolean[]{true, false, false});
+        super(game, new boolean[]{enableStarGateEffect, false, false});
         //radiuses = new float[]{10, 5, 5, 6, 7, 12, 34, 5};
         //speeds = new float[]{10, 5, 4, 7, 8, 15, 5, 8};
 
-        switch (palette){
+        switch (palette) {
             case (COFFEE):
                 colorOffset = 35;
                 break;
-            case(LIME):
+            case (LIME):
                 colorOffset = 80;
                 break;
-            case(GREEN):
+            case (GREEN):
                 colorOffset = 110;
                 break;
-            case(CYAN):
+            case (CYAN):
                 colorOffset = 190;
                 break;
         }
@@ -96,9 +97,12 @@ public class FourierScreen extends BaseVisualiser implements Screen {
 
         radiuses = new float[numberOfLinks];
 
+        float maxReduction = Math.max(Math.max(fftSizeModifier, starGateSizeModifier), triangleSizeModifier);
         for (int i = 0; i < numberOfLinks; i++) {
-            radiuses[i] = HEIGHT / (numberOfLinks * 2f) * (1 - 1 / (float) numberOfLinks / 2f);
+            radiuses[i] = (HEIGHT - 30 * (maxReduction + flyingBallsSizeModifier + 3)) / (numberOfLinks * 2f);
         }
+
+        defaultRadius = radiuses[0];
 
         currentAngles = new float[radiuses.length];
         currentAngles2 = new float[radiuses.length];
@@ -136,7 +140,7 @@ public class FourierScreen extends BaseVisualiser implements Screen {
         Gdx.gl.glClear(GL_COLOR_BUFFER_BIT);
 
         int pos = (int) (music.getPosition() * sampleRate);
-        if(syncColorOffsetToTheMusic) {
+        if (syncColorOffsetToTheMusic) {
             colorOffset = baseColorOffset + samplesSmoothed[pos] * syncedColorAmplitude;
         }
 
@@ -149,7 +153,11 @@ public class FourierScreen extends BaseVisualiser implements Screen {
                 newSample += Math.abs(samples[512 / numberOfLinks * i + i2]);
             }
             newSample /= (512 / (float) numberOfLinks);
-            newSamples[i] = newSample * (i / 3f + 1);
+            newSamples[i] = newSample * (i * 0.01f + 1);
+        }
+
+        for (int i = 0; i < samples.length; i++) {
+            samples[i] *= (i * 0.01 + 1);
         }
 
         renderer.setProjectionMatrix(camera.combined);
@@ -190,12 +198,12 @@ public class FourierScreen extends BaseVisualiser implements Screen {
             for (int i = 0; i < verticalSamples.length; i++) {
                 fireColors.add(
                         fadeBetweenTwoColors(new Color().fromHsv(0.9f + colorOffset, 0.5882f, 1), new Color().fromHsv(0.1078f + colorOffset, 1, 1),
-                        MathUtils.clamp(verticalSamples[0] / 500000f, 0, 1)));
+                                MathUtils.clamp(verticalSamples[0] / 500000f, 0, 1)));
                 fireShapes.add(new Vector3().set(-WIDTH / 2f - verticalStep - 5, i * verticalStep - HEIGHT / 2f, verticalStep + 0.5f));
             }
         }
         if (enableStarGateEffect) {
-            for (int i = 0; i < samplesSmoothed[pos] * 30; i++) {
+            for (int i = 0; i < samplesSmoothed[pos] * 25; i++) {
                 starGateTriangles.add(new Vector3().set(0, 0, 10));
                 starGateTriangleSpeeds.add(new Vector3(getRandomInRange(-200, 200) / 50f * (samplesSmoothed[pos] + 1), getRandomInRange(-200, 200) / 50f * (samplesSmoothed[pos] + 1), getRandomInRange(-180, 180)));
                 starGateTriangleColors.add(new Color().fromHsv(samplesRaw[pos] * 120 - 50 + colorOffset, 0.75f, 0.9f));
@@ -204,8 +212,8 @@ public class FourierScreen extends BaseVisualiser implements Screen {
         if (enableTriangles) {
             for (int i = 0; i < triangleCount; i++) {
                 triangles.add(new Vector3().set(
-                        -MathUtils.sinDeg(offsetAngle * 7 + i * triangleStep) * (HEIGHT / 2f - 30 * (samplesSmoothed[pos] * triangleAmplitude + 1)),
-                        -MathUtils.cosDeg(offsetAngle * 7 + i * triangleStep) * (HEIGHT / 2f - 30 * (samplesSmoothed[pos] * triangleAmplitude + 1)),
+                        -MathUtils.sinDeg(offsetAngle * 7 + i * triangleStep) * (HEIGHT / 2f - 30 * (samplesSmoothed[pos] * orbitAmplitude + triangleSizeModifier)),
+                        -MathUtils.cosDeg(offsetAngle * 7 + i * triangleStep) * (HEIGHT / 2f - 30 * (samplesSmoothed[pos] * orbitAmplitude + triangleSizeModifier)),
                         30));
             }
         }
@@ -221,7 +229,7 @@ public class FourierScreen extends BaseVisualiser implements Screen {
         //mirror
         for (int i = 0; i < samplesToDisplay.length; i++) {
             if (i >= 525) {
-                samplesToDisplay[i] = samplesToDisplay[1050 - i];
+                samplesToDisplay[i] = Math.abs(samplesToDisplay[1050 - i]);
             }
         }
 
@@ -230,11 +238,11 @@ public class FourierScreen extends BaseVisualiser implements Screen {
         }
 
         if (enableStarGateEffect) {
-            drawStarGateTriangles(delta);
+            drawStarGateTriangles(delta, pos);
         }
 
         if (changeBranchLength) {
-            radiuses[0] = radiuses[radiuses.length - 1] * (1 + samplesSmoothed[pos] * 0.5f);
+            radiuses[0] = defaultRadius * (1 + samplesSmoothed[pos] * 0.5f);
         }
 
         if (additionalRotation && music.isPlaying()) {
@@ -259,7 +267,7 @@ public class FourierScreen extends BaseVisualiser implements Screen {
         utils.bloomRender();
 
         if (enableBottomFFT) {
-            drawBottomFFT(samplesToDisplay, WIDTH / 1050f);
+            drawBottomFFT(samplesToDisplay, pos);
         }
 
         batch.begin();
@@ -268,17 +276,32 @@ public class FourierScreen extends BaseVisualiser implements Screen {
 
     }
 
-    private void drawBottomFFT(float[] samplesToDisplay, float step) {
+    private void drawBottomFFT(float[] samplesToDisplay, int pos) {
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         renderer.begin(ShapeRenderer.ShapeType.Filled);
 
+        float ffStep = 360 / 1050f;
         for (int i = 0; i < 1050; i++) {
+
+            float aAngle = 0;
+            if (i > 525) {
+                aAngle = 5 * (i - 525) / 300f;
+            } else if (i < 525) {
+                aAngle = 5 * (i - 525) / 300f;
+            }
+
+            float xStart = -MathUtils.cosDeg(i * ffStep + offsetAngle * 1.3f) * (HEIGHT / 2f - 30 * (samplesSmoothed[pos] * orbitAmplitude + fftSizeModifier));
+            float yStart = -MathUtils.sinDeg(i * ffStep + offsetAngle * 1.3f) * (HEIGHT / 2f - 30 * (samplesSmoothed[pos] * orbitAmplitude + fftSizeModifier));
+
+            float xEnd = -MathUtils.cosDeg(i * ffStep + offsetAngle * 1.3f + aAngle) * (HEIGHT / 2f - 30 * (samplesSmoothed[pos] * orbitAmplitude + fftSizeModifier) + displaySamples[i] / 10000f);
+            float yEnd = -MathUtils.sinDeg(i * ffStep + offsetAngle * 1.3f + aAngle) * (HEIGHT / 2f - 30 * (samplesSmoothed[pos] * orbitAmplitude + fftSizeModifier) + displaySamples[i] / 10000f);
+
             displaySamples[i] += samplesToDisplay[i];
-            Color color = new Color().fromHsv(MathUtils.clamp(displaySamples[i] / 8100 + colorOffset, 0, 190 + colorOffset), 0.9f, 1);
+            Color color = new Color().fromHsv(MathUtils.clamp(displaySamples[i] / 10100 + colorOffset, 0, 190), 0.9f, 1);
             color.a = 0.3f;
             renderer.setColor(color);
-            renderer.rect(i * step - WIDTH / 2f, -HEIGHT / 2f, step, Math.abs(displaySamples[i]) / 5596f);
+            renderer.rectLine(xStart, yStart, xEnd, yEnd, 3);
             displaySamples[i] /= 1.3f;
         }
 
@@ -355,7 +378,7 @@ public class FourierScreen extends BaseVisualiser implements Screen {
 
     }
 
-    private void drawStarGateTriangles(float delta) {
+    private void drawStarGateTriangles(float delta, int pos) {
         for (int i = 0; i < starGateTriangles.size; i++) {
             float[] triangle = calculatePolygon(starGateTriangles.get(i).x, starGateTriangles.get(i).y, starGateTriangles.get(i).z, starGateTriangleSpeeds.get(i).z, 3, 0);
 
@@ -367,7 +390,7 @@ public class FourierScreen extends BaseVisualiser implements Screen {
             float radius = starGateTriangles.get(i).x * starGateTriangles.get(i).x + starGateTriangles.get(i).y * starGateTriangles.get(i).y;
             radius = (float) Math.sqrt(radius);
 
-            if (radius > HEIGHT / 2f - 30 || starGateTriangles.get(i).z <= 0) {
+            if (radius > HEIGHT / 2f - 30 * (samplesSmoothed[pos] * orbitAmplitude + starGateSizeModifier) || starGateTriangles.get(i).z <= 0) {
                 starGateTriangles.removeIndex(i);
                 starGateTriangleSpeeds.removeIndex(i);
                 starGateTriangleColors.removeIndex(i);
@@ -400,14 +423,15 @@ public class FourierScreen extends BaseVisualiser implements Screen {
         paletteNames = new String[]{"Default", "Coffee", "Lime", "Green", "Cyan"};
         typeNames = new String[]{"Basic"};
 
-        settings = new String[]{"Type", "Pallet", "Number of branches", "Vary branch length", "Additional rotation", "Enable triangles", "Triangle amplitude", "Triangle count", "Enable wall fire",
-                "Enable stargate", "Enable flying balls", "Enable fft", "Enable trail triangles", "Color offset", "Sync color to the beats", "Synced color amplitude"};
-        settingTypes = new String[]{"int", "int", "int", "boolean", "boolean", "boolean", "float", "int", "boolean", "boolean", "boolean", "boolean", "boolean", "float", "boolean", "float"};
+        settings = new String[]{"Type", "Pallet", "Number of branches", "Vary branch length", "Additional rotation", "Enable triangles", "Orbit amplitude", "Triangle count", "Enable wall fire",
+                "Enable stargate", "Enable flying balls", "Enable fft", "Enable trail triangles", "Color offset", "Sync color to the beats", "Synced color amplitude",
+                "Stargate\n orbit reduction", "Fft\n orbit reduction", "Triangle\n orbit reduction", "Flying balls\n orbit reduction"};
+        settingTypes = new String[]{"int", "int", "int", "boolean", "boolean", "boolean", "float", "int", "boolean", "boolean", "boolean", "boolean", "boolean", "float", "boolean", "float", "float", "float", "float", "float"};
 
-        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 5, 1, 1, 1, 11, 72, 1, 1, 1, 1, 1, 180, 1, 180};
-        settingMinValues = new float[]{0, 0, 1, 0, 0, 0, -3, 0, 0, 0, 0, 0, 0, 0, 0, 5};
+        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 5, 1, 1, 1, 11, 72, 1, 1, 1, 1, 1, 180, 1, 180, 5, 5, 5, 11};
+        settingMinValues = new float[]{0, 0, 1, 0, 0, 0, -3, 0, 0, 0, 0, 0, 0, 0, 0, 5, 1, 1, 1, -5};
 
-        defaultSettings = new float[]{0, 0, 2, 1, 1, 1, 3, 36, 1, 0, 1, 1, 1, 0, 0, 15};
+        defaultSettings = new float[]{0, 0, 2, 1, 1, 1, 3, 36, 1, 0, 1, 1, 1, 0, 0, 15, 1, 1, 1, 0};
     }
 
     public static String getName() {
@@ -419,25 +443,25 @@ public class FourierScreen extends BaseVisualiser implements Screen {
         palette = (int) newSettings[1];
         switch ((int) newSettings[2]) {
             case (1):
-                numberOfLinks = 3;
+                numberOfLinks = 1;
                 break;
             case (2):
-                numberOfLinks = 5;
+                numberOfLinks = 3;
                 break;
             case (3):
-                numberOfLinks = 15;
+                numberOfLinks = 5;
                 break;
             case (4):
-                numberOfLinks = 25;
+                numberOfLinks = 15;
                 break;
             case (5):
-                numberOfLinks = 35;
+                numberOfLinks = 25;
                 break;
         }
         changeBranchLength = newSettings[3] > 0;
         additionalRotation = newSettings[4] > 0;
         enableTriangles = newSettings[5] > 0;
-        triangleAmplitude = newSettings[6];
+        orbitAmplitude = newSettings[6];
         triangleCount = (int) newSettings[7];
         triangleStep = 360 / newSettings[7];
         enableWallFire = newSettings[8] > 0;
@@ -448,6 +472,10 @@ public class FourierScreen extends BaseVisualiser implements Screen {
         colorOffset = newSettings[13];
         syncColorOffsetToTheMusic = newSettings[14] > 0;
         syncedColorAmplitude = newSettings[15];
+        starGateSizeModifier = newSettings[16];
+        fftSizeModifier = newSettings[17];
+        triangleSizeModifier = newSettings[18];
+        flyingBallsSizeModifier = newSettings[19];
     }
 
     @Override

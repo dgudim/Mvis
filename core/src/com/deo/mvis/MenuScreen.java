@@ -2,6 +2,7 @@ package com.deo.mvis;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.audio.Music;
@@ -29,6 +30,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Slider;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.utils.ActorGestureListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
@@ -439,6 +441,26 @@ public class MenuScreen implements Screen {
             e.printStackTrace();
         }
 
+        final String finalName = name;
+        if (!Gdx.files.external("Mvis/" + finalName + "/default").exists()) {
+            StringBuilder exportedSettings = new StringBuilder();
+            exportedSettings.append(newSettings[2]);
+            for (int i = 3; i < newSettings.length; i++) {
+                exportedSettings.append(",");
+                exportedSettings.append(newSettings[i]);
+            }
+            FileHandle destinationFolder = Gdx.files.external("Mvis/" + finalName + "/");
+
+            if (!destinationFolder.exists()) {
+                destinationFolder.mkdirs();
+            }
+
+            FileHandle destinationFile = Gdx.files.external("Mvis/" + finalName + "/default");
+            destinationFile.writeString(exportedSettings.toString(), false);
+            availablePresets.add("default");
+            availablePresetFiles.add(destinationFile);
+        }
+
         musicSelector.setItems(availableMusic);
         paletteSelector.setItems(paletteNames);
         typeSelector.setItems(typeNames);
@@ -457,7 +479,6 @@ public class MenuScreen implements Screen {
         paletteSelector.setSelectedIndex(getInteger("palette" + name));
         newSettings[1] = getInteger("palette" + name);
 
-        final String finalName = name;
         typeSelector.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
@@ -490,8 +511,40 @@ public class MenuScreen implements Screen {
         TextButton addPresetButton = uiComposer.addTextButton("defaultLight", "Save as a preset", 0.45f);
         addPresetButton.setColor(Color.LIGHT_GRAY);
 
+        TextButton loadPresetButton = uiComposer.addTextButton("defaultLight", "Load preset", 0.45f);
+        loadPresetButton.setColor(Color.LIGHT_GRAY);
+
         TextButton settingsResetButton = uiComposer.addTextButton("defaultLight", "Reset to defaults", 0.45f);
         settingsResetButton.setColor(Color.LIGHT_GRAY);
+
+        final String[] finalSettingTypes = settingTypes;
+        loadPresetButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                FileHandle destinationPreset = availablePresetFiles.get(presetSelector.getSelectedIndex());
+                String[] settings = destinationPreset.readString().split(",");
+                float[] fSettings = new float[settings.length + 2];
+                for (int i = 2; i < settings.length + 2; i++) {
+                    fSettings[i] = Float.parseFloat(settings[i - 2]);
+                }
+                for (int i = 2; i < finalSettingTypes.length; i++) {
+                    switch (finalSettingTypes[i]) {
+                        case ("int"):
+                        case ("float"):
+                            putFloat(finalName + "_" + i, fSettings[i]);
+                            Table sliderTable = (Table) settingsTable.getCells().get(i - 2).getActor();
+                            Slider slider = (Slider) sliderTable.getCells().get(0).getActor();
+                            slider.setValue(fSettings[i]);
+                            break;
+                        case ("boolean"):
+                            putBoolean(finalName + "_" + i, fSettings[i] > 0);
+                            CheckBox checkBox = (CheckBox) settingsTable.getCells().get(i - 2).getActor();
+                            checkBox.setChecked(fSettings[i] > 0);
+                            break;
+                    }
+                }
+            }
+        });
 
         addPresetButton.addListener(new ClickListener() {
             @Override
@@ -513,11 +566,36 @@ public class MenuScreen implements Screen {
                 FileHandle destinationFile = Gdx.files.external("Mvis/" + finalName + "/" + key);
                 destinationFile.writeString(exportedSettings.toString(), false);
 
-                if(!availablePresets.contains(key + "", false)) {
+                if (!availablePresets.contains(key + "", false)) {
                     availablePresets.add(key + "");
                     availablePresetFiles.add(destinationFile);
                     presetSelector.setItems(availablePresets);
                 }
+            }
+        });
+
+        presetSelector.addListener(new ActorGestureListener() {
+            @Override
+            public boolean longPress(Actor actor, float x, float y) {
+                CustomTextInputListener listener = new CustomTextInputListener() {
+                    @Override
+                    public void input(String text) {
+                        FileHandle fileToRename = availablePresetFiles.get(presetSelector.getSelectedIndex());
+                        FileHandle newFile = Gdx.files.external("Mvis/" + finalName + "/" + text);
+                        StringBuilder name = new StringBuilder(text);
+                        while (newFile.exists()) {
+                            name.append("(duplicate)");
+                            newFile = Gdx.files.external("Mvis/" + finalName + "/" + name);
+                        }
+                        newFile.writeString(fileToRename.readString(), false);
+                        fileToRename.delete();
+                        availablePresets.set(presetSelector.getSelectedIndex(), name.toString());
+                        availablePresetFiles.set(presetSelector.getSelectedIndex(), newFile);
+                        presetSelector.setItems(availablePresets);
+                    }
+                };
+                Gdx.input.getTextInput(listener, "Rename?", presetSelector.getSelected(), "");
+                return true;
             }
         });
 
@@ -537,7 +615,6 @@ public class MenuScreen implements Screen {
         });
 
         final float[] finalDefaultSettings = defaultSettings;
-        final String[] finalSettingTypes = settingTypes;
         settingsResetButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -646,8 +723,12 @@ public class MenuScreen implements Screen {
         middleTable.add(visualiserStartButton).width(330).height(75).padRight(5).padBottom(5).align(Align.left);
         middleTable.add(settingsResetButton).width(330).height(75).padLeft(5).padBottom(5).align(Align.left);
 
+        Table middleTable2 = new Table();
+        middleTable2.add(addPresetButton).width(330).height(75).padRight(5).padBottom(5).align(Align.left);
+        middleTable2.add(loadPresetButton).width(330).height(75).padLeft(5).padBottom(5).align(Align.left);
+
         settingsTable.add(middleTable).row();
-        settingsTable.add(addPresetButton).height(75).width(330).padBottom(5).row();
+        settingsTable.add(middleTable2).row();
         settingsTable.add(presetSelector).width(WIDTH / 2f - 22).padBottom(5).padLeft(7).align(Align.left);
 
         settings.add(scrollPane);
@@ -690,5 +771,15 @@ public class MenuScreen implements Screen {
         if (Gdx.input.getInputProcessor().equals(stage)) {
             Gdx.input.setInputProcessor(null);
         }
+    }
+}
+
+class CustomTextInputListener implements Input.TextInputListener {
+    @Override
+    public void input(String text) {
+    }
+
+    @Override
+    public void canceled() {
     }
 }
