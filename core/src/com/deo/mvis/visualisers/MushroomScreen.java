@@ -12,6 +12,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.deo.mvis.utils.SettingsArray;
 
 import static com.deo.mvis.Launcher.HEIGHT;
 
@@ -182,46 +183,39 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
         paletteNames = new String[]{"Default"};
         typeNames = new String[]{"Single", "Double", "Triple", "Double channel"};
 
-        settings = new String[]{
-                "Type",
-                "Pallet",
-                "Exponential",
-                "Branch length",
-                "Max iterations (+5)",
-                "Max angle",
-                "Base iterations",
-                "Base angle",
-                "Fadeout",
-                "Max bloom saturation",
-                "Render"};
-        settingTypes = new String[]{"int", "int", "boolean", "float", "int", "float", "int", "float", "float", "float", "boolean"};
-
-        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 1, 80, 10, 90, 7, 45, 0.1f, 5, 1};
-        settingMinValues = new float[]{0, 0, 0, 1, 1, 5, 1, 0, 0.0005f, 0, 0};
-
-        defaultSettings = new float[]{0, 0, 0, 45, 7, 45, 5, 5, 0.08f, 3, 0};
+        addSetting("Type","int",0.0f,3.0f,0.0f);
+        addSetting("Palette","int",0.0f,0.0f,0.0f);
+        addSetting("Exponential","boolean",0.0f,1.0f,0.0f);
+        addSetting("Branch length","float",1.0f,80.0f,45.0f);
+        addSetting("Max iterations (+5)","int",1.0f,10.0f,7.0f);
+        addSetting("Max angle","float",5.0f,90.0f,45.0f);
+        addSetting("Base iterations","int",1.0f,7.0f,5.0f);
+        addSetting("Base angle","float",0.0f,45.0f,5.0f);
+        addSetting("Fadeout","float",5.0E-4f,0.1f,0.08f);
+        addSetting("Max bloom saturation","float",0.0f,5.0f,3.0f);
+        addSetting("Render","boolean",0.0f,1.0f,0.0f);
     }
 
     public static String getName() {
         return "Fractal tree";
     }
 
-    public static void setSettings(float[] newSettings) {
+    public static void setSettings(SettingsArray newSettings){
 
-        type = (int) newSettings[0];
-        palette = (int) newSettings[1];
-        exponential = newSettings[2] > 0;
+        type = (int) newSettings.getSettingByName("Type");
+        palette = (int) newSettings.getSettingByName("Palette");
+        exponential = newSettings.getSettingByName("Exponential") > 0;
 
-        branchLength = newSettings[3];
-        maxIterations = (int) newSettings[4];
-        maxAngle = newSettings[5];
+        branchLength = newSettings.getSettingByName("Branch length");
+        maxIterations = (int) newSettings.getSettingByName("Max iterations (+5)");
+        maxAngle = newSettings.getSettingByName("Max angle");
 
-        baseIterations = (int) newSettings[6];
-        baseAngle = newSettings[7];
+        baseIterations = (int) newSettings.getSettingByName("Base iterations");
+        baseAngle = newSettings.getSettingByName("Base angle");
 
-        fadeout = newSettings[8];
-        maxSaturation = newSettings[9];
-        render = newSettings[10] > 0;
+        fadeout = newSettings.getSettingByName("Fadeout");
+        maxSaturation = newSettings.getSettingByName("Max bloom saturation");
+        render = newSettings.getSettingByName("Render") > 0;
     }
 
     @Override

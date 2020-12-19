@@ -16,9 +16,12 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.deo.mvis.MenuScreen;
 import com.deo.mvis.utils.MusicWave;
+import com.deo.mvis.utils.Setting;
+import com.deo.mvis.utils.SettingsArray;
 import com.deo.mvis.utils.UIComposer;
 import com.deo.mvis.utils.Utils;
 
@@ -54,10 +57,13 @@ public class BaseVisualiser {
     float[] rSamplesNormalisedSmoothed;
     float[] lSamplesNormalisedSmoothed;
 
-    public static String[] typeNames, paletteNames, settings, settingTypes;
-    public static float[] settingMaxValues, settingMinValues, defaultSettings;
+    public static String[] typeNames, paletteNames;
+
+    public static SettingsArray settings;
 
     int numOfSamples;
+    static int settingIndex;
+    static float[] newSettings;
     public int sampleRate;
 
     public static FileHandle musicFile = Gdx.files.internal("away.wav");
@@ -69,6 +75,8 @@ public class BaseVisualiser {
     private AssetManager assetManager;
 
     public BaseVisualiser(final Game game, boolean[] requiredSamples) {
+
+        settings = new SettingsArray();
 
         camera = new OrthographicCamera(1600, 900);
         viewport = new ScreenViewport(camera);
@@ -194,32 +202,12 @@ public class BaseVisualiser {
         System.gc();
     }
 
-    public static String[] getSettings() {
+    public static SettingsArray getSettings() {
         return settings;
     }
 
-    public static String[] getSettingTypes() {
-        return settingTypes;
-    }
-
-    public static String[] getTypeNames() {
-        return typeNames;
-    }
-
-    public static String[] getPaletteNames() {
-        return paletteNames;
-    }
-
-    public static float[] getSettingMaxValues() {
-        return settingMaxValues;
-    }
-
-    public static float[] getSettingMinValues() {
-        return settingMinValues;
-    }
-
-    public static float[] getDefaultSettings() {
-        return defaultSettings;
+    static void addSetting(String settingName, String settingType, float minValue, float maxValue, float defaultValue) {
+        settings.add(new Setting(settingName, settingType, minValue, maxValue, defaultValue));
     }
 
     public static void setMusic(FileHandle fileHandle) {

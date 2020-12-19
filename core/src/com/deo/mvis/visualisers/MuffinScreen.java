@@ -23,6 +23,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.deo.mvis.utils.SettingsArray;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -319,24 +320,21 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
         paletteNames = new String[]{"Default"};
         typeNames = new String[]{"Cube", "Muffin", "Flat"};
 
-        settings = new String[]{"Type", "Pallet", "VisualiserQuality", "Render"};
-        settingTypes = new String[]{"int", "int", "int", "boolean"};
-
-        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 100, 1};
-        settingMinValues = new float[]{0, 0, 1, 0};
-
-        defaultSettings = new float[]{0, 0, 100, 0};
+        addSetting("Type","int",0.0f,2.0f,0.0f);
+        addSetting("Palette","int",0.0f,0.0f,0.0f);
+        addSetting("Visualiser quality","int",1.0f,100.0f,100.0f);
+        addSetting("Render","boolean",0.0f,1.0f,0.0f);
     }
 
     public static String getName() {
         return "3D";
     }
 
-    public static void setSettings(float[] newSettings) {
-        type = (int) newSettings[0];
-        palette = (int) newSettings[1];
-        visualiserQuality = newSettings[2];
-        render = newSettings[3] > 0;
+    public static void setSettings(SettingsArray newSettings) {
+        type = (int) newSettings.getSettingByName("Type");
+        palette = (int)  newSettings.getSettingByName("Palette");
+        visualiserQuality =  newSettings.getSettingByName("Visualiser quality");
+        render =  newSettings.getSettingByName("Render") > 0;
     }
 
     @Override

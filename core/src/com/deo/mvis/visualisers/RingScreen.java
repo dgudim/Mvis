@@ -10,6 +10,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.deo.mvis.utils.SettingsArray;
 
 import static com.deo.mvis.Launcher.HEIGHT;
 
@@ -109,25 +110,23 @@ public class RingScreen extends BaseVisualiser implements Screen {
         paletteNames = new String[]{"Default"};
         typeNames = new String[]{"Default"};
 
-        settings = new String[]{"Type", "Pallet", "Ring grow speed", "Fadeout", "Render"};
-        settingTypes = new String[]{"int", "int", "float", "float", "boolean"};
-
-        settingMaxValues = new float[]{typeNames.length-1, paletteNames.length-1, 25, 0.05f, 1};
-        settingMinValues = new float[]{0, 0, 5, 0.0005f, 0};
-
-        defaultSettings = new float[]{0, 0, ringGrowSpeed, fadeout, 0};
+        addSetting("Type","int",0.0f,0.0f,0.0f);
+        addSetting("Palette","int",0.0f,0.0f,0.0f);
+        addSetting("Ring grow speed","float",5.0f,25.0f,12.0f);
+        addSetting("Fadeout","float",5.0E-4f,0.05f,0.006f);
+        addSetting("Render","boolean",0.0f,1.0f,0.0f);
     }
 
     public static String getName(){
         return "Ring";
     }
 
-    public static void setSettings(float[] newSettings) {
-        type = (int) newSettings[0];
-        palette = (int) newSettings[1] + 100;
-        ringGrowSpeed = newSettings[2];
-        fadeout = newSettings[3];
-        render = newSettings[4] > 0;
+    public static void setSettings(SettingsArray newSettings) {
+        type = (int) newSettings.getSettingByName("Type");
+        palette = (int) newSettings.getSettingByName("Palette") + 100;
+        ringGrowSpeed = newSettings.getSettingByName("Ring grow speed");
+        fadeout = newSettings.getSettingByName("Fadeout");
+        render = newSettings.getSettingByName("Render") > 0;
     }
 
     @Override

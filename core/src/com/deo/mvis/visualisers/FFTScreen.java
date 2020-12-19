@@ -17,6 +17,7 @@ import com.badlogic.gdx.utils.JsonValue;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.deo.mvis.jtransforms.fft.FloatFFT_1D;
 import com.deo.mvis.utils.GradientShape;
+import com.deo.mvis.utils.SettingsArray;
 import com.deo.mvis.utils.SyncedWord;
 
 import java.util.Arrays;
@@ -335,49 +336,58 @@ public class FFTScreen extends BaseVisualiser implements Screen {
         paletteNames = new String[]{"Default", "Chemical fire", "Purple banana", "Frozen grass"};
         typeNames = new String[]{"Basic", "Triangle"};
 
-        settings = new String[]{"Type", "Pallet", "Triangle flying speed", "Max fft height", "Color shift", "Color difference", "Color amplitude",
-                "Outline", "Waterfall", "Number of holes", "Faces", "Base radius", "Max radius", "Flying Speed",
-                "Gradient steps", "Spawn threshold", "Min spawn delay", "Waterfall color amplitude", "Waterfall color shift", "Invert colors",
-                "Display lyrics", "Render"};
-        settingTypes = new String[]{"int", "int", "float", "float", "float", "float", "float",
-                "boolean", "boolean", "int", "int", "float", "float", "float", "int", "float", "float", "float", "float", "boolean", "boolean", "boolean"};
+        addSetting("Type", "int", 0.0f, 1.0f, 0.0f);
+        addSetting("Palette", "int", 0.0f, 3.0f, 0.0f);
+        addSetting("Triangle flying speed", "float", 0.0f, 200.0f, 75.0f);
+        addSetting("Max fft height", "float", 1.0f, 4.0f, 1.0f);
+        addSetting("Color shift", "float", 0.0f, 180.0f, 0.0f);
+        addSetting("Color difference", "float", 0.0f, 180.0f, 0.0f);
+        addSetting("Color amplitude", "float", 1.0f, 7.0f, 1.0f);
+        addSetting("Outline", "boolean", 0.0f, 1.0f, 0.0f);
+        addSetting("Waterfall", "boolean", 0.0f, 1.0f, 0.0f);
+        addSetting("Number of holes", "int", 1.0f, 25.0f, 11.0f);
+        addSetting("Faces", "int", 3.0f, 15.0f, 6.0f);
+        addSetting("Base radius", "float", 0.0f, 10.0f, 0.0f);
+        addSetting("Max radius", "float", 0.0f, 20.2f, 5.2f);
+        addSetting("Flying Speed", "float", 5.0f, 50.0f, 35.0f);
+        addSetting("Gradient steps", "int", 1.0f, 15.0f, 5.0f);
+        addSetting("Spawn threshold", "float", 0.0f, 60.0f, 30.7f);
+        addSetting("Min spawn delay", "float", 0.0f, 30.0f, 10.0f);
+        addSetting("Waterfall color amplitude", "float", 1.0f, 17.0f, 1.0f);
+        addSetting("Waterfall color shift", "float", 0.0f, 180.0f, 0.0f);
+        addSetting("Invert colors", "boolean", 0.0f, 1.0f, 1.0f);
+        addSetting("Display lyrics", "boolean", 0.0f, 1.0f, 0.0f);
+        addSetting("Render", "boolean", 0.0f, 1.0f, 0.0f);
 
-        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 200, 4, 180, 180, 7,
-                1, 1, 25, 15, 10, 20.2f, 50, 15, 60, 30, 17, 180, 1, 1, 1};
-        settingMinValues = new float[]{0, 0, 0, 1, 0, 0, 1,
-                0, 0, 1, 3, 0, 0, 5, 1, 0, 0, 1, 0, 0, 0, 0};
-
-        defaultSettings = new float[]{0, 0, 75, 1, 0, 0, 1,
-                0, 0, 11, 6, 0, 5.2f, 35, 5, 30.7f, 10, 1, 0, 1, 0, 0};
     }
 
     public static String getName() {
         return "Frequency spectrum";
     }
 
-    public static void setSettings(float[] newSettings) {
-        type = (int) newSettings[0];
-        palette = (int) newSettings[1];
-        triangleFlyingSpeed = newSettings[2];
-        fftHeight = newSettings[3];
-        colorShift = newSettings[4];
-        colorShift2 = newSettings[5];
-        colorAmplitude = newSettings[6] / 2f;
-        outline = newSettings[7] > 0;
-        waterfall = newSettings[8] > 0;
-        numOfHoles = (int) newSettings[9];
-        faces = (int) newSettings[10];
-        baseRadius = newSettings[11];
-        maxRadius = newSettings[12];
-        flyingSpeed = newSettings[13];
-        gradientSteps = (int) newSettings[14];
-        spawnThreshold = newSettings[15];
-        minSpawnDelay = newSettings[16];
-        waterfallColorAmplitude = newSettings[17];
-        waterfallColorShift = newSettings[18];
-        invertColors = newSettings[19] > 0;
-        displayLyrics = newSettings[20] > 0;
-        render = newSettings[21] > 0;
+    public static void setSettings(SettingsArray newSettings) {
+        type = (int) newSettings.getSettingByName("Type");
+        palette = (int) newSettings.getSettingByName("Palette");
+        triangleFlyingSpeed = newSettings.getSettingByName("Triangle flying speed");
+        fftHeight = newSettings.getSettingByName("Max fft height");
+        colorShift = newSettings.getSettingByName("Color shift");
+        colorShift2 = newSettings.getSettingByName("Color difference");
+        colorAmplitude = newSettings.getSettingByName("Color amplitude") / 2f;
+        outline = newSettings.getSettingByName("Outline") > 0;
+        waterfall = newSettings.getSettingByName("Waterfall") > 0;
+        numOfHoles = (int) newSettings.getSettingByName("Number of holes");
+        faces = (int) newSettings.getSettingByName("Faces");
+        baseRadius = newSettings.getSettingByName("Base radius");
+        maxRadius = newSettings.getSettingByName("Max radius");
+        flyingSpeed = newSettings.getSettingByName("Flying Speed");
+        gradientSteps = (int) newSettings.getSettingByName("Gradient steps");
+        spawnThreshold = newSettings.getSettingByName("Spawn threshold");
+        minSpawnDelay = newSettings.getSettingByName("Min spawn delay");
+        waterfallColorAmplitude = newSettings.getSettingByName("Waterfall color amplitude");
+        waterfallColorShift = newSettings.getSettingByName("Waterfall color shift");
+        invertColors = newSettings.getSettingByName("Invert colors") > 0;
+        displayLyrics = newSettings.getSettingByName("Display lyrics") > 0;
+        render = newSettings.getSettingByName("Render") > 0;
     }
 
     @Override
