@@ -18,6 +18,6 @@ public class SettingsArray extends Array<Setting> {
     }
 
     public float getSettingByName(String name) {
-        return names.indexOf(name, false);
+        return get(names.indexOf(name, false)).value;
     }
 }

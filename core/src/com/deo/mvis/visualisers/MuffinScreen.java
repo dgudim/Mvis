@@ -317,6 +317,7 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
     }
 
     public static void init() {
+        initialiseArrays();
         paletteNames = new String[]{"Default"};
         typeNames = new String[]{"Cube", "Muffin", "Flat"};
 
@@ -330,11 +331,12 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
         return "3D";
     }
 
-    public static void setSettings(SettingsArray newSettings) {
-        type = (int) newSettings.getSettingByName("Type");
-        palette = (int)  newSettings.getSettingByName("Palette");
-        visualiserQuality =  newSettings.getSettingByName("Visualiser quality");
-        render =  newSettings.getSettingByName("Render") > 0;
+    public static void setSettings(float[] newSettings) {
+        migrateSettings(newSettings);
+        type = (int) settings.getSettingByName("Type");
+        palette = (int)  settings.getSettingByName("Palette");
+        visualiserQuality =  settings.getSettingByName("Visualiser quality");
+        render =  settings.getSettingByName("Render") > 0;
     }
 
     @Override

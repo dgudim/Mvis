@@ -333,6 +333,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
     }
 
     public static void init() {
+        initialiseArrays();
         paletteNames = new String[]{"Default", "Chemical fire", "Purple banana", "Frozen grass"};
         typeNames = new String[]{"Basic", "Triangle"};
 
@@ -365,29 +366,30 @@ public class FFTScreen extends BaseVisualiser implements Screen {
         return "Frequency spectrum";
     }
 
-    public static void setSettings(SettingsArray newSettings) {
-        type = (int) newSettings.getSettingByName("Type");
-        palette = (int) newSettings.getSettingByName("Palette");
-        triangleFlyingSpeed = newSettings.getSettingByName("Triangle flying speed");
-        fftHeight = newSettings.getSettingByName("Max fft height");
-        colorShift = newSettings.getSettingByName("Color shift");
-        colorShift2 = newSettings.getSettingByName("Color difference");
-        colorAmplitude = newSettings.getSettingByName("Color amplitude") / 2f;
-        outline = newSettings.getSettingByName("Outline") > 0;
-        waterfall = newSettings.getSettingByName("Waterfall") > 0;
-        numOfHoles = (int) newSettings.getSettingByName("Number of holes");
-        faces = (int) newSettings.getSettingByName("Faces");
-        baseRadius = newSettings.getSettingByName("Base radius");
-        maxRadius = newSettings.getSettingByName("Max radius");
-        flyingSpeed = newSettings.getSettingByName("Flying Speed");
-        gradientSteps = (int) newSettings.getSettingByName("Gradient steps");
-        spawnThreshold = newSettings.getSettingByName("Spawn threshold");
-        minSpawnDelay = newSettings.getSettingByName("Min spawn delay");
-        waterfallColorAmplitude = newSettings.getSettingByName("Waterfall color amplitude");
-        waterfallColorShift = newSettings.getSettingByName("Waterfall color shift");
-        invertColors = newSettings.getSettingByName("Invert colors") > 0;
-        displayLyrics = newSettings.getSettingByName("Display lyrics") > 0;
-        render = newSettings.getSettingByName("Render") > 0;
+    public static void setSettings(float[] newSettings) {
+        migrateSettings(newSettings);
+        type = (int) settings.getSettingByName("Type");
+        palette = (int) settings.getSettingByName("Palette");
+        triangleFlyingSpeed = settings.getSettingByName("Triangle flying speed");
+        fftHeight = settings.getSettingByName("Max fft height");
+        colorShift = settings.getSettingByName("Color shift");
+        colorShift2 = settings.getSettingByName("Color difference");
+        colorAmplitude = settings.getSettingByName("Color amplitude") / 2f;
+        outline = settings.getSettingByName("Outline") > 0;
+        waterfall = settings.getSettingByName("Waterfall") > 0;
+        numOfHoles = (int) settings.getSettingByName("Number of holes");
+        faces = (int) settings.getSettingByName("Faces");
+        baseRadius = settings.getSettingByName("Base radius");
+        maxRadius = settings.getSettingByName("Max radius");
+        flyingSpeed = settings.getSettingByName("Flying Speed");
+        gradientSteps = (int) settings.getSettingByName("Gradient steps");
+        spawnThreshold = settings.getSettingByName("Spawn threshold");
+        minSpawnDelay = settings.getSettingByName("Min spawn delay");
+        waterfallColorAmplitude = settings.getSettingByName("Waterfall color amplitude");
+        waterfallColorShift = settings.getSettingByName("Waterfall color shift");
+        invertColors = settings.getSettingByName("Invert colors") > 0;
+        displayLyrics = settings.getSettingByName("Display lyrics") > 0;
+        render = settings.getSettingByName("Render") > 0;
     }
 
     @Override

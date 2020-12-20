@@ -285,12 +285,7 @@ public class FourierScreen extends BaseVisualiser implements Screen {
         float ffStep = 360 / 1050f;
         for (int i = 0; i < 1050; i++) {
 
-            float aAngle = 0;
-            if (i > 525) {
-                aAngle = 5 * (i - 525) / 300f;
-            } else if (i < 525) {
-                aAngle = 5 * (i - 525) / 300f;
-            }
+            float aAngle = 5 * (i - 525) / 300f;
 
             float xStart = -MathUtils.cosDeg(i * ffStep + offsetAngle * 1.3f) * (HEIGHT / 2f - 30 * (samplesSmoothed[pos] * orbitAmplitude + fftSizeModifier));
             float yStart = -MathUtils.sinDeg(i * ffStep + offsetAngle * 1.3f) * (HEIGHT / 2f - 30 * (samplesSmoothed[pos] * orbitAmplitude + fftSizeModifier));
@@ -421,6 +416,7 @@ public class FourierScreen extends BaseVisualiser implements Screen {
     }
 
     public static void init() {
+        initialiseArrays();
         paletteNames = new String[]{"Default", "Coffee", "Lime", "Green", "Cyan"};
         typeNames = new String[]{"Basic"};
 
@@ -437,7 +433,7 @@ public class FourierScreen extends BaseVisualiser implements Screen {
         addSetting("Enable flying balls", "boolean", 0.0f, 1.0f, 1.0f);
         addSetting("Enable fft", "boolean", 0.0f, 1.0f, 1.0f);
         addSetting("Enable trail triangles", "boolean", 0.0f, 1.0f, 1.0f);
-        addSetting("Color offset", "float", 0.0f, 180.0f, 0.0f);
+        addSetting("Color offset", "float", 0.0f, 180.0f, 75.0f);
         addSetting("Sync color to the beats", "boolean", 0.0f, 1.0f, 0.0f);
         addSetting("Synced color amplitude", "float", 5.0f, 180.0f, 15.0f);
         addSetting("Stargate\n orbit reduction", "float", 1.0f, 5.0f, 1.0f);
@@ -450,10 +446,11 @@ public class FourierScreen extends BaseVisualiser implements Screen {
         return "Fourier visualiser";
     }
 
-    public static void setSettings(SettingsArray newSettings) {
-        type = (int) newSettings.getSettingByName("Type");
-        palette = (int) newSettings.getSettingByName("Palette");
-        switch ((int) newSettings.getSettingByName("Number of branches")) {
+    public static void setSettings(float[] newSettings) {
+        migrateSettings(newSettings);
+        type = (int) settings.getSettingByName("Type");
+        palette = (int) settings.getSettingByName("Palette");
+        switch ((int) settings.getSettingByName("Number of branches")) {
             case (1):
                 numberOfLinks = 1;
                 break;
@@ -470,24 +467,24 @@ public class FourierScreen extends BaseVisualiser implements Screen {
                 numberOfLinks = 25;
                 break;
         }
-        changeBranchLength = newSettings.getSettingByName("Vary branch length") > 0;
-        additionalRotation = newSettings.getSettingByName("Additional rotation") > 0;
-        enableTriangles = newSettings.getSettingByName("Enable triangles") > 0;
-        orbitAmplitude = newSettings.getSettingByName("Orbit amplitude");
-        triangleCount = (int) newSettings.getSettingByName("Triangle count");
-        triangleStep = 360 / newSettings.getSettingByName("Triangle count");
-        enableWallFire = newSettings.getSettingByName("Enable wall fire") > 0;
-        enableStarGateEffect = newSettings.getSettingByName("Enable stargate") > 0;
-        enableFlyingBalls = newSettings.getSettingByName("Enable flying balls") > 0;
-        enableBottomFFT = newSettings.getSettingByName("Enable fft") > 0;
-        enableFlyingBallsTrails = newSettings.getSettingByName("Enable trail triangles") > 0;
-        colorOffset = newSettings.getSettingByName("Color offset");
-        syncColorOffsetToTheMusic = newSettings.getSettingByName("Sync color to the beats") > 0;
-        syncedColorAmplitude = newSettings.getSettingByName("Synced color amplitude");
-        starGateSizeModifier = newSettings.getSettingByName("Stargate\n orbit reduction");
-        fftSizeModifier = newSettings.getSettingByName("Fft orbit\n reduction");
-        triangleSizeModifier = newSettings.getSettingByName("Triangle\n orbit reduction");
-        flyingBallsSizeModifier = newSettings.getSettingByName("Flying balls\n orbit reduction");
+        changeBranchLength = settings.getSettingByName("Vary branch length") > 0;
+        additionalRotation = settings.getSettingByName("Additional rotation") > 0;
+        enableTriangles = settings.getSettingByName("Enable triangles") > 0;
+        orbitAmplitude = settings.getSettingByName("Orbit amplitude");
+        triangleCount = (int) settings.getSettingByName("Triangle count");
+        triangleStep = 360 / settings.getSettingByName("Triangle count");
+        enableWallFire = settings.getSettingByName("Enable wall fire") > 0;
+        enableStarGateEffect = settings.getSettingByName("Enable stargate") > 0;
+        enableFlyingBalls = settings.getSettingByName("Enable flying balls") > 0;
+        enableBottomFFT = settings.getSettingByName("Enable fft") > 0;
+        enableFlyingBallsTrails = settings.getSettingByName("Enable trail triangles") > 0;
+        colorOffset = settings.getSettingByName("Color offset");
+        syncColorOffsetToTheMusic = settings.getSettingByName("Sync color to the beats") > 0;
+        syncedColorAmplitude = settings.getSettingByName("Synced color amplitude");
+        starGateSizeModifier = settings.getSettingByName("Stargate\n orbit reduction");
+        fftSizeModifier = settings.getSettingByName("Fft orbit\n reduction");
+        triangleSizeModifier = settings.getSettingByName("Triangle\n orbit reduction");
+        flyingBallsSizeModifier = settings.getSettingByName("Flying balls\n orbit reduction");
     }
 
     @Override

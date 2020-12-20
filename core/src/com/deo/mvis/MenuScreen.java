@@ -40,6 +40,8 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.deo.mvis.jtransforms.fft.FloatFFT_1D;
 import com.deo.mvis.otherScreens.GameOfLife;
 import com.deo.mvis.utils.MusicWave;
+import com.deo.mvis.utils.Setting;
+import com.deo.mvis.utils.SettingsArray;
 import com.deo.mvis.utils.UIComposer;
 import com.deo.mvis.visualisers.BaseVisualiser;
 import com.deo.mvis.visualisers.FFTScreen;
@@ -50,6 +52,8 @@ import com.deo.mvis.visualisers.OsciloscopeScreen;
 import com.deo.mvis.visualisers.RingScreen;
 
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -58,7 +62,6 @@ import static com.deo.mvis.Launcher.HEIGHT;
 import static com.deo.mvis.Launcher.WIDTH;
 import static com.deo.mvis.utils.Utils.getBoolean;
 import static com.deo.mvis.utils.Utils.getInteger;
-import static com.deo.mvis.utils.Utils.getRandomInRange;
 import static com.deo.mvis.utils.Utils.putBoolean;
 import static com.deo.mvis.utils.Utils.putFloat;
 import static com.deo.mvis.utils.Utils.putInteger;
@@ -364,13 +367,13 @@ public class MenuScreen implements Screen {
         String name = "noName";
 
         try {
-            settingNames = (String[]) visualiser.getMethod("getSettings").invoke(BaseVisualiser.class);
+            settingNames = (String[]) visualiser.getMethod("getSettingNames").invoke(BaseVisualiser.class);
             settingTypes = (String[]) visualiser.getMethod("getSettingTypes").invoke(BaseVisualiser.class);
             paletteNames = (String[]) visualiser.getMethod("getPaletteNames").invoke(BaseVisualiser.class);
             typeNames = (String[]) visualiser.getMethod("getTypeNames").invoke(BaseVisualiser.class);
             settingMaxValues = (float[]) visualiser.getMethod("getSettingMaxValues").invoke(BaseVisualiser.class);
             settingMinValues = (float[]) visualiser.getMethod("getSettingMinValues").invoke(BaseVisualiser.class);
-            defaultSettings = (float[]) visualiser.getMethod("getDefaultSettings").invoke(BaseVisualiser.class);
+            defaultSettings = (float[]) visualiser.getMethod("getSettingDefaultValues").invoke(BaseVisualiser.class);
             name = visualiser.getSimpleName();
         } catch (Exception e) {
             e.printStackTrace();
@@ -603,12 +606,19 @@ public class MenuScreen implements Screen {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 try {
+                    Gdx.input.setInputProcessor(null);
                     music.stop();
                     visualiser.getMethod("setSettings", newSettings.getClass()).invoke(visualiser, newSettings);
                     visualiser.getMethod("setMusic", FileHandle.class).invoke(visualiser, availableMusicFiles.get(musicSelector.getSelectedIndex()));
                     game.setScreen((Screen) visualiser.getConstructor(Game.class).newInstance(game));
                     MenuScreen.this.dispose();
                 } catch (Exception e) {
+                    StringWriter sw = new StringWriter();
+                    e.printStackTrace(new PrintWriter(sw));
+                    String fullStackTrace = sw.toString();
+                    Gdx.files.external("Mvis/ERRORS.txt").writeString(fullStackTrace+"\n\n\n", true);
+                    Gdx.input.setInputProcessor(stage);
+                    music.play();
                     e.printStackTrace();
                 }
             }
@@ -768,9 +778,6 @@ public class MenuScreen implements Screen {
         musicWave.dispose();
         font_small.dispose();
         assetManager.dispose();
-        if (Gdx.input.getInputProcessor().equals(stage)) {
-            Gdx.input.setInputProcessor(null);
-        }
     }
 }
 

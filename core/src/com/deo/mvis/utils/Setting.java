@@ -1,8 +1,8 @@
 package com.deo.mvis.utils;
 
 public class Setting {
-    float value;
-    String name;
+    public float value;
+    public String name;
     float maxValue;
     float minValue;
     float defaultValue;
@@ -15,5 +15,10 @@ public class Setting {
         this.maxValue = maxValue;
         this.defaultValue = defaultValue;
         value = defaultValue;
+    }
+
+    @Override
+    public String toString() {
+        return name + ":" + value;
     }
 }

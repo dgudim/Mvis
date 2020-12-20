@@ -107,6 +107,7 @@ public class RingScreen extends BaseVisualiser implements Screen {
     }
 
     public static void init() {
+        initialiseArrays();
         paletteNames = new String[]{"Default"};
         typeNames = new String[]{"Default"};
 
@@ -121,12 +122,13 @@ public class RingScreen extends BaseVisualiser implements Screen {
         return "Ring";
     }
 
-    public static void setSettings(SettingsArray newSettings) {
-        type = (int) newSettings.getSettingByName("Type");
-        palette = (int) newSettings.getSettingByName("Palette") + 100;
-        ringGrowSpeed = newSettings.getSettingByName("Ring grow speed");
-        fadeout = newSettings.getSettingByName("Fadeout");
-        render = newSettings.getSettingByName("Render") > 0;
+    public static void setSettings(float[] newSettings) {
+        migrateSettings(newSettings);
+        type = (int) settings.getSettingByName("Type");
+        palette = (int) settings.getSettingByName("Palette") + 100;
+        ringGrowSpeed = settings.getSettingByName("Ring grow speed");
+        fadeout = settings.getSettingByName("Fadeout");
+        render = settings.getSettingByName("Render") > 0;
     }
 
     @Override

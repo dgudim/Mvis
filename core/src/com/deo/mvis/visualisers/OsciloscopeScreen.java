@@ -334,6 +334,7 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
     }
 
     public static void init() {
+        initialiseArrays();
         paletteNames = new String[]{"Lime", "Fire", "Water"};
         typeNames = new String[]{"Oscilloscope", "Radial", "Bubble", "Bubble2", "Shapes", "Sinus", "Frequency in circle"};
 
@@ -350,14 +351,15 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
         return "Oscilloscope";
     }
 
-    public static void setSettings(SettingsArray newSettings){
-        type = (int) newSettings.getSettingByName("Type");
-        palette = (int) (newSettings.getSettingByName("Palette") + 100);
-        fadeout = newSettings.getSettingByName("Fadeout");
-        freqDisplaySamples = (int) newSettings.getSettingByName("Frequency display samples");
-        radialAmplitude = (int) newSettings.getSettingByName("Radial visualiser amplitude");
-        maxSaturation = newSettings.getSettingByName("Max bloom saturation");
-        render = newSettings.getSettingByName("Render") > 0;
+    public static void setSettings(float[] newSettings){
+        migrateSettings(newSettings);
+        type = (int) settings.getSettingByName("Type");
+        palette = (int) (settings.getSettingByName("Palette") + 100);
+        fadeout = settings.getSettingByName("Fadeout");
+        freqDisplaySamples = (int) settings.getSettingByName("Frequency display samples");
+        radialAmplitude = (int) settings.getSettingByName("Radial visualiser amplitude");
+        maxSaturation = settings.getSettingByName("Max bloom saturation");
+        render = settings.getSettingByName("Render") > 0;
     }
 
     @Override

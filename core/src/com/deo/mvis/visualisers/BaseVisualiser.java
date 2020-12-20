@@ -57,13 +57,12 @@ public class BaseVisualiser {
     float[] rSamplesNormalisedSmoothed;
     float[] lSamplesNormalisedSmoothed;
 
-    public static String[] typeNames, paletteNames;
+    public static String[] typeNames, paletteNames, settingNames, settingTypes;
+    public static float[] settingMinValues, settingMaxValues, settingDefaultValues;
 
     public static SettingsArray settings;
 
     int numOfSamples;
-    static int settingIndex;
-    static float[] newSettings;
     public int sampleRate;
 
     public static FileHandle musicFile = Gdx.files.internal("away.wav");
@@ -75,8 +74,6 @@ public class BaseVisualiser {
     private AssetManager assetManager;
 
     public BaseVisualiser(final Game game, boolean[] requiredSamples) {
-
-        settings = new SettingsArray();
 
         camera = new OrthographicCamera(1600, 900);
         viewport = new ScreenViewport(camera);
@@ -202,12 +199,70 @@ public class BaseVisualiser {
         System.gc();
     }
 
-    public static SettingsArray getSettings() {
-        return settings;
+    public static String[] getTypeNames() {
+        return typeNames;
     }
 
-    static void addSetting(String settingName, String settingType, float minValue, float maxValue, float defaultValue) {
+    public static String[] getPaletteNames() {
+        return paletteNames;
+    }
+
+    public static String[] getSettingNames() {
+        return settingNames;
+    }
+
+    public static String[] getSettingTypes() {
+        return settingTypes;
+    }
+
+    public static float[] getSettingMinValues() {
+        return settingMinValues;
+    }
+
+    public static float[] getSettingMaxValues() {
+        return settingMaxValues;
+    }
+
+    public static float[] getSettingDefaultValues() {
+        return settingDefaultValues;
+    }
+
+    public static void addSetting(String settingName, String settingType, float minValue, float maxValue, float defaultValue) {
+        settingNames = addItemToArray(settingName, settingNames);
+        settingTypes = addItemToArray(settingType, settingTypes);
+        settingMinValues = addItemToArray(minValue, settingMinValues);
+        settingMaxValues = addItemToArray(maxValue, settingMaxValues);
+        settingDefaultValues = addItemToArray(defaultValue, settingDefaultValues);
         settings.add(new Setting(settingName, settingType, minValue, maxValue, defaultValue));
+    }
+
+    private static float[] addItemToArray(float value, float[] destinationArray) {
+        float[] newDestinationArray = new float[destinationArray.length + 1];
+        System.arraycopy(destinationArray, 0, newDestinationArray, 0, destinationArray.length);
+        newDestinationArray[destinationArray.length] = value;
+        return newDestinationArray;
+    }
+
+    private static String[] addItemToArray(String value, String[] destinationArray) {
+        String[] newDestinationArray = new String[destinationArray.length + 1];
+        System.arraycopy(destinationArray, 0, newDestinationArray, 0, destinationArray.length);
+        newDestinationArray[destinationArray.length] = value;
+        return newDestinationArray;
+    }
+
+    public static void migrateSettings(float[] newSettings) {
+        for (int i = 0; i < newSettings.length; i++) {
+            settings.get(i).value = newSettings[i];
+        }
+    }
+
+    public static void initialiseArrays() {
+        settings = new SettingsArray();
+        settingNames = new String[0];
+        settingTypes = new String[0];
+        settingMinValues = new float[0];
+        settingMaxValues = new float[0];
+        settingDefaultValues = new float[0];
     }
 
     public static void setMusic(FileHandle fileHandle) {

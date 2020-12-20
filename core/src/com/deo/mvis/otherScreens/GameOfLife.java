@@ -12,6 +12,7 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.deo.mvis.utils.SettingsArray;
 import com.deo.mvis.visualisers.BaseVisualiser;
 
 import static com.badlogic.gdx.graphics.GL20.GL_COLOR_BUFFER_BIT;
@@ -442,16 +443,16 @@ public class GameOfLife extends BaseVisualiser implements Screen {
     }
 
     public static void init() {
+        initialiseArrays();
         paletteNames = new String[]{"Cyan-purple", "Cyan fadeout", "Purple fadeout", "Pink-green", "Rainbow water", "Pastel rainbow", "Long fadeout(pastel rainbow)", "winter", "Long cyan fadeout"};
         typeNames = new String[]{"Normal"};
 
-        settings = new String[]{"Type", "Pallet", "Bottom enabled", "Bottom rule height", "Render"};
-        settingTypes = new String[]{"int", "int", "boolean", "int", "boolean"};
+        addSetting("Type", "int", 0, typeNames.length - 1, 0);
+        addSetting("Pallet", "int", 0, paletteNames.length - 1, 0);
+        addSetting("Bottom enabled", "boolean", 0, 1, 1);
+        addSetting("Bottom rule height", "int", 0, fieldHeight - 50, oneDRuleHeight);
+        addSetting("Render", "boolean", 0, 1, 0);
 
-        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 1, fieldHeight - 50, 1};
-        settingMinValues = new float[]{0, 0, 0, 0, 0};
-
-        defaultSettings = new float[]{0, 0, 1, oneDRuleHeight, 0};
     }
 
     public static String getName() {
@@ -459,11 +460,13 @@ public class GameOfLife extends BaseVisualiser implements Screen {
     }
 
     public static void setSettings(float[] newSettings) {
-        type = (int) newSettings[0];
-        palette = (int) newSettings[1];
-        oneDRuleEnabled = newSettings[2] > 0;
-        oneDRuleHeight = (int) newSettings[3];
-        render = newSettings[4] > 0;
+        migrateSettings(newSettings);
+        type = (int) settings.getSettingByName("Type");
+        palette = (int) settings.getSettingByName("Pallet");
+        oneDRuleEnabled = settings.getSettingByName("Bottom enabled") > 0;
+        oneDRuleHeight = (int) settings.getSettingByName("Bottom rule height");
+        render = settings.getSettingByName("Render") > 0;
+
     }
 
     @Override

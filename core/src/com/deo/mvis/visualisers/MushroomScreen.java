@@ -180,6 +180,7 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
     }
 
     public static void init() {
+        initialiseArrays();
         paletteNames = new String[]{"Default"};
         typeNames = new String[]{"Single", "Double", "Triple", "Double channel"};
 
@@ -200,22 +201,22 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
         return "Fractal tree";
     }
 
-    public static void setSettings(SettingsArray newSettings){
+    public static void setSettings(float[] newSettings){
+        migrateSettings(newSettings);
+        type = (int) settings.getSettingByName("Type");
+        palette = (int) settings.getSettingByName("Palette");
+        exponential = settings.getSettingByName("Exponential") > 0;
 
-        type = (int) newSettings.getSettingByName("Type");
-        palette = (int) newSettings.getSettingByName("Palette");
-        exponential = newSettings.getSettingByName("Exponential") > 0;
+        branchLength = settings.getSettingByName("Branch length");
+        maxIterations = (int) settings.getSettingByName("Max iterations (+5)");
+        maxAngle = settings.getSettingByName("Max angle");
 
-        branchLength = newSettings.getSettingByName("Branch length");
-        maxIterations = (int) newSettings.getSettingByName("Max iterations (+5)");
-        maxAngle = newSettings.getSettingByName("Max angle");
+        baseIterations = (int) settings.getSettingByName("Base iterations");
+        baseAngle = settings.getSettingByName("Base angle");
 
-        baseIterations = (int) newSettings.getSettingByName("Base iterations");
-        baseAngle = newSettings.getSettingByName("Base angle");
-
-        fadeout = newSettings.getSettingByName("Fadeout");
-        maxSaturation = newSettings.getSettingByName("Max bloom saturation");
-        render = newSettings.getSettingByName("Render") > 0;
+        fadeout = settings.getSettingByName("Fadeout");
+        maxSaturation = settings.getSettingByName("Max bloom saturation");
+        render = settings.getSettingByName("Render") > 0;
     }
 
     @Override
