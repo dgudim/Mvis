@@ -20,23 +20,11 @@ import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.deo.mvis.utils.SettingsArray;
-
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
-
-import pl.edu.icm.jlargearrays.ConcurrencyUtils;
 
 import static com.deo.mvis.Launcher.HEIGHT;
 import static com.deo.mvis.Launcher.WIDTH;
-
-
 
 public class MuffinScreen extends BaseVisualiser implements Screen {
 
@@ -64,7 +52,7 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
     private static int palette;
 
     public MuffinScreen(Game game) {
-        super(game, new boolean[]{false, type == RUBENSTUBE, false});
+        super(game, LEFT_AND_RIGHT_RAW);
 
         cam = new PerspectiveCamera(67, WIDTH, HEIGHT);
         cam.position.set(10f, 10f, 10f);
@@ -317,14 +305,16 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
     }
 
     public static void init() {
-        initialiseArrays();
         paletteNames = new String[]{"Default"};
         typeNames = new String[]{"Cube", "Muffin", "Flat"};
 
-        addSetting("Type","int",0.0f,2.0f,0.0f);
-        addSetting("Palette","int",0.0f,0.0f,0.0f);
-        addSetting("Visualiser quality","int",1.0f,100.0f,100.0f);
-        addSetting("Render","boolean",0.0f,1.0f,0.0f);
+        settings = new String[]{"Type", "Pallet", "VisualiserQuality", "Render"};
+        settingTypes = new String[]{"int", "int", "int", "boolean"};
+
+        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 100, 1};
+        settingMinValues = new float[]{0, 0, 1, 0};
+
+        defaultSettings = new float[]{0, 0, 100, 0};
     }
 
     public static String getName() {
@@ -332,11 +322,10 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
     }
 
     public static void setSettings(float[] newSettings) {
-        migrateSettings(newSettings);
-        type = (int) settings.getSettingByName("Type");
-        palette = (int)  settings.getSettingByName("Palette");
-        visualiserQuality =  settings.getSettingByName("Visualiser quality");
-        render =  settings.getSettingByName("Render") > 0;
+        type = (int) newSettings[0];
+        palette = (int) newSettings[1];
+        visualiserQuality = newSettings[2];
+        render = newSettings[3] > 0;
     }
 
     @Override

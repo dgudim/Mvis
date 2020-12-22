@@ -35,14 +35,18 @@ public class MusicWave {
                 channels = 2;
             }
 
+            float[][] twoChannelSamples = getUnscaledAmplitude(bytes, channels);
 
-            float[] averageChannelAmplitude = getUnscaledAmplitudeMono(bytes, channels);
+            float[] averageChannelAmplitude = new float[twoChannelSamples[0].length];
 
-            if (requiresChannelSamples) {
-                float[][] twoChannelSamples = getUnscaledAmplitude(bytes, channels);
+            if(requiresChannelSamples) {
                 leftChannelSamples = new float[twoChannelSamples[0].length];
                 rightChannelSamples = new float[twoChannelSamples[1].length];
-                for (int i = 0; i < averageChannelAmplitude.length; i++) {
+            }
+
+            for (int i = 0; i < averageChannelAmplitude.length; i++) {
+                averageChannelAmplitude[i] = Math.abs(twoChannelSamples[0][i] + twoChannelSamples[1][i]) / 2.0f;
+                if(requiresChannelSamples) {
                     leftChannelSamples[i] = twoChannelSamples[0][i];
                     rightChannelSamples[i] = twoChannelSamples[1][i];
                 }
@@ -59,27 +63,6 @@ public class MusicWave {
 
     private int getSixteenBitSample(int high, int low) {
         return (high << 8) + (low & 0x00ff);
-    }
-
-    private float[] getUnscaledAmplitudeMono(byte[] eightBitByteArray, int nbChannels) {
-
-        float[] toReturn = new float[eightBitByteArray.length / 2];
-        int index = 0;
-
-        for (int audioByte = 0; audioByte < eightBitByteArray.length; ) {
-            int sample = 0;
-            for (int channel = 0; channel < nbChannels; channel++) {
-                int low = eightBitByteArray[audioByte];
-                audioByte++;
-                int high = eightBitByteArray[audioByte];
-                audioByte++;
-                sample += Math.abs(getSixteenBitSample(high, low));
-            }
-            toReturn[index] = sample / (float) nbChannels;
-            index++;
-        }
-
-        return toReturn;
     }
 
     private float[][] getUnscaledAmplitude(byte[] eightBitByteArray, int nbChannels) {
@@ -159,7 +142,7 @@ public class MusicWave {
         return samples;
     }
 
-    public float[] getSamplesForFFT(int pos, int i) {
+    public float[] getSamplesForFFT(int pos, int i, float[] samples) {
         float[] newSamples = new float[i];
         for (int i2 = 0; i2 < i; i2++) {
             newSamples[i2] = samples[pos + i2];
@@ -243,7 +226,7 @@ public class MusicWave {
         return data;
     }
 
-    public void dispose() {
+    public void dispose(){
         music.dispose();
         samples = null;
         leftChannelSamples = null;

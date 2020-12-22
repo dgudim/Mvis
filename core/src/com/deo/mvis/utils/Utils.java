@@ -99,7 +99,7 @@ public class Utils {
         pixmap.dispose();
     }
 
-    // a method fod displaying render debug data
+    // a method for displaying render debug data
     public void displayData(int recorderFrame, int frame, Matrix4 projMat) {
         batch.setProjectionMatrix(projMat);
         batch.begin();

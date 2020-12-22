@@ -16,12 +16,9 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.deo.mvis.MenuScreen;
 import com.deo.mvis.utils.MusicWave;
-import com.deo.mvis.utils.Setting;
-import com.deo.mvis.utils.SettingsArray;
 import com.deo.mvis.utils.UIComposer;
 import com.deo.mvis.utils.Utils;
 
@@ -48,6 +45,7 @@ public class BaseVisualiser {
 
     private boolean musicStarted = false;
 
+    float[] samplesForFFT;
     float[] samplesRaw;
     public float[] samplesSmoothed;
 
@@ -57,10 +55,8 @@ public class BaseVisualiser {
     float[] rSamplesNormalisedSmoothed;
     float[] lSamplesNormalisedSmoothed;
 
-    public static String[] typeNames, paletteNames, settingNames, settingTypes;
-    public static float[] settingMinValues, settingMaxValues, settingDefaultValues;
-
-    public static SettingsArray settings;
+    public static String[] typeNames, paletteNames, settings, settingTypes;
+    public static float[] settingMaxValues, settingMinValues, defaultSettings;
 
     int numOfSamples;
     public int sampleRate;
@@ -73,7 +69,16 @@ public class BaseVisualiser {
 
     private AssetManager assetManager;
 
-    public BaseVisualiser(final Game game, boolean[] requiredSamples) {
+    public static final byte DEFAULT = -100;
+    public static final byte FFT = -1;
+    public static final byte RAW = 0;
+    public static final byte FFT_AND_RAW = 2;
+    public static final byte LEFT_AND_RIGHT_RAW = 3;
+    public static final byte LEFT_AND_RIGHT_SMOOTHED = 4;
+    public static final byte LEFT_AND_RIGHT_RAW_AND_SMOOTHED = 5;
+    public static final byte ALL_SAMPLES_RAW = 6;
+
+    public BaseVisualiser(final Game game, final byte sampleMode) {
 
         camera = new OrthographicCamera(1600, 900);
         viewport = new ScreenViewport(camera);
@@ -111,32 +116,47 @@ public class BaseVisualiser {
 
         batch = new SpriteBatch();
 
-        musicWave = new MusicWave(musicFile, requiredSamples[1] || requiredSamples[2]);
+        musicWave = new MusicWave(musicFile, sampleMode == LEFT_AND_RIGHT_RAW ||
+                sampleMode == LEFT_AND_RIGHT_RAW_AND_SMOOTHED ||
+                sampleMode == LEFT_AND_RIGHT_SMOOTHED ||
+                sampleMode == ALL_SAMPLES_RAW);
         sampleRate = musicWave.sampleRate;
         step = sampleRate / FPS;
         music = musicWave.getMusic();
 
-        samplesSmoothed = musicWave.smoothSamples(musicWave.getSamples().clone(), 2, 32);
-
-        if (requiredSamples[0]) {
-            samplesRaw = musicWave.normaliseSamples(false, false, musicWave.getSamples().clone());
+        if(sampleMode == FFT || sampleMode == FFT_AND_RAW) {
+            samplesForFFT = musicWave.getSamples().clone();
+        }else{
+            samplesForFFT = musicWave.getSamples();
         }
 
-        if (requiredSamples[1]) {
-            lSamplesNormalised = musicWave.normaliseSamples(false, false, musicWave.getLeftChannelSamples());
-            rSamplesNormalised = musicWave.normaliseSamples(false, false, musicWave.getRightChannelSamples());
+        switch (sampleMode) {
+            case (RAW):
+            case (FFT_AND_RAW):
+                samplesRaw = musicWave.normaliseSamples(false, false, musicWave.getSamples());
+                break;
+            case (LEFT_AND_RIGHT_RAW):
+                lSamplesNormalised = musicWave.normaliseSamples(false, false, musicWave.getLeftChannelSamples());
+                rSamplesNormalised = musicWave.normaliseSamples(false, false, musicWave.getRightChannelSamples());
+                break;
+            case (LEFT_AND_RIGHT_SMOOTHED):
+                lSamplesNormalisedSmoothed = musicWave.smoothSamples(musicWave.getLeftChannelSamples(), 2, 32);
+                rSamplesNormalisedSmoothed = musicWave.smoothSamples(musicWave.getRightChannelSamples(), 2, 32);
+                break;
+            case (LEFT_AND_RIGHT_RAW_AND_SMOOTHED):
+                lSamplesNormalised = musicWave.normaliseSamples(false, false, musicWave.getLeftChannelSamples());
+                rSamplesNormalised = musicWave.normaliseSamples(false, false, musicWave.getRightChannelSamples());
+                lSamplesNormalisedSmoothed = musicWave.smoothSamples(musicWave.getLeftChannelSamples().clone(), 2, 32);
+                rSamplesNormalisedSmoothed = musicWave.smoothSamples(musicWave.getRightChannelSamples().clone(), 2, 32);
+                break;
+            case (ALL_SAMPLES_RAW):
+                samplesRaw = musicWave.normaliseSamples(false, false, musicWave.getSamples());
+                lSamplesNormalised = musicWave.normaliseSamples(false, false, musicWave.getLeftChannelSamples());
+                rSamplesNormalised = musicWave.normaliseSamples(false, false, musicWave.getRightChannelSamples());
+                break;
         }
 
-        if (requiredSamples[2] && requiredSamples[1]) {
-            lSamplesNormalisedSmoothed = musicWave.smoothSamples(musicWave.getLeftChannelSamples().clone(), 2, 32);
-            rSamplesNormalisedSmoothed = musicWave.smoothSamples(musicWave.getRightChannelSamples().clone(), 2, 32);
-        } else if (requiredSamples[2]) {
-            lSamplesNormalisedSmoothed = musicWave.smoothSamples(musicWave.getLeftChannelSamples(), 2, 32);
-            rSamplesNormalisedSmoothed = musicWave.smoothSamples(musicWave.getRightChannelSamples(), 2, 32);
-        }
-
-        numOfSamples = samplesSmoothed.length;
-
+        samplesSmoothed = musicWave.smoothSamples(musicWave.getSamples(), 2, 32);
         utils = new Utils(FPS, step, samplesSmoothed, 3, 1, 1, true, batch);
 
         if (!render) {
@@ -199,6 +219,14 @@ public class BaseVisualiser {
         System.gc();
     }
 
+    public static String[] getSettings() {
+        return settings;
+    }
+
+    public static String[] getSettingTypes() {
+        return settingTypes;
+    }
+
     public static String[] getTypeNames() {
         return typeNames;
     }
@@ -207,62 +235,16 @@ public class BaseVisualiser {
         return paletteNames;
     }
 
-    public static String[] getSettingNames() {
-        return settingNames;
-    }
-
-    public static String[] getSettingTypes() {
-        return settingTypes;
+    public static float[] getSettingMaxValues() {
+        return settingMaxValues;
     }
 
     public static float[] getSettingMinValues() {
         return settingMinValues;
     }
 
-    public static float[] getSettingMaxValues() {
-        return settingMaxValues;
-    }
-
-    public static float[] getSettingDefaultValues() {
-        return settingDefaultValues;
-    }
-
-    public static void addSetting(String settingName, String settingType, float minValue, float maxValue, float defaultValue) {
-        settingNames = addItemToArray(settingName, settingNames);
-        settingTypes = addItemToArray(settingType, settingTypes);
-        settingMinValues = addItemToArray(minValue, settingMinValues);
-        settingMaxValues = addItemToArray(maxValue, settingMaxValues);
-        settingDefaultValues = addItemToArray(defaultValue, settingDefaultValues);
-        settings.add(new Setting(settingName, settingType, minValue, maxValue, defaultValue));
-    }
-
-    private static float[] addItemToArray(float value, float[] destinationArray) {
-        float[] newDestinationArray = new float[destinationArray.length + 1];
-        System.arraycopy(destinationArray, 0, newDestinationArray, 0, destinationArray.length);
-        newDestinationArray[destinationArray.length] = value;
-        return newDestinationArray;
-    }
-
-    private static String[] addItemToArray(String value, String[] destinationArray) {
-        String[] newDestinationArray = new String[destinationArray.length + 1];
-        System.arraycopy(destinationArray, 0, newDestinationArray, 0, destinationArray.length);
-        newDestinationArray[destinationArray.length] = value;
-        return newDestinationArray;
-    }
-
-    public static void migrateSettings(float[] newSettings) {
-        for (int i = 0; i < newSettings.length; i++) {
-            settings.get(i).value = newSettings[i];
-        }
-    }
-
-    public static void initialiseArrays() {
-        settings = new SettingsArray();
-        settingNames = new String[0];
-        settingTypes = new String[0];
-        settingMinValues = new float[0];
-        settingMaxValues = new float[0];
-        settingDefaultValues = new float[0];
+    public static float[] getDefaultSettings() {
+        return defaultSettings;
     }
 
     public static void setMusic(FileHandle fileHandle) {

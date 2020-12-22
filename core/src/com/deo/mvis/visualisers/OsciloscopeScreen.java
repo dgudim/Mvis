@@ -9,7 +9,6 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.deo.mvis.utils.SettingsArray;
 
 import static com.deo.mvis.Launcher.HEIGHT;
 import static com.deo.mvis.Launcher.WIDTH;
@@ -50,7 +49,7 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
     private static int palette = 100;
 
     public OsciloscopeScreen(Game game) {
-        super(game, new boolean[]{type == FREQUENCY, !(type == FREQUENCY), false});
+        super(game, LEFT_AND_RIGHT_RAW);
 
         dots = new Array<>();
         colors = new Array<>();
@@ -334,32 +333,30 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
     }
 
     public static void init() {
-        initialiseArrays();
         paletteNames = new String[]{"Lime", "Fire", "Water"};
         typeNames = new String[]{"Oscilloscope", "Radial", "Bubble", "Bubble2", "Shapes", "Sinus", "Frequency in circle"};
 
-        addSetting("Type","int",0.0f,6.0f,0.0f);
-        addSetting("Palette","int",0.0f,2.0f,0.0f);
-        addSetting("Fadeout","float",5.0E-4f,0.05f,0.005f);
-        addSetting("Frequency display samples","int",256.0f,1024.0f,512.0f);
-        addSetting("Radial visualiser amplitude","float",15.0f,450.0f,180.0f);
-        addSetting("Max bloom saturation","float",0.0f,4.0f,1.0f);
-        addSetting("Render","boolean",0.0f,1.0f,0.0f);
+        settings = new String[]{"Type", "Pallet", "Fadeout", "Frequency display samples", "Radial visualiser amplitude", "Max bloom saturation", "Render"};
+        settingTypes = new String[]{"int", "int", "float", "int", "float", "float", "boolean"};
+
+        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 0.05f, 1024, 450, 4, 1};
+        settingMinValues = new float[]{0, 0, 0.0005f, 256, 15, 0, 0};
+
+        defaultSettings = new float[]{0, 0, fadeout, freqDisplaySamples, radialAmplitude, 1, 0};
     }
 
     public static String getName() {
         return "Oscilloscope";
     }
 
-    public static void setSettings(float[] newSettings){
-        migrateSettings(newSettings);
-        type = (int) settings.getSettingByName("Type");
-        palette = (int) (settings.getSettingByName("Palette") + 100);
-        fadeout = settings.getSettingByName("Fadeout");
-        freqDisplaySamples = (int) settings.getSettingByName("Frequency display samples");
-        radialAmplitude = (int) settings.getSettingByName("Radial visualiser amplitude");
-        maxSaturation = settings.getSettingByName("Max bloom saturation");
-        render = settings.getSettingByName("Render") > 0;
+    public static void setSettings(float[] newSettings) {
+        type = (int) newSettings[0];
+        palette = (int) (newSettings[1] + 100);
+        fadeout = newSettings[2];
+        freqDisplaySamples = (int) newSettings[3];
+        radialAmplitude = (int) newSettings[4];
+        maxSaturation = newSettings[5];
+        render = newSettings[6] > 0;
     }
 
     @Override
