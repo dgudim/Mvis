@@ -65,6 +65,8 @@ import static com.deo.mvis.utils.Utils.putFloat;
 import static com.deo.mvis.utils.Utils.putInteger;
 
 //TODO make a scratch-like visualiser programming system
+//TODO make a space background
+//TODO linear frequency visualiser and a string visualiser
 
 public class MenuScreen implements Screen {
 
@@ -130,7 +132,7 @@ public class MenuScreen implements Screen {
 
         settings = new Array<>();
 
-        if(menuVisualisation) {
+        if (menuVisualisation) {
             musicWave = new MusicWave(destinationMusic, false);
             music = musicWave.getMusic();
             averageSamples = musicWave.smoothSamples(musicWave.getSamples().clone(), 2, 32);
@@ -139,7 +141,7 @@ public class MenuScreen implements Screen {
 
             displaySamples = new float[32];
             Arrays.fill(displaySamples, 0);
-        }else{
+        } else {
             music = Gdx.audio.newMusic(destinationMusic);
         }
 
@@ -220,27 +222,29 @@ public class MenuScreen implements Screen {
             }
         }
 
-        final TextButton menuVisButton = uiComposer.addTextButton("defaultLight", "menu vis on/off", 0.45f);
+        final TextButton menuVisButton = uiComposer.addTextButton("defaultLight", "menu vis on/off", 0.4f);
 
-        if(getBoolean("menuVisD")){
+        if (getBoolean("menuVisD")) {
             menuVisButton.setColor(Color.RED);
             menuVisButton.setText("menu vis off");
-        }else{
+        } else {
             menuVisButton.setColor(Color.WHITE);
             menuVisButton.setText("menu vis on");
         }
 
-        menuVisButton.addListener(new ClickListener(){
+        menuVisButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 putBoolean("menuVisD", !getBoolean("menuVisD"));
-                if(getBoolean("menuVisD")){
+                if (getBoolean("menuVisD")) {
                     menuVisButton.setColor(Color.RED);
                     menuVisButton.setText("menu vis off");
-                }else{
+                } else {
                     menuVisButton.setColor(Color.WHITE);
                     menuVisButton.setText("menu vis on");
                 }
+                game.setScreen(new MenuScreen(game));
+                dispose();
             }
         });
 
@@ -277,9 +281,9 @@ public class MenuScreen implements Screen {
         renderer.begin(ShapeRenderer.ShapeType.Filled);
 
         float size, size2;
-        if(menuVisualisation) {
+        if (menuVisualisation) {
             size = MathUtils.clamp(averageSamples[pos] * 25 + 725 - triangleAnimation, 0, 900);
-        }else{
+        } else {
             size = 725 - triangleAnimation;
         }
         size2 = size + 25;
@@ -337,7 +341,7 @@ public class MenuScreen implements Screen {
 
         renderer.begin(ShapeRenderer.ShapeType.Filled);
 
-        if(menuVisualisation) {
+        if (menuVisualisation) {
             float[] samples = musicWave.getSamplesForFFT(pos, 32, musicWave.getSamples());
             fft.realForward(samples);
 
@@ -657,7 +661,7 @@ public class MenuScreen implements Screen {
                     StringWriter sw = new StringWriter();
                     e.printStackTrace(new PrintWriter(sw));
                     String fullStackTrace = sw.toString();
-                    Gdx.files.external("Mvis/ERRORS.txt").writeString(fullStackTrace+"\n\n\n", true);
+                    Gdx.files.external("Mvis/ERRORS.txt").writeString(fullStackTrace + "\n\n\n", true);
                     Gdx.input.setInputProcessor(stage);
                     music.play();
                     e.printStackTrace();
@@ -821,9 +825,9 @@ public class MenuScreen implements Screen {
         if (Gdx.input.getInputProcessor().equals(stage)) {
             Gdx.input.setInputProcessor(null);
         }
-        if(menuVisualisation){
+        if (menuVisualisation) {
             musicWave.dispose();
-        }else{
+        } else {
             music.dispose();
         }
     }
