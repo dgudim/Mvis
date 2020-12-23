@@ -60,10 +60,11 @@ import static com.deo.mvis.Launcher.HEIGHT;
 import static com.deo.mvis.Launcher.WIDTH;
 import static com.deo.mvis.utils.Utils.getBoolean;
 import static com.deo.mvis.utils.Utils.getInteger;
-import static com.deo.mvis.utils.Utils.getRandomInRange;
 import static com.deo.mvis.utils.Utils.putBoolean;
 import static com.deo.mvis.utils.Utils.putFloat;
 import static com.deo.mvis.utils.Utils.putInteger;
+
+//TODO make a scratch-like visualiser programming system
 
 public class MenuScreen implements Screen {
 
@@ -93,10 +94,13 @@ public class MenuScreen implements Screen {
     private float triangleAngle = 0;
     private float triangleAnimation = 700;
     boolean musicStarted = false;
+    boolean menuVisualisation;
 
     Set<Class<? extends BaseVisualiser>> visualiserClasses;
 
     public MenuScreen(final Game game) {
+
+        menuVisualisation = !getBoolean("menuVisD");
 
         FileHandle destinationFolder = Gdx.files.external("Mvis/");
 
@@ -126,11 +130,18 @@ public class MenuScreen implements Screen {
 
         settings = new Array<>();
 
-        musicWave = new MusicWave(destinationMusic, false);
+        if(menuVisualisation) {
+            musicWave = new MusicWave(destinationMusic, false);
+            music = musicWave.getMusic();
+            averageSamples = musicWave.smoothSamples(musicWave.getSamples().clone(), 2, 32);
 
-        music = musicWave.getMusic();
+            fft = new FloatFFT_1D(32);
 
-        averageSamples = musicWave.smoothSamples(musicWave.getSamples().clone(), 2, 32);
+            displaySamples = new float[32];
+            Arrays.fill(displaySamples, 0);
+        }else{
+            music = Gdx.audio.newMusic(destinationMusic);
+        }
 
         music.setOnCompletionListener(new Music.OnCompletionListener() {
             @Override
@@ -139,11 +150,6 @@ public class MenuScreen implements Screen {
                 music.play();
             }
         });
-
-        fft = new FloatFFT_1D(32);
-
-        displaySamples = new float[32];
-        Arrays.fill(displaySamples, 0);
 
         renderer = new ShapeRenderer();
         renderer.setAutoShapeType(true);
@@ -214,6 +220,36 @@ public class MenuScreen implements Screen {
             }
         }
 
+        final TextButton menuVisButton = uiComposer.addTextButton("defaultLight", "menu vis on/off", 0.45f);
+
+        if(getBoolean("menuVisD")){
+            menuVisButton.setColor(Color.RED);
+            menuVisButton.setText("menu vis off");
+        }else{
+            menuVisButton.setColor(Color.WHITE);
+            menuVisButton.setText("menu vis on");
+        }
+
+        menuVisButton.addListener(new ClickListener(){
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                putBoolean("menuVisD", !getBoolean("menuVisD"));
+                if(getBoolean("menuVisD")){
+                    menuVisButton.setColor(Color.RED);
+                    menuVisButton.setText("menu vis off");
+                }else{
+                    menuVisButton.setColor(Color.WHITE);
+                    menuVisButton.setText("menu vis on");
+                }
+            }
+        });
+
+        if (row) {
+            visualisersTable.add(menuVisButton).width(370).height(100).pad(7).row();
+        } else {
+            visualisersTable.add(menuVisButton).width(370).height(100).pad(7);
+        }
+
         scrollPane = new ScrollPane(visualisersTable);
         scrollPane.setBounds(-WIDTH / 2f, -HEIGHT / 2f, WIDTH / 2f - 10, HEIGHT / 2f + 45);
 
@@ -240,8 +276,13 @@ public class MenuScreen implements Screen {
 
         renderer.begin(ShapeRenderer.ShapeType.Filled);
 
-        float size = MathUtils.clamp(averageSamples[pos] * 25 + 725 - triangleAnimation, 0, 900);
-        float size2 = size + 25;
+        float size, size2;
+        if(menuVisualisation) {
+            size = MathUtils.clamp(averageSamples[pos] * 25 + 725 - triangleAnimation, 0, 900);
+        }else{
+            size = 725 - triangleAnimation;
+        }
+        size2 = size + 25;
 
         float[] triangle = makeATriangle(size);
         float[] triangle2 = makeATriangle(size2);
@@ -276,11 +317,11 @@ public class MenuScreen implements Screen {
 
         //shadow
         font.setColor(Color.BLACK);
-        font.draw(batch, "Welcome to Mvis V1.3", -WIDTH / 2f + 5, HEIGHT / 2f - 125, WIDTH, 1, false);
+        font.draw(batch, "Welcome to Mvis V1.9", -WIDTH / 2f + 5, HEIGHT / 2f - 125, WIDTH, 1, false);
 
         //actual text
         font.setColor(Color.valueOf("#7799FF"));
-        font.draw(batch, "Welcome to Mvis V1.3", -WIDTH / 2f, HEIGHT / 2f - 130, WIDTH, 1, false);
+        font.draw(batch, "Welcome to Mvis V1.9", -WIDTH / 2f, HEIGHT / 2f - 130, WIDTH, 1, false);
 
         //shadow
         font2.setColor(Color.BLACK);
@@ -296,32 +337,33 @@ public class MenuScreen implements Screen {
 
         renderer.begin(ShapeRenderer.ShapeType.Filled);
 
-        float[] samples = musicWave.getSamplesForFFT(pos, 32, musicWave.getSamples());
-        fft.realForward(samples);
+        if(menuVisualisation) {
+            float[] samples = musicWave.getSamplesForFFT(pos, 32, musicWave.getSamples());
+            fft.realForward(samples);
 
-        float[] samples2 = new float[samples.length + 4];
+            float[] samples2 = new float[samples.length + 4];
 
-        for (int t = 2; t < samples.length - 2; t++) {
-            samples2[t] = samples[t - 2];
-        }
+            for (int t = 2; t < samples.length - 2; t++) {
+                samples2[t] = samples[t - 2];
+            }
 
-        for (int t = 0; t < 2; t++) {
+            for (int t = 0; t < 2; t++) {
+                for (int i = 2; i < samples2.length - 2; i++) {
+                    float neighbours = samples2[i - 2] + samples2[i + 2] + samples2[i - 1] + samples2[i + 1];
+                    samples2[i] = (Math.abs(neighbours) + Math.abs(samples2[i])) / 5f;
+                }
+            }
+
             for (int i = 2; i < samples2.length - 2; i++) {
-                float neighbours = samples2[i - 2] + samples2[i + 2] + samples2[i - 1] + samples2[i + 1];
-                samples2[i] = (Math.abs(neighbours) + Math.abs(samples2[i])) / 5f;
+
+                displaySamples[i - 2] += samples2[i] / 1.5f;
+
+                renderer.setColor(new Color().fromHsv(displaySamples[i - 2] / 2048, 0.75f, 0.9f));
+                renderer.rect(i * 37.8f - samples.length / 2f * 37.8f - 62, 329, 11, displaySamples[i - 2] / 512 + 0.5f);
+
+                displaySamples[i - 2] /= 1.3f;
             }
         }
-
-        for (int i = 2; i < samples2.length - 2; i++) {
-
-            displaySamples[i - 2] += samples2[i] / 1.5f;
-
-            renderer.setColor(new Color().fromHsv(displaySamples[i - 2] / 2048, 0.75f, 0.9f));
-            renderer.rect(i * 37.8f - samples.length / 2f * 37.8f - 62, 329, 11, displaySamples[i - 2] / 512 + 0.5f);
-
-            displaySamples[i - 2] /= 1.3f;
-        }
-
 
         float overHead = viewport.getScreenHeight() * camera.zoom - HEIGHT;
         float overHeadHorizontal = viewport.getScreenWidth() * camera.zoom - WIDTH;
@@ -774,11 +816,15 @@ public class MenuScreen implements Screen {
     public void dispose() {
         batch.dispose();
         renderer.dispose();
-        musicWave.dispose();
         font_small.dispose();
         assetManager.dispose();
         if (Gdx.input.getInputProcessor().equals(stage)) {
             Gdx.input.setInputProcessor(null);
+        }
+        if(menuVisualisation){
+            musicWave.dispose();
+        }else{
+            music.dispose();
         }
     }
 }
