@@ -20,6 +20,7 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
 
     //settings
     private static int freqDisplaySamples = 512;
+    private static int freqDisplaySampleMultiplier = 2;
     private static float fadeout = 0.005f;
     private static int radialAmplitude = 180;
     private float freqDisplayRenderAngle;
@@ -49,7 +50,7 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
     private static int palette = 100;
 
     public OsciloscopeScreen(Game game) {
-        super(game, LEFT_AND_RIGHT_RAW);
+        super(game, ALL_SAMPLES_RAW);
 
         dots = new Array<>();
         colors = new Array<>();
@@ -266,11 +267,11 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
                 break;
             case (FREQUENCY):
                 if (!render) {
-                    if (pos >= freqDisplaySamples / 2) {
+                    if (pos >= freqDisplaySamples * freqDisplaySampleMultiplier) {
                         for (int i = 0; i < freqDisplaySamples; i++) {
                             freqDisplayRenderAngle += angleStep;
-                            x = -MathUtils.cosDeg(freqDisplayRenderAngle) * samplesRaw[pos - freqDisplaySamples / 2 + i] * (HEIGHT / 2f - 10);
-                            y = -MathUtils.sinDeg(freqDisplayRenderAngle) * samplesRaw[pos - freqDisplaySamples / 2 + i] * (HEIGHT / 2f - 10);
+                            x = -MathUtils.cosDeg(freqDisplayRenderAngle) * samplesRaw[pos - freqDisplaySamples * freqDisplaySampleMultiplier + i * 2 * freqDisplaySampleMultiplier] * (HEIGHT / 2f - 10);
+                            y = -MathUtils.sinDeg(freqDisplayRenderAngle) * samplesRaw[pos - freqDisplaySamples * freqDisplaySampleMultiplier + i * 2 * freqDisplaySampleMultiplier] * (HEIGHT / 2f - 10);
                             dots.add(new Vector3().set(x, y, 0));
                             colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
                         }
@@ -336,13 +337,13 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
         paletteNames = new String[]{"Lime", "Fire", "Water"};
         typeNames = new String[]{"Oscilloscope", "Radial", "Bubble", "Bubble2", "Shapes", "Sinus", "Frequency in circle"};
 
-        settings = new String[]{"Type", "Pallet", "Fadeout", "Frequency display samples", "Radial visualiser amplitude", "Max bloom saturation", "Render"};
-        settingTypes = new String[]{"int", "int", "float", "int", "float", "float", "boolean"};
+        settings = new String[]{"Type", "Pallet", "Fadeout", "Frequency display samples", "Frequency display sample multiplier", "Radial visualiser amplitude", "Max bloom saturation", "Render"};
+        settingTypes = new String[]{"int", "int", "float", "int", "int", "float", "float", "boolean"};
 
-        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 0.05f, 1024, 450, 4, 1};
-        settingMinValues = new float[]{0, 0, 0.0005f, 256, 15, 0, 0};
+        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 0.05f, 1024, 6, 450, 4, 1};
+        settingMinValues = new float[]{0, 0, 0.0005f, 256, 1, 15, 0, 0};
 
-        defaultSettings = new float[]{0, 0, fadeout, freqDisplaySamples, radialAmplitude, 1, 0};
+        defaultSettings = new float[]{0, 0, fadeout, freqDisplaySamples, 2, radialAmplitude, 1, 0};
     }
 
     public static String getName() {
@@ -354,9 +355,10 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
         palette = (int) (newSettings[1] + 100);
         fadeout = newSettings[2];
         freqDisplaySamples = (int) newSettings[3];
-        radialAmplitude = (int) newSettings[4];
-        maxSaturation = newSettings[5];
-        render = newSettings[6] > 0;
+        freqDisplaySampleMultiplier = (int) newSettings[4];
+        radialAmplitude = (int) newSettings[5];
+        maxSaturation = newSettings[6];
+        render = newSettings[7] > 0;
     }
 
     @Override
