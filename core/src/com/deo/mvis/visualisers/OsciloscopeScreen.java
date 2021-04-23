@@ -340,7 +340,7 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
         settings = new String[]{"Type", "Pallet", "Fadeout", "Frequency display samples", "Frequency display sample multiplier", "Radial visualiser amplitude", "Max bloom saturation", "Render"};
         settingTypes = new String[]{"int", "int", "float", "int", "int", "float", "float", "boolean"};
 
-        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 0.05f, 1024, 6, 450, 4, 1};
+        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 0.05f, 1024, 8, 450, 4, 1};
         settingMinValues = new float[]{0, 0, 0.0005f, 256, 1, 15, 0, 0};
 
         defaultSettings = new float[]{0, 0, fadeout, freqDisplaySamples, 2, radialAmplitude, 1, 0};
