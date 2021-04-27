@@ -166,7 +166,7 @@ public class SlimeScreen extends BaseVisualiser implements Screen {
 
     public static void setSettings(float[] newSettings) {
         currentSimulationRule = (int) newSettings[0];
-        currentPalette = (int) (newSettings[1] + 100);
+        currentPalette = (int) newSettings[1];
         render = newSettings[2] > 0;
     }
 
