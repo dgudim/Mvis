@@ -58,14 +58,13 @@ public class BaseVisualiser {
     public static String[] typeNames, paletteNames, settings, settingTypes;
     public static float[] settingMaxValues, settingMinValues, defaultSettings;
 
-    int numOfSamples;
     public int sampleRate;
 
     public static FileHandle musicFile = Gdx.files.internal("away.wav");
 
     private TextButton exit;
     public Stage stage;
-    private float transparency = 1;
+    float transparency = 1;
 
     private AssetManager assetManager;
 

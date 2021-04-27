@@ -5,24 +5,47 @@ import com.badlogic.gdx.math.MathUtils;
 
 public class ColorPallets {
 
-    public static Color fadeBetweenTwoColors(Color color1, Color color2, float i){
-        i = MathUtils.clamp(i, 0, 1);
-
-        float r = color1.r*(1-i) + color2.r*i;
-        float g = color1.g*(1-i) + color2.g*i;
-        float b = color1.b*(1-i) + color2.b*i;
-        float a = color1.a*(1-i) + color2.a*i;
-
-        return new Color().set(r, g, b, a);
+    public static Color fadeBetweenTwoColors(Color color1, Color color2, float ratio){
+        return new Color(mixTwoColors(color1, color2, ratio));
     }
 
-    public static Color fadeBetweenThreeColors(Color color1, Color color2, Color color3, float i){
-        i = MathUtils.clamp(i, -1, 1);
-        if(i>=0){
-            return fadeBetweenTwoColors(color2, color3, i);
-        }else{
-            return fadeBetweenTwoColors(color2, color1, -i);
+    public static int interpolate(float step, Color... colors) {
+        step = Math.max(Math.min(step, 1.0f), 0.0f);
+
+        switch (colors.length) {
+            case 0:
+                throw new IllegalArgumentException("At least one color required.");
+
+            case 1:
+                return Color.argb8888(colors[0]);
+
+            case 2:
+                return mixTwoColors(colors[0], colors[1], step);
+
+            default:
+
+                int firstColorIndex = (int) (step * (colors.length - 1));
+
+                if (firstColorIndex == colors.length - 1) {
+                    return Color.argb8888(colors[colors.length - 1]);
+                }
+
+                // stepAtFirstColorIndex will be a bit smaller than step
+                float stepAtFirstColorIndex = (float) firstColorIndex
+                        / (colors.length - 1);
+
+                // multiply to increase values to range between 0.0f and 1.0f
+                float localStep = (step - stepAtFirstColorIndex)
+                        * (colors.length - 1);
+
+                return mixTwoColors(colors[firstColorIndex],
+                        colors[firstColorIndex + 1], localStep);
         }
+
+    }
+
+    public static int mixTwoColors(Color color1, Color color2, float ratio) {
+        return Color.rgba8888(color1.r * (1f - ratio) + color2.r * ratio, color1.g * (1f - ratio) + color2.g * ratio, color1.b * (1f - ratio) + color2.b * ratio, color1.a * (1f - ratio) + color2.a * ratio);
     }
 
 }

@@ -9,8 +9,6 @@ import static com.deo.mvis.Launcher.WIDTH;
 
 public class DesktopLauncher {
 
-
-
 	public static void main (String[] arg) {
 		LwjglApplicationConfiguration cfg = new LwjglApplicationConfiguration();
 		cfg.title = "Mvis";

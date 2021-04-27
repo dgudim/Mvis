@@ -48,6 +48,7 @@ import com.deo.mvis.visualisers.MuffinScreen;
 import com.deo.mvis.visualisers.MushroomScreen;
 import com.deo.mvis.visualisers.OsciloscopeScreen;
 import com.deo.mvis.visualisers.RingScreen;
+import com.deo.mvis.visualisers.SlimeScreen;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -185,6 +186,7 @@ public class MenuScreen implements Screen {
         visualiserClasses.add(FFTScreen.class);
         visualiserClasses.add(GameOfLife.class);
         visualiserClasses.add(FourierScreen.class);
+        visualiserClasses.add(SlimeScreen.class);
 
         boolean row = false;
         int i = 0;
