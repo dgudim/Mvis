@@ -3,8 +3,6 @@ package com.deo.mvis.visualisers;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.assets.AssetManager;
-import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
@@ -69,9 +67,7 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
         cachedPositions.setSize(51);
 
         modelBuilder = new ModelBuilder();
-
         modelBatch = new ModelBatch();
-
         environment = new Environment();
 
         utils.changeBloomEnabledState(type == SINGULAR);
@@ -86,9 +82,9 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
 
     @Override
     public void render(float delta) {
-
-        Gdx.gl.glClearColor(0, 0, 0, 1);
+        
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
+        Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
         Gdx.gl.glEnable(GL20.GL_CULL_FACE);
 
@@ -109,6 +105,7 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
         for (int i = instances.size - 1; i >= 0; i--) {
             modelBatch.render(instances.get(i), environment);
         }
+        
         modelBatch.end();
         utils.bloomRender();
 
@@ -200,6 +197,7 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
                         instance2.transform.translate(-x * 0.5f * 100 / visualiserQuality, -17, -z * 0.5f * 100 / visualiserQuality);
 
                         models.add(model2);
+                        // TODO: 5/26/2021 probably dont need to create models, just instances
                         instances.add(instance2);
                         modelYPoses.add(0f);
 
@@ -351,6 +349,7 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
     @Override
     public void dispose() {
         super.dispose();
+        modelBatch.dispose();
         for (int i = 0; i < models.size; i++) {
             models.get(i).dispose();
         }

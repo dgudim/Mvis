@@ -16,6 +16,8 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import com.deo.mvis.postprocessing.PostProcessor;
 import com.deo.mvis.postprocessing.effects.Bloom;
 
+import java.util.Locale;
+
 import static com.deo.mvis.Launcher.HEIGHT;
 import static com.deo.mvis.Launcher.WIDTH;
 
@@ -103,7 +105,7 @@ public class Utils {
     public void displayData(int recorderFrame, int frame, Matrix4 projMat) {
         batch.setProjectionMatrix(projMat);
         batch.begin();
-        font.draw(batch, String.format("% 2f", recorderFrame / (float) FPS) + "s", -WIDTH / 2f + 100, -HEIGHT / 2f + 120);
+        font.draw(batch, String.format("% 2f", recorderFrame / (float) FPS, Locale.ROOT) + "s", -WIDTH / 2f + 100, -HEIGHT / 2f + 120);
         boolean normal = frame / (float) 44100 == recorderFrame / (float) FPS;
         font.draw(batch, frame + "fr " + recorderFrame + "fr " + normal, -WIDTH / 2f + 100, -HEIGHT / 2f + 170);
         font.draw(batch, frame / (float) samples.length * 100 + "%", -WIDTH / 2f + 100, -HEIGHT / 2f + 70);

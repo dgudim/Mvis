@@ -47,17 +47,16 @@ public class RingScreen extends BaseVisualiser implements Screen {
         float radiusx, radiusy;
         int pos;
         if (!render) {
-            radiusx = lSamplesNormalised[(int) (music.getPosition() * sampleRate)] * 720;
-            radiusy = rSamplesNormalised[(int) (music.getPosition() * sampleRate)] * 720;
             pos = (int) (music.getPosition() * sampleRate);
         } else {
-            radiusx = lSamplesNormalised[frame] * 720;
-            radiusy = rSamplesNormalised[frame] * 720;
             pos = frame;
             frame += step;
             recorderFrame++;
         }
-
+    
+        radiusx = lSamplesNormalised[pos] * 720;
+        radiusy = rSamplesNormalised[pos] * 720;
+        
         positions.add(new Vector2(0, 0));
         colors.add(new Vector3(1, 1, 0));
 
