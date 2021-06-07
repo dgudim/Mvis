@@ -154,8 +154,12 @@ public class BaseVisualiser {
                 rSamplesNormalised = musicWave.normaliseSamples(false, false, musicWave.getRightChannelSamples());
                 break;
         }
+        if(!(sampleMode == DEFAULT)){
+            samplesSmoothed = musicWave.smoothSamples(musicWave.getSamples().clone(), 2, 32);
+        }else{
+            samplesSmoothed = musicWave.smoothSamples(musicWave.getSamples(), 2, 32);
+        }
         
-        samplesSmoothed = musicWave.smoothSamples(musicWave.getSamples(), 2, 32);
         utils = new Utils(FPS, step, samplesSmoothed, 3, 1, 1, true, batch);
         
         if (!render) {

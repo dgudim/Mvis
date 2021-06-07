@@ -2,33 +2,30 @@ package com.deo.mvis.visualisers;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 import static com.deo.mvis.Launcher.HEIGHT;
 import static com.deo.mvis.Launcher.WIDTH;
 
 public class OsciloscopeScreen extends BaseVisualiser implements Screen {
-
+    
     private Array<Vector3> dots;
     private Array<Vector3> colors;
-
+    
     //settings
-    private static int freqDisplaySamples = 512;
     private static int freqDisplaySampleMultiplier = 2;
+    private static int freqDisplaySamples = 512;
     private static float fadeout = 0.005f;
     private static int radialAmplitude = 180;
-    private float freqDisplayRenderAngle;
+    private float freqDisplayRenderAngle = 0;
     private float angleStep = 360 / (float) freqDisplaySamples;
     private int skipOver;
-
+    
     private int prevPosition = 0;
-
+    
     public final int STANDARD = 0;
     public final int RADIAL = 1;
     public final int BUBBLE = 2;
@@ -36,40 +33,38 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
     public final int SHAPES = 4;
     public final int SINUS = 5;
     public static final int FREQUENCY = 6;
-
+    
     public final int LIME = 100;
     public final int FIRE = 101;
     public final int CYAN = 102;
-
+    
     private Color palletColor;
     private Vector3 palletFadeoutPattern;
-
+    
     private static float maxSaturation = 4;
-
+    
     private static int type = 0;
     private static int palette = 100;
-
+    
     public OsciloscopeScreen(Game game) {
         super(game, ALL_SAMPLES_RAW);
-
+        
         dots = new Array<>();
         colors = new Array<>();
-
-        freqDisplayRenderAngle = 0;
-
+        
         if (type == BUBBLE || type == SHAPES || type == RADIAL_BUBBLE || type == SINUS) {
             skipOver = step;
             maxSaturation = 1;
         } else {
             skipOver = 1;
         }
-
+        
         if (type == SINUS) {
             fadeout *= 30;
             maxSaturation = 3;
             utils.setBloomIntensity(2f);
         }
-
+        
         if (type == FREQUENCY) {
             if (!render) {
                 fadeout *= 5;
@@ -78,16 +73,16 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
             }
             utils.setBloomIntensity(1.3f);
         }
-
+        
         if (type == SHAPES) {
             fadeout *= 2;
         }
-
+        
         utils.maxSaturation = maxSaturation;
-
+        
         palletColor = new Color();
         palletFadeoutPattern = new Vector3();
-
+        
         switch (palette) {
             case (FIRE):
                 palletColor.r = 1;
@@ -107,75 +102,75 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
                 palletFadeoutPattern.set(fadeout, fadeout, fadeout / 8f);
                 break;
         }
-
+        
     }
-
+    
     @Override
     public void show() {
         super.show();
     }
-
+    
     @Override
     public void render(float delta) {
-
+        
         int pos;
         if (!render) {
             pos = (int) (music.getPosition() * sampleRate);
         } else {
             pos = frame;
         }
-
+        
         renderer.setProjectionMatrix(camera.combined);
-
+        
         utils.bloomBegin(true, pos);
-
+        
         renderer.begin();
-
+        
         if (!render) {
-
+            
             addCoords((int) (music.getPosition() * sampleRate));
             render();
-
+            
             if (!(type == STANDARD || type == RADIAL)) {
                 fadeOut();
             }
-
+            
         } else {
-
+            
             for (int i = 0; i < step; i += skipOver) {
                 addCoords(frame);
                 frame += skipOver;
                 fadeOut();
             }
-
+            
             recorderFrame++;
-
+            
             render();
-
+            
         }
-
+        
         renderer.end();
         utils.bloomRender();
-
+        
         if (render) {
             utils.makeAScreenShot(recorderFrame);
             utils.displayData(recorderFrame, frame, camera.combined);
         }
-
+        
         batch.begin();
         drawExitButton();
         batch.end();
     }
-
+    
     private void addCoords(int pos) {
-
+        
         float x, y, angle, rad;
-
+        
         int repeat = 1; //triple circle effect happens automatically because music.getPosition returns in milliseconds
         if (render) {
             repeat = 3;  //make triple circle effect
         }
-
+        
         switch (type) {
             case (STANDARD):
                 if (!render) {
@@ -267,25 +262,28 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
                 break;
             case (FREQUENCY):
                 if (!render) {
-                    if (pos >= freqDisplaySamples * freqDisplaySampleMultiplier) {
-                        for (int i = 0; i < freqDisplaySamples; i++) {
-                            freqDisplayRenderAngle += angleStep;
-                            x = -MathUtils.cosDeg(freqDisplayRenderAngle) * samplesRaw[pos - freqDisplaySamples * freqDisplaySampleMultiplier + i * 2 * freqDisplaySampleMultiplier] * (HEIGHT / 2f - 10);
-                            y = -MathUtils.sinDeg(freqDisplayRenderAngle) * samplesRaw[pos - freqDisplaySamples * freqDisplaySampleMultiplier + i * 2 * freqDisplaySampleMultiplier] * (HEIGHT / 2f - 10);
+                    if (pos >= freqDisplaySamples) {
+                        for (int i = 0; i < freqDisplaySamples; i += freqDisplaySampleMultiplier) {
+                            freqDisplayRenderAngle += angleStep * freqDisplaySampleMultiplier;
+                            x = -MathUtils.cosDeg(freqDisplayRenderAngle) * samplesSmoothed[pos - freqDisplaySamples / 2 + i] * (HEIGHT / 2f - 10);
+                            y = -MathUtils.sinDeg(freqDisplayRenderAngle) * samplesSmoothed[pos - freqDisplaySamples / 2 + i] * (HEIGHT / 2f - 10);
                             dots.add(new Vector3().set(x, y, 0));
                             colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
                         }
                     }
+                    while (freqDisplayRenderAngle > 360) {
+                        freqDisplayRenderAngle -= 360;
+                    }
                 } else {
                     freqDisplayRenderAngle += angleStep;
-                    x = -MathUtils.cosDeg(freqDisplayRenderAngle) * samplesRaw[pos] * (HEIGHT / 2f - 10);
-                    y = -MathUtils.sinDeg(freqDisplayRenderAngle) * samplesRaw[pos] * (HEIGHT / 2f - 10);
+                    x = -MathUtils.cosDeg(freqDisplayRenderAngle) * samplesSmoothed[pos] * (HEIGHT / 2f - 10);
+                    y = -MathUtils.sinDeg(freqDisplayRenderAngle) * samplesSmoothed[pos] * (HEIGHT / 2f - 10);
                     dots.add(new Vector3().set(x, y, 0));
                     colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
                 }
         }
     }
-
+    
     private void render() {
         // bubble renderer
         if (type == BUBBLE || type == RADIAL_BUBBLE) {
@@ -310,13 +308,13 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
             }
         }
     }
-
+    
     private void fadeOut() {
         // fade the colors
         for (int i = 0; i < dots.size; i++) {
-
+            
             Vector3 colorV = colors.get(i);
-
+            
             if (colorV.x + colorV.y + colorV.z >= fadeout) {
                 colorV.x = MathUtils.clamp(colorV.x - palletFadeoutPattern.x, 0, 1);
                 colorV.y = MathUtils.clamp(colorV.y - palletFadeoutPattern.y, 0, 1);
@@ -332,55 +330,55 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
             }
         }
     }
-
+    
     public static void init() {
         paletteNames = new String[]{"Lime", "Fire", "Water"};
         typeNames = new String[]{"Oscilloscope", "Radial", "Bubble", "Bubble2", "Shapes", "Sinus", "Frequency in circle"};
-
+        
         settings = new String[]{"Type", "Pallet", "Fadeout", "Frequency display samples", "Frequency display sample multiplier", "Radial visualiser amplitude", "Max bloom saturation", "Render"};
         settingTypes = new String[]{"int", "int", "float", "int", "int", "float", "float", "boolean"};
-
-        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 0.05f, 1024, 8, 450, 4, 1};
-        settingMinValues = new float[]{0, 0, 0.0005f, 256, 1, 15, 0, 0};
-
+        
+        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 0.05f, 16192, 8, 450, 4, 1};
+        settingMinValues = new float[]{0, 0, 0.0005f, 2048, 1, 15, 0, 0};
+        
         defaultSettings = new float[]{0, 0, fadeout, freqDisplaySamples, 2, radialAmplitude, 1, 0};
     }
-
+    
     public static String getName() {
         return "Oscilloscope";
     }
-
+    
     public static void setSettings(float[] newSettings) {
         type = (int) newSettings[0];
         palette = (int) (newSettings[1] + 100);
         fadeout = newSettings[2];
         freqDisplaySamples = (int) newSettings[3];
-        freqDisplaySampleMultiplier = (int) newSettings[4];
+        freqDisplaySampleMultiplier = (int) newSettings[4] + 4;
         radialAmplitude = (int) newSettings[5];
         maxSaturation = newSettings[6];
         render = newSettings[7] > 0;
     }
-
+    
     @Override
     public void resize(int width, int height) {
         super.resize(width, height, 0, true);
     }
-
+    
     @Override
     public void pause() {
-
+    
     }
-
+    
     @Override
     public void resume() {
-
+    
     }
-
+    
     @Override
     public void hide() {
-
+    
     }
-
+    
     @Override
     public void dispose() {
         super.dispose();

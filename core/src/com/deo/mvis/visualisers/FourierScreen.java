@@ -203,7 +203,7 @@ public class FourierScreen extends BaseVisualiser implements Screen {
             }
         }
         if (enableStarGateEffect) {
-            for (int i = 0; i < samplesSmoothed[pos] * 25; i++) {
+            for (int i = 0; i < samplesSmoothed[pos] * 15; i++) {
                 starGateTriangles.add(new Vector3().set(0, 0, 10));
                 starGateTriangleSpeeds.add(new Vector3(getRandomInRange(-200, 200) / 50f * (samplesSmoothed[pos] + 1), getRandomInRange(-200, 200) / 50f * (samplesSmoothed[pos] + 1), getRandomInRange(-180, 180)));
                 starGateTriangleColors.add(new Color().fromHsv(samplesRaw[pos] * 120 - 50 + colorOffset, 0.75f, 0.9f));
@@ -385,7 +385,7 @@ public class FourierScreen extends BaseVisualiser implements Screen {
             renderer.setColor(starGateTriangleColors.get(i));
             renderer.triangle(triangle[0], triangle[1], triangle[2], triangle[3], triangle[4], triangle[5]);
 
-            starGateTriangles.set(i, starGateTriangles.get(i).add(starGateTriangleSpeeds.get(i).x, starGateTriangleSpeeds.get(i).y, -delta * 3));
+            starGateTriangles.set(i, starGateTriangles.get(i).add(starGateTriangleSpeeds.get(i).x * delta * 100, starGateTriangleSpeeds.get(i).y * delta * 100, -delta * 3));
 
             float radius = starGateTriangles.get(i).x * starGateTriangles.get(i).x + starGateTriangles.get(i).y * starGateTriangles.get(i).y;
             radius = (float) Math.sqrt(radius);

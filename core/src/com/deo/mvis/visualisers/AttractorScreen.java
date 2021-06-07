@@ -42,6 +42,7 @@ public class AttractorScreen extends BaseVisualiser implements Screen {
     private static float timestep;
     
     float spread = 3;
+    float angle = 0;
     
     private final Array<Point> points;
     
@@ -102,6 +103,10 @@ public class AttractorScreen extends BaseVisualiser implements Screen {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
         Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
         Gdx.gl.glEnable(GL20.GL_CULL_FACE);
+        
+        //angle += delta/30f;
+        //cam.rotateAround(new Vector3(0, 0, 0), new Vector3(0, 1, 0), angle);
+        //cam.update();
         
         cameraInputController.update();
         
