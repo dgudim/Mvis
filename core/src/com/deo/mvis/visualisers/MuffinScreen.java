@@ -23,6 +23,7 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.deo.mvis.utils.CompositeSettings;
 import com.deo.mvis.utils.SettingsEntry;
 import com.deo.mvis.utils.Type;
 
@@ -307,33 +308,24 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
         }
     }
     
-    public static void init() {
-    
-        settings = new Array<>();
-        settings.add(new SettingsEntry("Visualiser quality", 0, 100, 100, Type.INT));
-        settings.add(new SettingsEntry("Render", 0, 1, 0, Type.BOOLEAN));
+    public static CompositeSettings init() {
+        CompositeSettings compositeSettings = new CompositeSettings(enumToArray(Palette.class), enumToArray(Mode.class));
         
-        paletteNames = new Array<>();
-        for (int i = 0; i < MuffinScreen.Palette.values().length; i++) {
-            paletteNames.add(MuffinScreen.Palette.values()[i].name().toLowerCase(Locale.ROOT).replace("_", ""));
-        }
-    
-        typeNames = new Array<>();
-        for (int i = 0; i < MuffinScreen.Mode.values().length; i++) {
-            typeNames.add(MuffinScreen.Mode.values()[i].name().toLowerCase(Locale.ROOT).replace("_", ""));
-        }
+        compositeSettings.addSetting("Visualiser quality", 0, 100, 100, Type.INT);
+        compositeSettings.addSetting("Render", 0, 1, 0, Type.BOOLEAN);
         
+        return compositeSettings;
     }
     
     public static String getName() {
         return "3D";
     }
     
-    public static void setSettings(int mode, int palette) {
+    public static void setSettings(Array<SettingsEntry> settings, int mode, int palette) {
         MuffinScreen.mode = MuffinScreen.Mode.values()[mode];
         MuffinScreen.palette = MuffinScreen.Palette.values()[palette];
-        visualiserQuality = getSettingByName("Visualiser quality");
-        render = getSettingByName("Render") > 0;
+        visualiserQuality = getSettingByName(settings, "Visualiser quality");
+        render = getSettingByName(settings, "Render") > 0;
     }
     
     @Override

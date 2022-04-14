@@ -10,6 +10,7 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
+import com.deo.mvis.utils.CompositeSettings;
 import com.deo.mvis.utils.SettingsEntry;
 import com.deo.mvis.utils.Type;
 
@@ -181,50 +182,43 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
         
     }
     
-    public static void init() {
-    
-        settings = new Array<>();
-        settings.add(new SettingsEntry("Exponential", 0, 1, 0, Type.BOOLEAN));
-        settings.add(new SettingsEntry("Branch length", 1, 80, 45, Type.FLOAT));
-        settings.add(new SettingsEntry("Max iterations (+5)", 1, 10, 7, Type.INT));
-        settings.add(new SettingsEntry("Max angle", 5, 90, 45, Type.FLOAT));
-        settings.add(new SettingsEntry("Base iterations", 1, 7, 5, Type.INT));
-        settings.add(new SettingsEntry("Base angle", 0, 45, 5, Type.FLOAT));
-        settings.add(new SettingsEntry("Fadeout", 0.0005f, 0.1f, 0.08f, Type.FLOAT));
-        settings.add(new SettingsEntry("Max bloom saturation", 0, 5, 3, Type.FLOAT));
-        settings.add(new SettingsEntry("Render", 0, 1, 0, Type.BOOLEAN));
+    public static CompositeSettings init() {
         
-        paletteNames = new Array<>();
-        for (int i = 0; i < MushroomScreen.Palette.values().length; i++) {
-            paletteNames.add(MushroomScreen.Palette.values()[i].name().toLowerCase(Locale.ROOT).replace("_", ""));
-        }
+        CompositeSettings compositeSettings = new CompositeSettings(enumToArray(Palette.class), enumToArray(Mode.class));
         
-        typeNames = new Array<>();
-        for (int i = 0; i < MushroomScreen.Mode.values().length; i++) {
-            typeNames.add(MushroomScreen.Mode.values()[i].name().toLowerCase(Locale.ROOT).replace("_", ""));
-        }
+        compositeSettings.addSetting("Exponential", 0, 1, 0, Type.BOOLEAN);
+        compositeSettings.addSetting("Branch length", 1, 80, 45, Type.FLOAT);
+        compositeSettings.addSetting("Max iterations (+5)", 1, 10, 7, Type.INT);
+        compositeSettings.addSetting("Max angle", 5, 90, 45, Type.FLOAT);
+        compositeSettings.addSetting("Base iterations", 1, 7, 5, Type.INT);
+        compositeSettings.addSetting("Base angle", 0, 45, 5, Type.FLOAT);
+        compositeSettings.addSetting("Fadeout", 0.0005f, 0.1f, 0.08f, Type.FLOAT);
+        compositeSettings.addSetting("Max bloom saturation", 0, 5, 3, Type.FLOAT);
+        compositeSettings.addSetting("Render", 0, 1, 0, Type.BOOLEAN);
+        
+        return compositeSettings;
     }
     
     public static String getName() {
         return "Fractal tree";
     }
     
-    public static void setSettings(int mode, int palette) {
+    public static void setSettings(Array<SettingsEntry> settings, int mode, int palette) {
         MushroomScreen.mode = MushroomScreen.Mode.values()[mode];
         MushroomScreen.palette = MushroomScreen.Palette.values()[palette];
         
-        exponential = getSettingByName("Exponential") > 0;
+        exponential = getSettingByName(settings, "Exponential") > 0;
         
-        branchLength = getSettingByName("Branch length");
-        maxIterations = (int) getSettingByName("Max iterations (+5)");
-        maxAngle = getSettingByName("Max angle");
+        branchLength = getSettingByName(settings, "Branch length");
+        maxIterations = (int) getSettingByName(settings, "Max iterations (+5)");
+        maxAngle = getSettingByName(settings, "Max angle");
         
-        baseIterations = (int) getSettingByName("Base iterations");
-        baseAngle = getSettingByName("Base angle");
+        baseIterations = (int) getSettingByName(settings, "Base iterations");
+        baseAngle = getSettingByName(settings, "Base angle");
         
-        fadeout = getSettingByName("Fadeout");
-        maxSaturation = getSettingByName("Max bloom saturation");
-        render = getSettingByName("Render") > 0;
+        fadeout = getSettingByName(settings, "Fadeout");
+        maxSaturation = getSettingByName(settings, "Max bloom saturation");
+        render = getSettingByName(settings, "Render") > 0;
     }
     
     @Override

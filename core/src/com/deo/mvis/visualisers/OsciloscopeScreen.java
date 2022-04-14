@@ -343,12 +343,12 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
     
         paletteNames = new Array<>();
         for (int i = 0; i < OsciloscopeScreen.Palette.values().length; i++) {
-            paletteNames.add(OsciloscopeScreen.Palette.values()[i].name().toLowerCase(Locale.ROOT).replace("_", ""));
+            paletteNames.add(OsciloscopeScreen.Palette.values()[i].name().toLowerCase(Locale.ROOT).replace("_", " "));
         }
     
         typeNames = new Array<>();
         for (int i = 0; i < OsciloscopeScreen.Mode.values().length; i++) {
-            typeNames.add(OsciloscopeScreen.Mode.values()[i].name().toLowerCase(Locale.ROOT).replace("_", ""));
+            typeNames.add(OsciloscopeScreen.Mode.values()[i].name().toLowerCase(Locale.ROOT).replace("_", " "));
         }
     }
     

@@ -451,12 +451,12 @@ public class FourierScreen extends BaseVisualiser implements Screen {
         
         paletteNames = new Array<>();
         for (int i = 0; i < FourierScreen.Palette.values().length; i++) {
-            paletteNames.add(FourierScreen.Palette.values()[i].name().toLowerCase(Locale.ROOT).replace("_", ""));
+            paletteNames.add(FourierScreen.Palette.values()[i].name().toLowerCase(Locale.ROOT).replace("_", " "));
         }
         
         typeNames = new Array<>();
         for (int i = 0; i < FourierScreen.Mode.values().length; i++) {
-            typeNames.add(FourierScreen.Mode.values()[i].name().toLowerCase(Locale.ROOT).replace("_", ""));
+            typeNames.add(FourierScreen.Mode.values()[i].name().toLowerCase(Locale.ROOT).replace("_", " "));
         }
     }
     

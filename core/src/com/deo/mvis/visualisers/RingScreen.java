@@ -121,12 +121,12 @@ public class RingScreen extends BaseVisualiser implements Screen {
         
         paletteNames = new Array<>();
         for (int i = 0; i < RingScreen.Palette.values().length; i++) {
-            paletteNames.add(RingScreen.Palette.values()[i].name().toLowerCase(Locale.ROOT).replace("_", ""));
+            paletteNames.add(RingScreen.Palette.values()[i].name().toLowerCase(Locale.ROOT).replace("_", " "));
         }
         
         typeNames = new Array<>();
         for (int i = 0; i < RingScreen.Mode.values().length; i++) {
-            typeNames.add(RingScreen.Mode.values()[i].name().toLowerCase(Locale.ROOT).replace("_", ""));
+            typeNames.add(RingScreen.Mode.values()[i].name().toLowerCase(Locale.ROOT).replace("_", " "));
         }
         
     }

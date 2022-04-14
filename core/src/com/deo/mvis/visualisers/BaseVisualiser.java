@@ -57,9 +57,6 @@ public class BaseVisualiser {
     float[] rSamplesNormalisedSmoothed;
     float[] lSamplesNormalisedSmoothed;
     
-    public static Array<SettingsEntry> settings;
-    public static Array<String> typeNames, paletteNames;
-    
     public int sampleRate;
     
     public static FileHandle musicFile = Gdx.files.internal("away.wav");
@@ -176,7 +173,15 @@ public class BaseVisualiser {
         
     }
     
-    protected static float getSettingByName(String name) {
+    protected static <E extends Enum<E>> Array<String> enumToArray(Class<E> enumData) {
+        Array<String> array = new Array<>();
+        for (Enum<E> enumVal : enumData.getEnumConstants()) {
+            array.add(enumVal.name().toLowerCase().replace("_", " "));
+        }
+        return array;
+    }
+    
+    protected static float getSettingByName(Array<SettingsEntry> settings, String name) {
         for (int i = 0; i < settings.size; i++) {
             if (settings.get(i).getName().equals(name)) {
                 return settings.get(i).getCurrent();
@@ -232,18 +237,6 @@ public class BaseVisualiser {
         lSamplesNormalisedSmoothed = null;
         rSamplesNormalisedSmoothed = null;
         System.gc();
-    }
-    
-    public static Array<SettingsEntry> getSettings() {
-        return settings;
-    }
-    
-    public static Array<String> getTypeNames() {
-        return typeNames;
-    }
-    
-    public static Array<String> getPaletteNames() {
-        return paletteNames;
     }
     
     public static void setMusic(FileHandle fileHandle) {

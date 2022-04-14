@@ -175,12 +175,12 @@ public class AttractorScreen extends BaseVisualiser implements Screen {
         
         paletteNames = new Array<>();
         for (int i = 0; i < AttractorScreen.Palette.values().length; i++) {
-            paletteNames.add(AttractorScreen.Palette.values()[i].name().toLowerCase(Locale.ROOT).replace("_", ""));
+            paletteNames.add(AttractorScreen.Palette.values()[i].name().toLowerCase(Locale.ROOT).replace("_", " "));
         }
         
         typeNames = new Array<>();
         for (int i = 0; i < AttractorScreen.Mode.values().length; i++) {
-            typeNames.add(AttractorScreen.Mode.values()[i].name().toLowerCase(Locale.ROOT).replace("_", ""));
+            typeNames.add(AttractorScreen.Mode.values()[i].name().toLowerCase(Locale.ROOT).replace("_", " "));
         }
         
     }
