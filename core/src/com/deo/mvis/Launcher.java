@@ -1,11 +1,10 @@
 package com.deo.mvis;
 import com.badlogic.gdx.Game;
-import com.deo.mvis.visualisers.FourierScreen;
 
 public final class Launcher extends Game {
 
-    public static int WIDTH = 1600;
-    public static int HEIGHT = 900;
+    public static int WIDTH = 1920;
+    public static int HEIGHT = 1080;
 
     @Override
     public void create() {

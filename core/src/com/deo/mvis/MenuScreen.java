@@ -94,7 +94,6 @@ public class MenuScreen implements Screen {
     
     private MusicWave musicWave;
     private float[] displaySamples;
-    private float[] averageSamples;
     private final Music music;
     private FloatFFT_1D fft;
     
@@ -140,7 +139,6 @@ public class MenuScreen implements Screen {
         if (menuVisualisation) {
             musicWave = new MusicWave(destinationMusic, false);
             music = musicWave.getMusic();
-            averageSamples = musicWave.smoothSamples(musicWave.getSamples().clone(), 2, 32);
             
             fft = new FloatFFT_1D(32);
             
@@ -284,22 +282,34 @@ public class MenuScreen implements Screen {
         batch.setProjectionMatrix(camera.combined);
         
         renderer.begin(ShapeRenderer.ShapeType.Filled);
-        
-        float size, size2;
-        if (menuVisualisation) {
-            size = MathUtils.clamp(averageSamples[pos] * 25 + 725 - triangleAnimation, 0, 900);
-        } else {
-            size = 725 - triangleAnimation;
+    
+        float[] samples = musicWave.getSamplesForFFT(pos, 32, musicWave.getSamples());
+        fft.realForward(samples);
+    
+        float[] samples2 = new float[samples.length + 4];
+    
+        for (int t = 2; t < samples.length - 2; t++) {
+            samples2[t] = samples[t - 2];
         }
-        size2 = size + 25;
+    
+        for (int t = 0; t < 2; t++) {
+            for (int i = 2; i < samples2.length - 2; i++) {
+                float neighbours = samples2[i - 2] + samples2[i + 2] + samples2[i - 1] + samples2[i + 1];
+                samples2[i] = (Math.abs(neighbours) + Math.abs(samples2[i])) / 5f * (1 + i / 100f);
+            }
+        }
         
-        float[] triangle = makeATriangle(size);
-        float[] triangle2 = makeATriangle(size2);
+        for (int i = 2; i < samples2.length - 2; i++) {
+            displaySamples[i - 2] /= 1.3f;
+            displaySamples[i - 2] += samples2[i] / 1.5f;
+        }
         
-        renderer.setColor(Color.valueOf("#558581"));
-        renderer.triangle(triangle2[0], triangle2[1], triangle2[2], triangle2[3], triangle2[4], triangle2[5]);
-        renderer.setColor(Color.valueOf("#88b2a1"));
-        renderer.triangle(triangle[0], triangle[1], triangle[2], triangle[3], triangle[4], triangle[5]);
+        float[] triangle;
+        for (int i = 2; i < samples2.length - 2; i++) {
+            triangle = makeATriangle(displaySamples[i - 2] / 1000 + 725 - triangleAnimation);
+            renderer.setColor(new Color().fromHsv(i * 5 + 100, 0.6f, 0.9f).add(0, 0, 0, 0.3f));
+            renderer.triangle(triangle[0], triangle[1], triangle[2], triangle[3], triangle[4], triangle[5]);
+        }
         
         renderer.setColor(0, 0, 0, 0.55f);
         float width = viewport.getScreenWidth() * camera.zoom;
@@ -309,7 +319,7 @@ public class MenuScreen implements Screen {
         triangleAngle += 10 * delta;
         
         if (triangleAnimation > 15) {
-            triangleAnimation /= 1.01f;
+            triangleAnimation = triangleAnimation * (1 - delta);
         }
         
         if (!musicStarted && triangleAnimation < 70) {
@@ -347,30 +357,9 @@ public class MenuScreen implements Screen {
         renderer.begin(ShapeRenderer.ShapeType.Filled);
         
         if (menuVisualisation) {
-            float[] samples = musicWave.getSamplesForFFT(pos, 32, musicWave.getSamples());
-            fft.realForward(samples);
-            
-            float[] samples2 = new float[samples.length + 4];
-            
-            for (int t = 2; t < samples.length - 2; t++) {
-                samples2[t] = samples[t - 2];
-            }
-            
-            for (int t = 0; t < 2; t++) {
-                for (int i = 2; i < samples2.length - 2; i++) {
-                    float neighbours = samples2[i - 2] + samples2[i + 2] + samples2[i - 1] + samples2[i + 1];
-                    samples2[i] = (Math.abs(neighbours) + Math.abs(samples2[i])) / 5f;
-                }
-            }
-            
             for (int i = 2; i < samples2.length - 2; i++) {
-                
-                displaySamples[i - 2] += samples2[i] / 1.5f;
-                
                 renderer.setColor(new Color().fromHsv(displaySamples[i - 2] / 2048, 0.75f, 0.9f));
-                renderer.rect(i * 37.8f - samples.length / 2f * 37.8f - 62, 329, 11, displaySamples[i - 2] / 512 + 0.5f);
-                
-                displaySamples[i - 2] /= 1.3f;
+                renderer.rect(i * 37.8f - samples.length / 2f * 37.8f - 62, 420, 11, displaySamples[i - 2] / 512 + 0.5f);
             }
         }
         
