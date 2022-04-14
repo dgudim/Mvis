@@ -1,5 +1,8 @@
 package com.deo.mvis.visualisers;
 
+import static com.deo.mvis.Launcher.HEIGHT;
+import static com.deo.mvis.Launcher.WIDTH;
+
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
@@ -16,14 +19,13 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.deo.mvis.MenuScreen;
 import com.deo.mvis.utils.MusicWave;
+import com.deo.mvis.utils.SettingsEntry;
 import com.deo.mvis.utils.UIComposer;
 import com.deo.mvis.utils.Utils;
-
-import static com.deo.mvis.Launcher.HEIGHT;
-import static com.deo.mvis.Launcher.WIDTH;
 
 public class BaseVisualiser {
     
@@ -55,18 +57,18 @@ public class BaseVisualiser {
     float[] rSamplesNormalisedSmoothed;
     float[] lSamplesNormalisedSmoothed;
     
-    public static String[] typeNames, paletteNames, settings, settingTypes;
-    public static float[] settingMaxValues, settingMinValues, defaultSettings;
+    public static Array<SettingsEntry> settings;
+    public static Array<String> typeNames, paletteNames;
     
     public int sampleRate;
     
     public static FileHandle musicFile = Gdx.files.internal("away.wav");
     
-    private TextButton exit;
+    private final TextButton exit;
     public Stage stage;
     float transparency = 1;
     
-    private AssetManager assetManager;
+    private final AssetManager assetManager;
     
     public static final byte DEFAULT = -100;
     public static final byte FFT = -1;
@@ -154,13 +156,13 @@ public class BaseVisualiser {
                 rSamplesNormalised = musicWave.normaliseSamples(false, false, musicWave.getRightChannelSamples());
                 break;
         }
-        if(!(sampleMode == DEFAULT)){
+        if (!(sampleMode == DEFAULT)) {
             samplesSmoothed = musicWave.smoothSamples(musicWave.getSamples().clone(), 2, 32);
-        }else{
+        } else {
             samplesSmoothed = musicWave.smoothSamples(musicWave.getSamples(), 2, 32);
         }
         
-        utils = new Utils(FPS, step, samplesSmoothed, 3, 1, 1, true, batch);
+        utils = new Utils(FPS, step, musicWave, samplesSmoothed, 3, 1, 1, true, batch);
         
         if (!render) {
             music.setOnCompletionListener(new Music.OnCompletionListener() {
@@ -172,6 +174,16 @@ public class BaseVisualiser {
             });
         }
         
+    }
+    
+    protected static float getSettingByName(String name) {
+        for (int i = 0; i < settings.size; i++) {
+            if (settings.get(i).getName().equals(name)) {
+                return settings.get(i).getCurrent();
+            }
+        }
+        System.out.println("Setting not found: " + name);
+        return 0;
     }
     
     public void show() {
@@ -222,32 +234,16 @@ public class BaseVisualiser {
         System.gc();
     }
     
-    public static String[] getSettings() {
+    public static Array<SettingsEntry> getSettings() {
         return settings;
     }
     
-    public static String[] getSettingTypes() {
-        return settingTypes;
-    }
-    
-    public static String[] getTypeNames() {
+    public static Array<String> getTypeNames() {
         return typeNames;
     }
     
-    public static String[] getPaletteNames() {
+    public static Array<String> getPaletteNames() {
         return paletteNames;
-    }
-    
-    public static float[] getSettingMaxValues() {
-        return settingMaxValues;
-    }
-    
-    public static float[] getSettingMinValues() {
-        return settingMinValues;
-    }
-    
-    public static float[] getDefaultSettings() {
-        return defaultSettings;
     }
     
     public static void setMusic(FileHandle fileHandle) {

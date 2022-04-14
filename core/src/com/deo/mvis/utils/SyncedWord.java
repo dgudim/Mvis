@@ -10,24 +10,26 @@ import static com.deo.mvis.Launcher.WIDTH;
 
 public class SyncedWord {
 
-    private int timestamp;
-    private float x, y;
-    private BitmapFont font;
-    private String text;
+    private final int timestamp;
+    private final float x;
+    private final float y;
+    private final BitmapFont font;
+    private final String text;
     private float alpha = 0;
-    private float fadeoutSpeed;
+    private final float fadeoutSpeed;
     private boolean displayed = false;
     public boolean dispose = false;
-    private float fadeInSpeed = 10;
+    private final float fadeInSpeed;
     private boolean hasFadedIn = false;
 
-    public SyncedWord(float x, float y, int timestamp, int nextTimestamp, String text, BitmapFont font) {
+    public SyncedWord(float x, float y, int timestamp, int nextTimestamp, String text, BitmapFont font, float fadeInSpeed) {
         this.timestamp = timestamp;
         this.font = font;
         this.text = text;
         this.x = x;
         this.y = y;
-
+        this.fadeInSpeed = fadeInSpeed;
+        
         font.setUseIntegerPositions(false);
 
         fadeoutSpeed = MathUtils.clamp(1 / (float) (nextTimestamp - timestamp) * 1.3f, 0.00015f, 1000000);

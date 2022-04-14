@@ -27,18 +27,20 @@ import static com.deo.mvis.utils.Utils.getFloat;
 import static com.deo.mvis.utils.Utils.putBoolean;
 import static com.deo.mvis.utils.Utils.putFloat;
 
-public class UIComposer {
+import java.util.Locale;
 
+public class UIComposer {
+    
     Array<Button.ButtonStyle> buttonStyles;
     Array<Slider.SliderStyle> sliderStyles;
     Array<CheckBox.CheckBoxStyle> checkBoxStyles;
-
+    
     Array<String> buttonStyleNames;
     Array<String> sliderStyleNames;
     Array<String> checkBoxStyleNames;
-
+    
     private AssetManager assetManager;
-
+    
     public UIComposer(AssetManager assetManager) {
         this.assetManager = assetManager;
         buttonStyles = new Array<>();
@@ -48,7 +50,7 @@ public class UIComposer {
         sliderStyleNames = new Array<>();
         sliderStyles = new Array<>();
     }
-
+    
     public void loadStyles(String... styleNames) {
         JsonValue styles = new JsonReader().parse(Gdx.files.internal("styles.json"));
         Array<BitmapFont> fonts = new Array<>();
@@ -64,7 +66,7 @@ public class UIComposer {
             loadStyle(styles, styleNames[i], textures, dependencies, fonts);
         }
     }
-
+    
     private void loadStyle(JsonValue treeJson, String style, Skin textures, Array<String> dependencies, Array<BitmapFont> fonts) {
         String dependency;
         if (treeJson.get(style) == null) {
@@ -91,39 +93,39 @@ public class UIComposer {
                 break;
         }
     }
-
+    
     private void loadButtonStyle(JsonValue style, Skin textures) {
         Button.ButtonStyle buttonStyle = new Button.ButtonStyle();
         setButtonStyleDimensionsAndTextures(style, buttonStyle, textures);
         addButtonStyle(buttonStyle, style.name);
     }
-
+    
     private void loadTextButtonStyle(JsonValue style, Skin textures, Array<BitmapFont> fonts) {
         TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
         setButtonStyleDimensionsAndTextures(style, buttonStyle, textures);
         setTextButtonFontStyle(buttonStyle, style, fonts);
         addButtonStyle(buttonStyle, style.name);
     }
-
+    
     private void loadCheckBoxStyle(JsonValue style, Skin textures, Array<BitmapFont> fonts) {
         CheckBox.CheckBoxStyle checkBoxStyle = new CheckBox.CheckBoxStyle();
         setCheckBoxStyleDimensionsAndTextures(style, checkBoxStyle, textures);
         setCheckBoxFontStyle(checkBoxStyle, style, fonts);
         addCheckBoxStyleStyle(checkBoxStyle, style.name);
     }
-
+    
     private void loadSliderStyle(JsonValue style, Skin textures) {
         Slider.SliderStyle sliderStyle = new Slider.SliderStyle();
         setSliderStyleDimensionsAndTextures(style, sliderStyle, textures);
         addSliderStyle(sliderStyle, style.name);
     }
-
+    
     private void setButtonStyleDimensionsAndTextures(JsonValue styleJson, Button.ButtonStyle style, Skin textures) {
-
+        
         style.up = textures.getDrawable(styleJson.get("up").getString("texture"));
         style.over = textures.getDrawable(styleJson.get("over").getString("texture"));
         style.down = textures.getDrawable(styleJson.get("down").getString("texture"));
-
+        
         if (!styleJson.get("up").get("size").asStringArray()[0].equals("default")) {
             style.up.setMinWidth(styleJson.get("up").get("size").asIntArray()[0]);
         }
@@ -143,14 +145,14 @@ public class UIComposer {
             style.over.setMinHeight(styleJson.get("over").get("size").asIntArray()[1]);
         }
     }
-
+    
     private void setCheckBoxStyleDimensionsAndTextures(JsonValue styleJson, CheckBox.CheckBoxStyle style, Skin textures) {
-
+        
         style.checkboxOn = textures.getDrawable(styleJson.get("on").getString("texture"));
         style.checkboxOnOver = textures.getDrawable(styleJson.get("onOver").getString("texture"));
         style.checkboxOff = textures.getDrawable(styleJson.get("off").getString("texture"));
         style.checkboxOver = textures.getDrawable(styleJson.get("offOver").getString("texture"));
-
+        
         if (!styleJson.get("on").get("size").asStringArray()[0].equals("default")) {
             style.checkboxOn.setMinWidth(styleJson.get("on").get("size").asIntArray()[0]);
         }
@@ -176,7 +178,7 @@ public class UIComposer {
             style.checkboxOver.setMinHeight(styleJson.get("offOver").get("size").asIntArray()[1]);
         }
     }
-
+    
     private void setTextButtonFontStyle(TextButton.TextButtonStyle buttonStyle, JsonValue styleJson, Array<BitmapFont> fonts) {
         buttonStyle.font = fonts.get(styleJson.getInt("font"));
         if (!styleJson.get("up").getString("fontColor").equals("default")) {
@@ -189,14 +191,14 @@ public class UIComposer {
             buttonStyle.downFontColor = Color.valueOf(styleJson.get("down").getString("fontColor"));
         }
     }
-
+    
     private void setSliderStyleDimensionsAndTextures(JsonValue styleJson, Slider.SliderStyle style, Skin textures) {
-
+        
         style.background = textures.getDrawable(styleJson.get("background").getString("texture"));
         style.knob = textures.getDrawable(styleJson.get("knob").getString("texture"));
         style.knobOver = textures.getDrawable(styleJson.get("knobOver").getString("texture"));
         style.knobDown = textures.getDrawable(styleJson.get("knobDown").getString("texture"));
-
+        
         if (!styleJson.get("background").get("size").asStringArray()[0].equals("default")) {
             style.background.setMinWidth(styleJson.get("background").get("size").asIntArray()[0]);
         }
@@ -222,7 +224,7 @@ public class UIComposer {
             style.knobDown.setMinHeight(styleJson.get("knobDown").get("size").asIntArray()[1]);
         }
     }
-
+    
     private void setCheckBoxFontStyle(CheckBox.CheckBoxStyle checkBoxStyle, JsonValue styleJson, Array<BitmapFont> fonts) {
         checkBoxStyle.font = fonts.get(styleJson.getInt("font"));
         if (!styleJson.get("off").getString("fontColor").equals("default")) {
@@ -238,7 +240,7 @@ public class UIComposer {
             checkBoxStyle.checkedOverFontColor = Color.valueOf(styleJson.get("onOver").getString("fontColor"));
         }
     }
-
+    
     public Actor addScrollText(String text, BitmapFont font, float fontScale, boolean scrollable, boolean horizontal, float x, float y, float width, float height) {
         font.getData().markupEnabled = true;
         Label.LabelStyle labelStyle = new Label.LabelStyle();
@@ -259,7 +261,7 @@ public class UIComposer {
         }
         return returnActor;
     }
-
+    
     public Label addText(String text, BitmapFont font, float fontScale) {
         font.getData().markupEnabled = true;
         Label.LabelStyle labelStyle = new Label.LabelStyle();
@@ -269,23 +271,23 @@ public class UIComposer {
         label.setAlignment(Align.center);
         return label;
     }
-
-
+    
+    
     private void addButtonStyle(Button.ButtonStyle buttonStyle, String assignmentName) {
         buttonStyles.add(buttonStyle);
         buttonStyleNames.add(assignmentName);
     }
-
+    
     private void addSliderStyle(Slider.SliderStyle sliderStyle, String assignmentName) {
         sliderStyles.add(sliderStyle);
         sliderStyleNames.add(assignmentName);
     }
-
+    
     private void addCheckBoxStyleStyle(CheckBox.CheckBoxStyle checkBoxStyle, String assignmentName) {
         checkBoxStyles.add(checkBoxStyle);
         checkBoxStyleNames.add(assignmentName);
     }
-
+    
     public CheckBox addCheckBox(String style, String text, final String valueKey) {
         final CheckBox checkBox = addCheckBox(style, text);
         checkBox.setChecked(getBoolean(valueKey));
@@ -297,7 +299,7 @@ public class UIComposer {
         });
         return checkBox;
     }
-
+    
     public CheckBox addCheckBox(String style, String text) {
         if (checkBoxStyleNames.indexOf(style, false) == -1)
             throw new IllegalArgumentException("Style not loaded: " + style);
@@ -306,8 +308,8 @@ public class UIComposer {
         checkBox.getImageCell().padRight(5);
         return checkBox;
     }
-
-    public Table addSlider(String style, float min, float max, float step, final String text, final String postText, final String valueKey, final String type, final ScrollPane scrollHolder) {
+    
+    public Table addSlider(String style, float min, float max, float step, final String text, final String postText, final String valueKey, final Type type, final ScrollPane scrollHolder) {
         Table slider = addSlider(style, min, max, step, text, postText, valueKey, type);
         slider.getCells().get(0).getActor().addListener(new ChangeListener() {
             @Override
@@ -317,24 +319,24 @@ public class UIComposer {
         });
         return slider;
     }
-
-    public Table addSlider(String style, float min, float max, float step, final String text, final String postText, final String valueKey, final String type) {
+    
+    public Table addSlider(String style, float min, float max, float step, final String text, final String postText, final String valueKey, final Type type) {
         Table cell = new Table();
         final Slider slider = addSlider(style, min, max, step);
         slider.setValue(getFloat(valueKey));
-
-        String valueText = String.format("%.3f", getFloat(valueKey));
-
-        if(type.equals("int")){
-            valueText = String.valueOf((int)getFloat(valueKey));
+        
+        String valueText = String.format(Locale.ROOT, "%.3f", getFloat(valueKey));
+        
+        if (type == Type.INT) {
+            valueText = String.valueOf((int) getFloat(valueKey));
         }
-
+        
         final Label textLabel = addText(text + valueText + postText, (BitmapFont) assetManager.get("font2(old).fnt"), 0.78f);
         slider.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeListener.ChangeEvent event, Actor actor) {
-                if (type.equals("float")) {
-                    textLabel.setText(text + String.format("%.3f", slider.getValue()) + postText);
+                if (type == Type.FLOAT) {
+                    textLabel.setText(text + String.format(Locale.ROOT, "%.3f", slider.getValue()) + postText);
                 } else {
                     textLabel.setText(text + (int) slider.getValue() + postText);
                 }
@@ -345,26 +347,26 @@ public class UIComposer {
         cell.add(textLabel);
         return cell;
     }
-
+    
     public Slider addSlider(String style, float min, float max, float step) {
         if (sliderStyleNames.indexOf(style, false) == -1)
             throw new IllegalArgumentException("Style not loaded: " + style);
         return new Slider(min, max, step, false, sliderStyles.get(sliderStyleNames.indexOf(style, false)));
     }
-
+    
     public Button addButton(String style) {
         if (buttonStyleNames.indexOf(style, false) == -1)
             throw new IllegalArgumentException("Style not loaded: " + style);
         return new Button(buttonStyles.get(buttonStyleNames.indexOf(style, false)));
     }
-
+    
     public Table addButton(String style, String text, float fontScale) {
         Table table = new Table();
         table.add(addButton(style));
         table.add(addText(text, (BitmapFont) assetManager.get("font2(old).fnt"), fontScale));
         return table;
     }
-
+    
     public TextButton addTextButton(String style, String text, float fontScale) {
         if (buttonStyleNames.indexOf(style, false) == -1)
             throw new IllegalArgumentException("Style not loaded: " + style);
@@ -373,7 +375,7 @@ public class UIComposer {
         button.getLabel().setFontScale(fontScale);
         return button;
     }
-
+    
     public Table addLinkButton(String style, String text, final String link) {
         Table cell = addButton(style, text, 0.4f);
         cell.getCells().get(1).padLeft(5);
@@ -385,12 +387,12 @@ public class UIComposer {
         });
         return cell;
     }
-
+    
     public ScrollPane createScrollGroup(float x, float y, float width, float height, boolean horizontal, boolean vertical) {
         ScrollPane scrollPane = new ScrollPane(new Table());
         scrollPane.setBounds(x, y, width, height);
         scrollPane.setScrollingDisabled(!horizontal, !vertical);
         return scrollPane;
     }
-
+    
 }

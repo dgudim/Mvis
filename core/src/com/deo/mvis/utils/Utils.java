@@ -23,25 +23,27 @@ import static com.deo.mvis.Launcher.WIDTH;
 
 public class Utils {
 
-    private static Preferences prefs = Gdx.app.getPreferences("MvisPrefs");
+    private static final Preferences prefs = Gdx.app.getPreferences("MvisPrefs");
 
-    private int step;
-    private int FPS;
-    private BitmapFont font;
-    private SpriteBatch batch;
-    private float[] samples;
-    private PostProcessor blurProcessor;
+    private final int step;
+    private final int FPS;
+    private final BitmapFont font;
+    private final SpriteBatch batch;
+    private final MusicWave musicWave;
+    private final float[] smoothedSamples;
+    private final PostProcessor blurProcessor;
     public Bloom bloom;
     private boolean enableBloom;
 
     public float maxSaturation = 1;
 
-    public Utils(int FPS, int step, float[] samples, int bloomPasses, float bloomIntensity, float bloomSaturation, boolean enableBloom, SpriteBatch batch) {
+    public Utils(int FPS, int step, MusicWave musicWave, float[] smoothedSamples, int bloomPasses, float bloomIntensity, float bloomSaturation, boolean enableBloom, SpriteBatch batch) {
         this.step = step;
         this.FPS = FPS;
-        this.samples = samples;
+        this.musicWave = musicWave;
         this.enableBloom = enableBloom;
         this.batch = batch;
+        this.smoothedSamples = smoothedSamples;
         font = new BitmapFont(Gdx.files.internal("font2(old).fnt"));
 
         ShaderLoader.BasePath = "shaders/";
@@ -56,7 +58,7 @@ public class Utils {
     public void bloomBegin(boolean syncToMusic, int pos) {
         if (enableBloom) {
             if (syncToMusic) {
-                bloom.setBloomSaturation(Math.abs(samples[pos]) * maxSaturation + 1);
+                bloom.setBloomSaturation(Math.abs(smoothedSamples[pos]) * maxSaturation + 1);
             }
             blurProcessor.capture();
         }
@@ -105,16 +107,16 @@ public class Utils {
     public void displayData(int recorderFrame, int frame, Matrix4 projMat) {
         batch.setProjectionMatrix(projMat);
         batch.begin();
-        font.draw(batch, String.format("% 2f", recorderFrame / (float) FPS, Locale.ROOT) + "s", -WIDTH / 2f + 100, -HEIGHT / 2f + 120);
-        boolean normal = frame / (float) 44100 == recorderFrame / (float) FPS;
+        font.draw(batch, String.format(Locale.ROOT, "% 2f", recorderFrame / (float) FPS) + "s", -WIDTH / 2f + 100, -HEIGHT / 2f + 120);
+        boolean normal = frame / (float) musicWave.sampleRate == recorderFrame / (float) FPS;
         font.draw(batch, frame + "fr " + recorderFrame + "fr " + normal, -WIDTH / 2f + 100, -HEIGHT / 2f + 170);
-        font.draw(batch, frame / (float) samples.length * 100 + "%", -WIDTH / 2f + 100, -HEIGHT / 2f + 70);
+        font.draw(batch, frame / (float) smoothedSamples.length * 100 + "%", -WIDTH / 2f + 100, -HEIGHT / 2f + 70);
         font.draw(batch, computeTime(recorderFrame) + "h", -WIDTH / 2f + 100, -HEIGHT / 2f + 220);
         batch.end();
     }
 
     private float computeTime(int recorderFrame) {
-        return Gdx.graphics.getDeltaTime() * (samples.length / (float) step - recorderFrame) / 3600;
+        return Gdx.graphics.getDeltaTime() * (smoothedSamples.length / (float) step - recorderFrame) / 3600;
     }
 
     public static int getRandomInRange(int min, int max) {

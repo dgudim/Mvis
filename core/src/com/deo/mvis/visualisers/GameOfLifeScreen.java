@@ -1,42 +1,51 @@
-package com.deo.mvis.otherScreens;
-
-import com.badlogic.gdx.Game;
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
-import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.assets.AssetManager;
-import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.deo.mvis.visualisers.BaseVisualiser;
+package com.deo.mvis.visualisers;
 
 import static com.badlogic.gdx.graphics.GL20.GL_COLOR_BUFFER_BIT;
 import static com.deo.mvis.Launcher.HEIGHT;
 import static com.deo.mvis.Launcher.WIDTH;
 
-public class GameOfLife extends BaseVisualiser implements Screen {
+import com.badlogic.gdx.Game;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.Array;
+import com.deo.mvis.utils.SettingsEntry;
+import com.deo.mvis.utils.Type;
+
+import java.util.Locale;
+
+public class GameOfLifeScreen extends BaseVisualiser implements Screen {
 
     private final int fieldWidth = 800;
     private static final int fieldHeight = 450;
     private static int oneDRuleHeight = 100;
     private static boolean oneDRuleEnabled = true;
 
-    private boolean[][] cells;
-    private Vector3[][] colorMask;
-    private int[][] colorMaskProgress;
+    private final boolean[][] cells;
+    private final Vector3[][] colorMask;
+    private final int[][] colorMaskProgress;
 
-    private Vector2 dimensions;
-
-    private static int palette = 0;
-    private static int type;
-
+    private final Vector2 dimensions;
+    
+    private static GameOfLifeScreen.Mode mode;
+    private static GameOfLifeScreen.Palette palette;
+    
+    private enum Palette {
+        CYAN_PURPLE, CYAN_FADEOUT, PURPLE_FADEOUT, PINK_GREEN, RAINBOW_WATER, PASTEL_RAINBOW, LONG_FADEOUT_PASTEL_RAINBOW, WINTER, LONG_FADEOUT_CYAN
+    }
+    
+    private enum Mode {
+        BASIC
+    }
+    
     private int drawSquareSize = 10;
 
-    public GameOfLife(Game game) {
+    public GameOfLifeScreen(Game game) {
         super(game, DEFAULT);
 
         cells = new boolean[fieldWidth][fieldHeight];
@@ -89,7 +98,7 @@ public class GameOfLife extends BaseVisualiser implements Screen {
                 }
             }
             for (int x = 0; x < fieldWidth; x++) {
-                cells[x][0] = alive1D(x, 0);
+                cells[x][0] = alive1D(x);
             }
         }
 
@@ -171,16 +180,7 @@ public class GameOfLife extends BaseVisualiser implements Screen {
         renderer.end();
 
         utils.bloomRender();
-
-        if (Gdx.input.isKeyJustPressed(Input.Keys.EQUALS)) {
-            palette++;
-        }
-        if (Gdx.input.isKeyJustPressed(Input.Keys.MINUS)) {
-            palette--;
-            if (palette == -1) {
-                palette = 8;
-            }
-        }
+        
         if (Gdx.input.isKeyPressed(Input.Keys.Q)) {
             for (int i = 0; i < drawSquareSize; i++) {
                 for (int i2 = 0; i2 < drawSquareSize; i2++) {
@@ -189,7 +189,7 @@ public class GameOfLife extends BaseVisualiser implements Screen {
                         Vector2 newCords = viewport.unproject(tCords);
                         cells[(int) (newCords.x + fieldWidth / 2f - Math.floor(drawSquareSize / 2f) + i2)][(int) (newCords.y + fieldHeight / 2f - Math.floor(drawSquareSize / 2f) + i)] = true;
                     } catch (Exception e) {
-
+                        System.out.println(e.getMessage());
                     }
                 }
             }
@@ -277,12 +277,12 @@ public class GameOfLife extends BaseVisualiser implements Screen {
         return num;
     }
 
-    private Vector3 getNeighbours1D(int xPos, int yPos) {
-        return new Vector3().set(new float[]{getNeighbours(xPos, yPos, 0, 1), getNeighbours(xPos, yPos, 1, 1), getNeighbours(xPos, yPos, -1, 1)});
+    private Vector3 getNeighbours1D(int xPos) {
+        return new Vector3().set(new float[]{getNeighbours(xPos, 0, 0, 1), getNeighbours(xPos, 0, 1, 1), getNeighbours(xPos, 0, -1, 1)});
     }
 
-    private boolean alive1D(int xPos, int yPos) {
-        Vector3 neighbours = getNeighbours1D(xPos, yPos);
+    private boolean alive1D(int xPos) {
+        Vector3 neighbours = getNeighbours1D(xPos);
         if (neighbours.x == 0 && neighbours.y == 0 && neighbours.z == 0) {
             return true;
         }
@@ -304,10 +304,7 @@ public class GameOfLife extends BaseVisualiser implements Screen {
         if (neighbours.x == 1 && neighbours.y == 1 && neighbours.z == 0) {
             return false;
         }
-        if (neighbours.x == 1 && neighbours.y == 1 && neighbours.z == 1) {
-            return true;
-        }
-        return false;
+        return neighbours.x == 1 && neighbours.y == 1 && neighbours.z == 1;
     }
 
     private int getNeighbours(int xPos, int yPos, int xOffset, int yOffset) {
@@ -321,10 +318,7 @@ public class GameOfLife extends BaseVisualiser implements Screen {
 
     private Vector3 shiftColor(Vector3 prevColor, int progress) {
         switch (palette) {
-            default:
-                palette = 0;
-                return prevColor;
-            case (8):
+            case LONG_FADEOUT_CYAN:
                 if (prevColor.x > 0.8f && prevColor.y > 0.8f && prevColor.z > 0.8f) {
                     prevColor.x -= 0.007;
                     prevColor.z -= 0.07;
@@ -339,18 +333,18 @@ public class GameOfLife extends BaseVisualiser implements Screen {
                     prevColor.y -= 0.001;
                 }
                 return prevColor;
-            case (1):
+            case CYAN_FADEOUT:
                 prevColor.x = (float) MathUtils.clamp(prevColor.x - 0.02, 0, 1);
                 prevColor.y = (float) MathUtils.clamp(prevColor.y - 0.01, 0, 1);
                 prevColor.z = (float) MathUtils.clamp(prevColor.z - 0.01, 0, 1);
                 return prevColor;
-            case (2):
+            case PURPLE_FADEOUT:
                 prevColor.x = (float) MathUtils.clamp(prevColor.x - 0.01, 0, 1);
                 prevColor.y = (float) MathUtils.clamp(prevColor.y - 0.05, 0, 1);
                 prevColor.z = (float) MathUtils.clamp(prevColor.z - 0.01, 0, 1);
                 prevColor.x = (prevColor.y + prevColor.z) / 2.1f;
                 return prevColor;
-            case (3):
+            case PINK_GREEN:
                 if (progress < 2000) {
                     prevColor.x = MathUtils.cosDeg(progress);
                     prevColor.y = MathUtils.sinDeg(progress);
@@ -361,7 +355,7 @@ public class GameOfLife extends BaseVisualiser implements Screen {
                     prevColor.y -= 0.005;
                 }
                 return prevColor;
-            case (4):
+            case RAINBOW_WATER:
                 Color newColor = new Color();
                 newColor = newColor.fromHsv(progress * 2, 1, 1).add(0, 0, 0, 1);
                 if (progress < 180) {
@@ -383,7 +377,7 @@ public class GameOfLife extends BaseVisualiser implements Screen {
                     prevColor.y -= 0.005;
                 }
                 return prevColor;
-            case (5):
+            case PASTEL_RAINBOW:
                 Color newColor2 = new Color();
                 newColor2 = newColor2.fromHsv(progress * 2, 0.5f, 1).add(0, 0, 0, 1);
                 if (progress < 180) {
@@ -397,7 +391,7 @@ public class GameOfLife extends BaseVisualiser implements Screen {
                     prevColor.y -= 0.005;
                 }
                 return prevColor;
-            case (6):
+            case LONG_FADEOUT_PASTEL_RAINBOW:
                 Color newColor3 = new Color();
                 newColor3 = newColor3.fromHsv(progress * 2, 0.5f, 1).add(0, 0, 0, 1);
                 if (progress < 90) {
@@ -411,7 +405,7 @@ public class GameOfLife extends BaseVisualiser implements Screen {
                     prevColor.y -= 0.0005;
                 }
                 return prevColor;
-            case (7):
+            case WINTER:
                 Color newColor4 = new Color();
                 newColor4 = newColor4.fromHsv(progress * 2, progress / 180f, 1 - progress / 180f).add(0, 0, 0, 1);
                 if (progress < 180) {
@@ -425,7 +419,7 @@ public class GameOfLife extends BaseVisualiser implements Screen {
                     prevColor.y -= 0.0005;
                 }
                 return prevColor;
-            case (0):
+            case CYAN_PURPLE:
                 Color newColor6 = new Color();
                 newColor6 = newColor6.fromHsv(progress + 90, 0.5f, 0.5f).add(0, 0, 0, 1);
                 if (progress < 180) {
@@ -438,32 +432,39 @@ public class GameOfLife extends BaseVisualiser implements Screen {
                     prevColor.y -= 0.001;
                 }
                 return prevColor;
+            default:
+                return prevColor;
         }
     }
 
     public static void init() {
-        paletteNames = new String[]{"Cyan-purple", "Cyan fadeout", "Purple fadeout", "Pink-green", "Rainbow water", "Pastel rainbow", "Long fadeout(pastel rainbow)", "winter", "Long cyan fadeout"};
-        typeNames = new String[]{"Normal"};
-
-        settings = new String[]{"Type", "Pallet", "Bottom enabled", "Bottom rule height", "Render"};
-        settingTypes = new String[]{"int", "int", "boolean", "int", "boolean"};
-
-        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 1, fieldHeight - 50, 1};
-        settingMinValues = new float[]{0, 0, 0, 0, 0};
-
-        defaultSettings = new float[]{0, 0, 1, oneDRuleHeight, 0};
+    
+        paletteNames = new Array<>();
+        for (int i = 0; i < GameOfLifeScreen.Palette.values().length; i++) {
+            paletteNames.add(GameOfLifeScreen.Palette.values()[i].name().toLowerCase(Locale.ROOT).replace("_", ""));
+        }
+    
+        typeNames = new Array<>();
+        for (int i = 0; i < GameOfLifeScreen.Mode.values().length; i++) {
+            typeNames.add(GameOfLifeScreen.Mode.values()[i].name().toLowerCase(Locale.ROOT).replace("_", ""));
+        }
+    
+        settings = new Array<>();
+        settings.add(new SettingsEntry("Bottom enabled", 0, 1, 0, Type.BOOLEAN));
+        settings.add(new SettingsEntry("Bottom rule height", 0, fieldHeight - 50, oneDRuleHeight, Type.INT));
+        settings.add(new SettingsEntry("Render", 0, 1, 0, Type.BOOLEAN));
     }
 
     public static String getName() {
         return "Game of life";
     }
-
-    public static void setSettings(float[] newSettings) {
-        type = (int) newSettings[0];
-        palette = (int) newSettings[1];
-        oneDRuleEnabled = newSettings[2] > 0;
-        oneDRuleHeight = (int) newSettings[3];
-        render = newSettings[4] > 0;
+    
+    public static void setSettings(int mode, int palette) {
+        GameOfLifeScreen.mode = GameOfLifeScreen.Mode.values()[mode];
+        GameOfLifeScreen.palette = GameOfLifeScreen.Palette.values()[palette];
+        oneDRuleEnabled = getSettingByName("Bottom enabled") > 0;
+        oneDRuleHeight = (int) getSettingByName("Bottom rule height");
+        render = getSettingByName("Render") > 0;
     }
 
     @Override

@@ -2,47 +2,55 @@ package com.deo.mvis.visualisers;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.assets.AssetManager;
-import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.deo.mvis.utils.SettingsEntry;
+import com.deo.mvis.utils.Type;
 
-import static com.deo.mvis.Launcher.HEIGHT;
+import java.util.Locale;
 
 public class RingScreen extends BaseVisualiser implements Screen {
-
-    private Array<Float> radiuses, radiuses2;
-    private Array<Vector2> positions;
-    private Array<Vector3> colors;
+    
+    private final Array<Float> radiuses;
+    private final Array<Float> radiuses2;
+    private final Array<Vector2> positions;
+    private final Array<Vector3> colors;
     private static float fadeout = 0.006f;
     private static float ringGrowSpeed = 12f;
-
-    private static int palette, type;
-
+    
+    private static RingScreen.Mode mode;
+    private static RingScreen.Palette palette;
+    
+    private enum Palette {
+        DEFAULT
+    }
+    
+    private enum Mode {
+        DEFAULT
+    }
+    
     public RingScreen(Game game) {
         super(game, LEFT_AND_RIGHT_RAW);
-
+        
         radiuses = new Array<>();
         radiuses2 = new Array<>();
         positions = new Array<>();
         colors = new Array<>();
-
+        
         utils.maxSaturation = 2;
-
+        
     }
-
+    
     @Override
     public void show() {
         super.show();
     }
-
+    
     @Override
     public void render(float delta) {
-
+        
         fadeout();
         float radiusx, radiusy;
         int pos;
@@ -53,18 +61,18 @@ public class RingScreen extends BaseVisualiser implements Screen {
             frame += step;
             recorderFrame++;
         }
-    
+        
         radiusx = lSamplesNormalised[pos] * 720;
         radiusy = rSamplesNormalised[pos] * 720;
         
         positions.add(new Vector2(0, 0));
         colors.add(new Vector3(1, 1, 0));
-
+        
         radiuses.add(radiusx);
         radiuses2.add(radiusy);
-
+        
         renderer.setProjectionMatrix(camera.combined);
-
+        
         utils.bloomBegin(true, pos);
         renderer.begin();
         for (int i = 0; i < positions.size; i++) {
@@ -73,18 +81,18 @@ public class RingScreen extends BaseVisualiser implements Screen {
         }
         renderer.end();
         utils.bloomRender();
-
+        
         if (render) {
             utils.makeAScreenShot(recorderFrame);
             utils.displayData(recorderFrame, frame, camera.combined);
         }
-
+        
         batch.begin();
         drawExitButton();
         batch.end();
-
+        
     }
-
+    
     void fadeout() {
         for (int i = 0; i < positions.size; i++) {
             radiuses.set(i, radiuses.get(i) + ringGrowSpeed);
@@ -103,52 +111,59 @@ public class RingScreen extends BaseVisualiser implements Screen {
             }
         }
     }
-
+    
     public static void init() {
-        paletteNames = new String[]{"Default"};
-        typeNames = new String[]{"Default"};
-
-        settings = new String[]{"Type", "Pallet", "Ring grow speed", "Fadeout", "Render"};
-        settingTypes = new String[]{"int", "int", "float", "float", "boolean"};
-
-        settingMaxValues = new float[]{typeNames.length-1, paletteNames.length-1, 25, 0.05f, 1};
-        settingMinValues = new float[]{0, 0, 5, 0.0005f, 0};
-
-        defaultSettings = new float[]{0, 0, ringGrowSpeed, fadeout, 0};
+    
+        settings = new Array<>();
+        settings.add(new SettingsEntry("Ring grow speed", 5, 25, ringGrowSpeed, Type.FLOAT));
+        settings.add(new SettingsEntry("Fadeout", 0.0005f, 0.05f, fadeout, Type.FLOAT));
+        settings.add(new SettingsEntry("Render", 0, 1, 0, Type.BOOLEAN));
+        
+        paletteNames = new Array<>();
+        for (int i = 0; i < RingScreen.Palette.values().length; i++) {
+            paletteNames.add(RingScreen.Palette.values()[i].name().toLowerCase(Locale.ROOT).replace("_", ""));
+        }
+        
+        typeNames = new Array<>();
+        for (int i = 0; i < RingScreen.Mode.values().length; i++) {
+            typeNames.add(RingScreen.Mode.values()[i].name().toLowerCase(Locale.ROOT).replace("_", ""));
+        }
+        
     }
-
-    public static String getName(){
+    
+    public static String getName() {
         return "Ring";
     }
-
-    public static void setSettings(float[] newSettings) {
-        type = (int) newSettings[0];
-        palette = (int) newSettings[1] + 100;
-        ringGrowSpeed = newSettings[2];
-        fadeout = newSettings[3];
-        render = newSettings[4] > 0;
+    
+    public static void setSettings(int mode, int palette) {
+        RingScreen.mode = RingScreen.Mode.values()[mode];
+        RingScreen.palette = RingScreen.Palette.values()[palette];
+        
+        ringGrowSpeed = getSettingByName("Ring grow speed");
+        fadeout = getSettingByName("Fadeout");
+        render = getSettingByName("Render") > 0;
     }
-
+    
     @Override
     public void resize(int width, int height) {
         super.resize(width, height, 0, true);
     }
-
+    
     @Override
     public void pause() {
-
+    
     }
-
+    
     @Override
     public void resume() {
-
+    
     }
-
+    
     @Override
     public void hide() {
-
+    
     }
-
+    
     @Override
     public void dispose() {
         super.dispose();

@@ -1,5 +1,12 @@
 package com.deo.mvis.visualisers;
 
+import static com.badlogic.gdx.math.MathUtils.clamp;
+import static com.deo.mvis.Launcher.HEIGHT;
+import static com.deo.mvis.Launcher.WIDTH;
+import static java.lang.StrictMath.cos;
+import static java.lang.StrictMath.random;
+import static java.lang.StrictMath.sin;
+
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
@@ -21,13 +28,10 @@ import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.deo.mvis.utils.SettingsEntry;
+import com.deo.mvis.utils.Type;
 
-import static com.badlogic.gdx.math.MathUtils.clamp;
-import static com.deo.mvis.Launcher.HEIGHT;
-import static com.deo.mvis.Launcher.WIDTH;
-import static java.lang.StrictMath.cos;
-import static java.lang.StrictMath.random;
-import static java.lang.StrictMath.sin;
+import java.util.Locale;
 
 public class AttractorScreen extends BaseVisualiser implements Screen {
     
@@ -36,8 +40,6 @@ public class AttractorScreen extends BaseVisualiser implements Screen {
     private final ModelBatch modelBatch;
     private final Environment environment;
     
-    private static int currentPalette;
-    private static int currentSimulationRule;
     private static int pointCount;
     private static float timestep;
     
@@ -55,6 +57,17 @@ public class AttractorScreen extends BaseVisualiser implements Screen {
             {Color.valueOf("12691299"), Color.LIME, Color.SKY, Color.CYAN},
             {Color.valueOf("#00334499"), Color.TEAL, Color.SKY, Color.CYAN}};
     
+    private static AttractorScreen.Mode mode;
+    private static AttractorScreen.Palette palette;
+    
+    private enum Palette {
+        VIVID, ORANGE, FIRE, VIRUS, BLACK_HOLE
+    }
+    
+    private enum Mode {
+        ATTRACTOR1, ATTRACTOR2, ATTRACTOR3, ATTRACTOR4, ATTRACTOR5, ATTRACTOR6
+    }
+    
     public AttractorScreen(Game game) {
         super(game, DEFAULT);
         
@@ -64,8 +77,8 @@ public class AttractorScreen extends BaseVisualiser implements Screen {
         
         points = new Array<>();
         for (int i = 0; i < pointCount; i++) {
-            points.add(new Point(new Vector3((float) (random() * spread), (float) (random() * spread), (float) (random() * spread)), availablePalettes[currentPalette],
-                    currentSimulationRule, timestep/3f));
+            points.add(new Point(new Vector3((float) (random() * spread), (float) (random() * spread), (float) (random() * spread)), availablePalettes[palette.ordinal()],
+                    mode.ordinal(), timestep / 3f));
         }
         
         cam = new PerspectiveCamera(67, WIDTH, HEIGHT);
@@ -83,7 +96,7 @@ public class AttractorScreen extends BaseVisualiser implements Screen {
         environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.3f, 0.3f, 0.3f, 1f));
         
         cameraInputController = new CameraInputController(cam);
-    
+        
         InputMultiplexer multiplexer = new InputMultiplexer();
         multiplexer.addProcessor(cameraInputController);
         multiplexer.addProcessor(stage);
@@ -120,7 +133,7 @@ public class AttractorScreen extends BaseVisualiser implements Screen {
         }
         
         float volume = samplesSmoothed[pos];
-    
+        
         utils.bloomBegin(true, pos);
         modelBatch.begin(cam);
         Gdx.gl.glEnable(GL20.GL_BLEND);
@@ -137,7 +150,7 @@ public class AttractorScreen extends BaseVisualiser implements Screen {
             utils.makeAScreenShot(recorderFrame);
             utils.displayData(recorderFrame, frame, camera.combined);
         }
-    
+        
         batch.begin();
         drawExitButton();
         batch.end();
@@ -154,28 +167,35 @@ public class AttractorScreen extends BaseVisualiser implements Screen {
     }
     
     public static void init() {
-        paletteNames = new String[]{"Vivid", "Orange", "Fire", "Virus", "Black hole"};
-        typeNames = new String[]{"Attractor1", "Attractor2", "Attractor3", "Attractor4", "Attractor5", "Attractor6"};
+    
+        settings = new Array<>();
+        settings.add(new SettingsEntry("Number of points", 10, 450, 70, Type.INT));
+        settings.add(new SettingsEntry("Time step", 0.0001f, 0.5f, 0.01f, Type.FLOAT));
+        settings.add(new SettingsEntry("Render", 0, 1, 0, Type.BOOLEAN));
         
-        settings = new String[]{"Type", "Pallet", "Number of points", "TimeStep", "Render"};
-        settingTypes = new String[]{"int", "int", "int", "float", "boolean"};
+        paletteNames = new Array<>();
+        for (int i = 0; i < AttractorScreen.Palette.values().length; i++) {
+            paletteNames.add(AttractorScreen.Palette.values()[i].name().toLowerCase(Locale.ROOT).replace("_", ""));
+        }
         
-        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 450, 0.5f, 1};
-        settingMinValues = new float[]{0, 0, 10, 0.0001f, 0};
+        typeNames = new Array<>();
+        for (int i = 0; i < AttractorScreen.Mode.values().length; i++) {
+            typeNames.add(AttractorScreen.Mode.values()[i].name().toLowerCase(Locale.ROOT).replace("_", ""));
+        }
         
-        defaultSettings = new float[]{0, 0, 70, 0.01f, 0};
     }
     
     public static String getName() {
         return "Attractor";
     }
     
-    public static void setSettings(float[] newSettings) {
-        currentSimulationRule = (int) newSettings[0];
-        currentPalette = (int) newSettings[1];
-        pointCount = (int) newSettings[2];
-        timestep = newSettings[3];
-        render = newSettings[4] > 0;
+    public static void setSettings(int mode, int palette) {
+        AttractorScreen.mode = AttractorScreen.Mode.values()[mode];
+        AttractorScreen.palette = AttractorScreen.Palette.values()[palette];
+        
+        pointCount = (int) getSettingByName("Number of points");
+        timestep = getSettingByName("Time step");
+        render = getSettingByName("Render") > 0;
     }
     
     @Override

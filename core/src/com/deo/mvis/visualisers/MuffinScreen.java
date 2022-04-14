@@ -1,5 +1,8 @@
 package com.deo.mvis.visualisers;
 
+import static com.deo.mvis.Launcher.HEIGHT;
+import static com.deo.mvis.Launcher.WIDTH;
+
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
@@ -20,21 +23,21 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.deo.mvis.utils.SettingsEntry;
+import com.deo.mvis.utils.Type;
 
-import static com.deo.mvis.Launcher.HEIGHT;
-import static com.deo.mvis.Launcher.WIDTH;
-import static java.lang.StrictMath.random;
+import java.util.Locale;
 
 public class MuffinScreen extends BaseVisualiser implements Screen {
     
-    private PerspectiveCamera cam;
-    private ModelBatch modelBatch;
-    private ModelBuilder modelBuilder;
-    private Array<Model> models;
-    private Array<Float> modelYPoses;
-    private Array<ModelInstance> instances;
-    private Array<Array<Integer>> cachedPositions;
-    private Environment environment;
+    private final PerspectiveCamera cam;
+    private final ModelBatch modelBatch;
+    private final ModelBuilder modelBuilder;
+    private final Array<Model> models;
+    private final Array<Float> modelYPoses;
+    private final Array<ModelInstance> instances;
+    private final Array<Array<Integer>> cachedPositions;
+    private final Environment environment;
     boolean preloaded;
     
     private float degrees;
@@ -42,13 +45,18 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
     private Color fadeColor;
     private DirectionalLight prevLight;
     
-    private final int SINGULAR = 0;
-    private final int GRID = 1;
-    private static final int RUBENSTUBE = 2;
-    
-    private static int type = 1;
     private static float visualiserQuality = 100f;
-    private static int palette;
+    
+    private static MuffinScreen.Mode mode;
+    private static MuffinScreen.Palette palette;
+    
+    private enum Palette {
+        DEFAULT
+    }
+    
+    private enum Mode {
+        CUBE, MUFFIN, FLAT
+    }
     
     public MuffinScreen(Game game) {
         super(game, LEFT_AND_RIGHT_RAW);
@@ -71,7 +79,7 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
         modelBatch = new ModelBatch();
         environment = new Environment();
         
-        utils.changeBloomEnabledState(type == SINGULAR);
+        utils.changeBloomEnabledState(mode == Mode.CUBE);
         
         initialiseScene();
     }
@@ -126,8 +134,8 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
     }
     
     private void transform3d(final int pos) {
-        switch (type) {
-            case (SINGULAR):
+        switch (mode) {
+            case CUBE:
                 degrees += samplesSmoothed[pos] * 2;
                 
                 instances.get(0).transform.setToScaling(samplesSmoothed[pos] * 0.8f + 1, samplesSmoothed[pos] * 0.8f + 1, samplesSmoothed[pos] * 0.8f + 1);
@@ -142,24 +150,20 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
                 environment.add(prevLight);
                 
                 break;
-            case (GRID):
-                
+            case MUFFIN:
                 for (int i = 0; i < 51; i++) {
                     transformInRadius(i, pos);
                 }
-                
                 break;
-            case (RUBENSTUBE):
-                
+            case FLAT:
                 rubensTransform(pos);
-                
                 break;
         }
     }
     
     private void initialiseScene() {
-        switch (type) {
-            case (SINGULAR):
+        switch (mode) {
+            case CUBE:
                 
                 environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.3f, 0.3f, 0.3f, 1f));
                 prevLight = new DirectionalLight().set(0, 1, 1, -1f, -0.8f, -0.2f);
@@ -175,15 +179,15 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
                 instances.add(instance);
                 
                 break;
-            case (GRID):
-            case (RUBENSTUBE):
+            case MUFFIN:
+            case FLAT:
                 
                 environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 1, 1, 1, 1f));
                 prevLight = new DirectionalLight().set(0, 1, 1, -1f, -0.8f, -0.2f);
                 environment.add(prevLight);
                 
                 float visualiserQuality = MuffinScreen.visualiserQuality;
-                if (type == GRID) {
+                if (mode == Mode.MUFFIN) {
                     visualiserQuality = 100;
                 }
                 
@@ -205,7 +209,7 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
                     }
                 }
                 
-                if (type == GRID) {
+                if (mode == Mode.MUFFIN) {
                     Model filler = modelBuilder.createBox(300, 15f, 300,
                             new Material(ColorAttribute.createDiffuse(Color.valueOf("#000000"))),
                             VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal);
@@ -304,27 +308,32 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
     }
     
     public static void init() {
-        paletteNames = new String[]{"Default"};
-        typeNames = new String[]{"Cube", "Muffin", "Flat"};
+    
+        settings = new Array<>();
+        settings.add(new SettingsEntry("Visualiser quality", 0, 100, 100, Type.INT));
+        settings.add(new SettingsEntry("Render", 0, 1, 0, Type.BOOLEAN));
         
-        settings = new String[]{"Type", "Pallet", "VisualiserQuality", "Render"};
-        settingTypes = new String[]{"int", "int", "int", "boolean"};
+        paletteNames = new Array<>();
+        for (int i = 0; i < MuffinScreen.Palette.values().length; i++) {
+            paletteNames.add(MuffinScreen.Palette.values()[i].name().toLowerCase(Locale.ROOT).replace("_", ""));
+        }
+    
+        typeNames = new Array<>();
+        for (int i = 0; i < MuffinScreen.Mode.values().length; i++) {
+            typeNames.add(MuffinScreen.Mode.values()[i].name().toLowerCase(Locale.ROOT).replace("_", ""));
+        }
         
-        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 100, 1};
-        settingMinValues = new float[]{0, 0, 1, 0};
-        
-        defaultSettings = new float[]{0, 0, 100, 0};
     }
     
     public static String getName() {
         return "3D";
     }
     
-    public static void setSettings(float[] newSettings) {
-        type = (int) newSettings[0];
-        palette = (int) newSettings[1];
-        visualiserQuality = newSettings[2];
-        render = newSettings[3] > 0;
+    public static void setSettings(int mode, int palette) {
+        MuffinScreen.mode = MuffinScreen.Mode.values()[mode];
+        MuffinScreen.palette = MuffinScreen.Palette.values()[palette];
+        visualiserQuality = getSettingByName("Visualiser quality");
+        render = getSettingByName("Render") > 0;
     }
     
     @Override

@@ -1,5 +1,14 @@
 package com.deo.mvis;
 
+import static com.deo.mvis.Launcher.HEIGHT;
+import static com.deo.mvis.Launcher.WIDTH;
+import static com.deo.mvis.utils.Type.INT;
+import static com.deo.mvis.utils.Utils.getBoolean;
+import static com.deo.mvis.utils.Utils.getInteger;
+import static com.deo.mvis.utils.Utils.putBoolean;
+import static com.deo.mvis.utils.Utils.putFloat;
+import static com.deo.mvis.utils.Utils.putInteger;
+
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
@@ -38,10 +47,18 @@ import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.deo.mvis.jtransforms.fft.FloatFFT_1D;
-import com.deo.mvis.otherScreens.GameOfLife;
 import com.deo.mvis.utils.MusicWave;
+import com.deo.mvis.utils.SettingsEntry;
 import com.deo.mvis.utils.UIComposer;
-import com.deo.mvis.visualisers.*;
+import com.deo.mvis.visualisers.AttractorScreen;
+import com.deo.mvis.visualisers.BaseVisualiser;
+import com.deo.mvis.visualisers.FFTScreen;
+import com.deo.mvis.visualisers.FourierScreen;
+import com.deo.mvis.visualisers.GameOfLifeScreen;
+import com.deo.mvis.visualisers.MuffinScreen;
+import com.deo.mvis.visualisers.MushroomScreen;
+import com.deo.mvis.visualisers.OsciloscopeScreen;
+import com.deo.mvis.visualisers.RingScreen;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -50,41 +67,33 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.deo.mvis.Launcher.HEIGHT;
-import static com.deo.mvis.Launcher.WIDTH;
-import static com.deo.mvis.utils.Utils.getBoolean;
-import static com.deo.mvis.utils.Utils.getInteger;
-import static com.deo.mvis.utils.Utils.putBoolean;
-import static com.deo.mvis.utils.Utils.putFloat;
-import static com.deo.mvis.utils.Utils.putInteger;
-
 //TODO make a scratch-like visualiser programming system
 //TODO make a space background
 //TODO linear frequency visualiser and a string visualiser
 
 public class MenuScreen implements Screen {
     
-    private Game game;
-    private Stage stage;
-    private Table visualisersTable;
-    private Array<ScrollPane> settings;
-    private ScrollPane scrollPane;
-    private UIComposer uiComposer;
-    private AssetManager assetManager;
+    private final Game game;
+    private final Stage stage;
+    private final Array<ScrollPane> settings;
+    private final UIComposer uiComposer;
+    private final AssetManager assetManager;
     
-    private ShapeRenderer renderer;
+    private final ShapeRenderer renderer;
     
-    private OrthographicCamera camera;
-    private ScreenViewport viewport;
+    private final OrthographicCamera camera;
+    private final ScreenViewport viewport;
     
-    private SpriteBatch batch;
+    private final SpriteBatch batch;
     
-    private BitmapFont font, font2, font_small;
+    private final BitmapFont font;
+    private final BitmapFont font2;
+    private final BitmapFont font_small;
     
     private MusicWave musicWave;
     private float[] displaySamples;
     private float[] averageSamples;
-    private Music music;
+    private final Music music;
     private FloatFFT_1D fft;
     
     private float triangleAngle = 0;
@@ -165,8 +174,8 @@ public class MenuScreen implements Screen {
         
         uiComposer = new UIComposer(assetManager);
         uiComposer.loadStyles("defaultLight", "checkBoxDefault", "sliderDefaultSmall");
-        
-        visualisersTable = new Table();
+    
+        Table visualisersTable = new Table();
         
         stage = new Stage(viewport, batch);
         
@@ -177,7 +186,7 @@ public class MenuScreen implements Screen {
         visualiserClasses.add(RingScreen.class);
         visualiserClasses.add(MushroomScreen.class);
         visualiserClasses.add(FFTScreen.class);
-        visualiserClasses.add(GameOfLife.class);
+        visualiserClasses.add(GameOfLifeScreen.class);
         visualiserClasses.add(FourierScreen.class);
         visualiserClasses.add(AttractorScreen.class);
         
@@ -248,8 +257,8 @@ public class MenuScreen implements Screen {
         } else {
             visualisersTable.add(menuVisButton).width(370).height(100).pad(7);
         }
-        
-        scrollPane = new ScrollPane(visualisersTable);
+    
+        ScrollPane scrollPane = new ScrollPane(visualisersTable);
         scrollPane.setBounds(-WIDTH / 2f, -HEIGHT / 2f, WIDTH / 2f - 10, HEIGHT / 2f + 45);
         
         stage.addActor(scrollPane);
@@ -394,32 +403,25 @@ public class MenuScreen implements Screen {
         return new float[]{x1, y1, x2, y2, x3, y3};
     }
     
-    private void loadSettingsForVisualiser(final Class visualiser) {
+    private void loadSettingsForVisualiser(final Class<? extends BaseVisualiser> visualiser) {
         
-        String[] settingNames = new String[0];
-        String[] settingTypes = new String[0];
-        String[] paletteNames = new String[0];
-        String[] typeNames = new String[0];
-        float[] settingMaxValues = new float[0];
-        float[] settingMinValues = new float[0];
-        float[] defaultSettings = new float[0];
+        Array<SettingsEntry> settingsEntries = new Array<>();
+        Array<String> paletteNames = new Array<>();
+        Array<String> typeNames = new Array<>();
+    
+        final int[] palette = {0};
+        final int[] type = {0};
         
         String name = "noName";
         
         try {
-            settingNames = (String[]) visualiser.getMethod("getSettings").invoke(BaseVisualiser.class);
-            settingTypes = (String[]) visualiser.getMethod("getSettingTypes").invoke(BaseVisualiser.class);
-            paletteNames = (String[]) visualiser.getMethod("getPaletteNames").invoke(BaseVisualiser.class);
-            typeNames = (String[]) visualiser.getMethod("getTypeNames").invoke(BaseVisualiser.class);
-            settingMaxValues = (float[]) visualiser.getMethod("getSettingMaxValues").invoke(BaseVisualiser.class);
-            settingMinValues = (float[]) visualiser.getMethod("getSettingMinValues").invoke(BaseVisualiser.class);
-            defaultSettings = (float[]) visualiser.getMethod("getDefaultSettings").invoke(BaseVisualiser.class);
+            settingsEntries = (Array<SettingsEntry>) visualiser.getMethod("getSettings").invoke(visualiser);
+            paletteNames = (Array<String>) visualiser.getMethod("getPaletteNames").invoke(visualiser);
+            typeNames = (Array<String>) visualiser.getMethod("getTypeNames").invoke(visualiser);
             name = visualiser.getSimpleName();
         } catch (Exception e) {
             e.printStackTrace();
         }
-        
-        final float[] newSettings = defaultSettings.clone();
         
         Pixmap pixmap = new Pixmap(100, 30, Pixmap.Format.RGBA8888);
         pixmap.setColor(Color.BLACK);
@@ -440,7 +442,7 @@ public class MenuScreen implements Screen {
         pixmap3.dispose();
         
         Skin texturesForStyle = new Skin();
-        texturesForStyle.addRegions((TextureAtlas) assetManager.get("ui.atlas"));
+        texturesForStyle.addRegions(assetManager.get("ui.atlas"));
         
         SelectBox.SelectBoxStyle selectBoxStyle = new SelectBox.SelectBoxStyle(font_small, Color.WHITE, BarBackgroundBlank,
                 new ScrollPane.ScrollPaneStyle(BarBackgroundGrey, BarBackgroundEmpty, BarBackgroundEmpty, BarBackgroundEmpty, BarBackgroundEmpty),
@@ -487,10 +489,10 @@ public class MenuScreen implements Screen {
         final String finalName = name;
         if (!Gdx.files.external("Mvis/" + finalName + "/default").exists()) {
             StringBuilder exportedSettings = new StringBuilder();
-            exportedSettings.append(newSettings[2]);
-            for (int i = 3; i < newSettings.length; i++) {
+            exportedSettings.append(settingsEntries.get(0).getDefault());
+            for (int i = 1; i < settingsEntries.size; i++) {
                 exportedSettings.append(",");
-                exportedSettings.append(newSettings[i]);
+                exportedSettings.append(settingsEntries.get(i).getDefault());
             }
             FileHandle destinationFolder = Gdx.files.external("Mvis/" + finalName + "/");
             
@@ -518,23 +520,23 @@ public class MenuScreen implements Screen {
         
         musicSelector.setSelectedIndex(selectedMusic);
         typeSelector.setSelectedIndex(getInteger("type" + name));
-        newSettings[0] = getInteger("type" + name);
+        type[0] = getInteger("type" + name);
         paletteSelector.setSelectedIndex(getInteger("palette" + name));
-        newSettings[1] = getInteger("palette" + name);
+        palette[0] = getInteger("palette" + name);
         
         typeSelector.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                newSettings[0] = typeSelector.getSelectedIndex();
-                putInteger("type" + finalName, (int) newSettings[0]);
+                type[0] = typeSelector.getSelectedIndex();
+                putInteger("type" + finalName, type[0]);
             }
         });
         
         paletteSelector.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                newSettings[1] = paletteSelector.getSelectedIndex();
-                putInteger("palette" + finalName, (int) newSettings[1]);
+                palette[0] = paletteSelector.getSelectedIndex();
+                putInteger("palette" + finalName, palette[0]);
             }
         });
         
@@ -559,46 +561,47 @@ public class MenuScreen implements Screen {
         
         TextButton settingsResetButton = uiComposer.addTextButton("defaultLight", "Reset to defaults", 0.45f);
         settingsResetButton.setColor(Color.LIGHT_GRAY);
-        
-        final String[] finalSettingTypes = settingTypes;
+    
+        final Array<SettingsEntry> finalSettingsEntries = settingsEntries;
         loadPresetButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 FileHandle destinationPreset = availablePresetFiles.get(presetSelector.getSelectedIndex());
                 String[] settings = destinationPreset.readString().split(",");
-                float[] fSettings = new float[settings.length + 2];
-                for (int i = 2; i < settings.length + 2; i++) {
-                    fSettings[i] = Float.parseFloat(settings[i - 2]);
+                float[] fSettings = new float[settings.length];
+                for (int i = 0; i < settings.length; i++) {
+                    fSettings[i] = Float.parseFloat(settings[i]);
                 }
-                for (int i = 2; i < finalSettingTypes.length; i++) {
-                    switch (finalSettingTypes[i]) {
-                        case ("int"):
-                        case ("float"):
+                for (int i = 0; i < finalSettingsEntries.size; i++) {
+                    switch (finalSettingsEntries.get(i).getType()) {
+                        case INT:
+                        case FLOAT:
                             putFloat(finalName + "_" + i, fSettings[i]);
-                            Table sliderTable = (Table) settingsTable.getCells().get(i - 2).getActor();
+                            Table sliderTable = (Table) settingsTable.getCells().get(i).getActor();
                             Slider slider = (Slider) sliderTable.getCells().get(0).getActor();
                             slider.setValue(fSettings[i]);
                             break;
-                        case ("boolean"):
+                        case BOOLEAN:
                             putBoolean(finalName + "_" + i, fSettings[i] > 0);
-                            CheckBox checkBox = (CheckBox) settingsTable.getCells().get(i - 2).getActor();
+                            CheckBox checkBox = (CheckBox) settingsTable.getCells().get(i).getActor();
                             checkBox.setChecked(fSettings[i] > 0);
                             break;
                     }
                 }
             }
         });
+    
         
         addPresetButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 float key = 0;
                 StringBuilder exportedSettings = new StringBuilder();
-                exportedSettings.append(newSettings[2]);
-                for (int i = 3; i < newSettings.length; i++) {
+                exportedSettings.append(finalSettingsEntries.get(0).getCurrent());
+                for (int i = 1; i < finalSettingsEntries.size; i++) {
                     exportedSettings.append(",");
-                    exportedSettings.append(newSettings[i]);
-                    key += newSettings[i] % i;
+                    exportedSettings.append(finalSettingsEntries.get(i).getCurrent());
+                    key += finalSettingsEntries.get(i).getCurrent() % i;
                 }
                 FileHandle destinationFolder = Gdx.files.external("Mvis/" + finalName + "/");
                 
@@ -648,7 +651,7 @@ public class MenuScreen implements Screen {
                 try {
                     Gdx.input.setInputProcessor(null);
                     music.stop();
-                    visualiser.getMethod("setSettings", newSettings.getClass()).invoke(visualiser, newSettings);
+                    visualiser.getMethod("setSettings", int.class, int.class).invoke(visualiser, type[0], palette[0]);
                     visualiser.getMethod("setMusic", FileHandle.class).invoke(visualiser, availableMusicFiles.get(musicSelector.getSelectedIndex()));
                     game.setScreen((Screen) visualiser.getConstructor(Game.class).newInstance(game));
                     dispose();
@@ -664,29 +667,27 @@ public class MenuScreen implements Screen {
             }
         });
         
-        final float[] finalDefaultSettings = defaultSettings;
         settingsResetButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 try {
                     
-                    for (int i = 2; i < finalSettingTypes.length; i++) {
-                        switch (finalSettingTypes[i]) {
-                            case ("int"):
-                            case ("float"):
-                                putFloat(finalName + "_" + i, finalDefaultSettings[i]);
+                    for (int i = 0; i < finalSettingsEntries.size; i++) {
+                        switch (finalSettingsEntries.get(i).getType()) {
+                            case INT:
+                            case FLOAT:
+                                putFloat(finalName + "_" + i, finalSettingsEntries.get(i).getDefault());
                                 Table sliderTable = (Table) settingsTable.getCells().get(i - 2).getActor();
                                 Slider slider = (Slider) sliderTable.getCells().get(0).getActor();
-                                slider.setValue(finalDefaultSettings[i]);
+                                slider.setValue(finalSettingsEntries.get(i).getDefault());
                                 break;
-                            case ("boolean"):
-                                putBoolean(finalName + "_" + i, finalDefaultSettings[i] > 0);
+                            case BOOLEAN:
+                                putBoolean(finalName + "_" + i, finalSettingsEntries.get(i).getDefault() > 0);
                                 CheckBox checkBox = (CheckBox) settingsTable.getCells().get(i - 2).getActor();
-                                checkBox.setChecked(finalDefaultSettings[i] > 0);
+                                checkBox.setChecked(finalSettingsEntries.get(i).getDefault() > 0);
                                 break;
                         }
                     }
-                    
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -696,54 +697,55 @@ public class MenuScreen implements Screen {
         ScrollPane scrollPane = new ScrollPane(settingsTable);
         scrollPane.setBounds(10, -HEIGHT / 2f, WIDTH / 2f - 10, HEIGHT / 2f + 45);
         scrollPane.setVisible(false);
-        
-        for (int i = 2; i < settingTypes.length; i++) {
-            switch (settingTypes[i]) {
-                case ("int"):
-                case ("float"):
+        SettingsEntry currentSettingsEntry;
+        for (int i = 0; i < finalSettingsEntries.size; i++) {
+            currentSettingsEntry = finalSettingsEntries.get(i);
+            switch (currentSettingsEntry.getType()) {
+                case INT:
+                case FLOAT:
                     
                     float step = 0.001f;
-                    if (settingTypes[i].equals("int")) {
+                    if (currentSettingsEntry.getType() == INT) {
                         step = 1;
                     }
                     
                     if (!getBoolean(name + "_" + i + "_changed")) {
                         putBoolean(name + "_" + i + "_changed", true);
-                        putFloat(name + "_" + i, defaultSettings[i]);
+                        putFloat(name + "_" + i, currentSettingsEntry.getDefault());
                     }
                     
-                    Table setting = uiComposer.addSlider("sliderDefaultSmall", settingMinValues[i], settingMaxValues[i],
-                            step, settingNames[i] + ": ", "", name + "_" + i, settingTypes[i], scrollPane);
+                    Table setting = uiComposer.addSlider("sliderDefaultSmall", currentSettingsEntry.getMin(), currentSettingsEntry.getMax(),
+                            step, currentSettingsEntry.getName() + ": ", "", name + "_" + i, currentSettingsEntry.getType(), scrollPane);
                     
                     final Slider slider = (Slider) setting.getCells().get(0).getActor();
-                    
-                    newSettings[i] = slider.getValue();
+    
+                    currentSettingsEntry.setValue(slider.getValue());
                     
                     final int finalI = i;
                     slider.addListener(new ChangeListener() {
                         @Override
                         public void changed(ChangeEvent event, Actor actor) {
-                            newSettings[finalI] = slider.getValue();
+                            finalSettingsEntries.get(finalI).setValue(slider.getValue());
                             putBoolean(finalName + "_" + finalI + "_changed", true);
                         }
                     });
                     
                     settingsTable.add(setting).padBottom(5).padLeft(7).align(Align.left).row();
                     break;
-                case ("boolean"):
+                case BOOLEAN:
                     
                     if (!getBoolean(name + "_" + i + "_changed")) {
                         putBoolean(name + "_" + i + "_changed", true);
-                        putBoolean(name + "_" + i, defaultSettings[i] > 0);
+                        putBoolean(name + "_" + i, currentSettingsEntry.getDefault() > 0);
                     }
                     
-                    final CheckBox setting2 = uiComposer.addCheckBox("checkBoxDefault", settingNames[i], name + "_" + i);
+                    final CheckBox setting2 = uiComposer.addCheckBox("checkBoxDefault", currentSettingsEntry.getName(), name + "_" + i);
                     
                     int set = 0;
                     if (setting2.isChecked()) {
                         set = 1;
                     }
-                    newSettings[i] = set;
+                    currentSettingsEntry.setValue(set);
                     
                     final int finalI1 = i;
                     setting2.addListener(new ChangeListener() {
@@ -753,7 +755,7 @@ public class MenuScreen implements Screen {
                             if (setting2.isChecked()) {
                                 set = 1;
                             }
-                            newSettings[finalI1] = set;
+                            finalSettingsEntries.get(finalI1).setValue(set);
                             putBoolean(finalName + "_" + finalI1 + "_changed", true);
                         }
                     });

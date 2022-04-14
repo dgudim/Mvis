@@ -30,10 +30,7 @@ public class MusicWave {
 
             sampleRate = header.sampleRate;
 
-            int channels = 1;
-            if (header.isStereo) {
-                channels = 2;
-            }
+            int channels = header.isStereo ? 2 : 1;
 
             float[][] twoChannelSamples = getUnscaledAmplitude(bytes, channels);
 
@@ -145,7 +142,7 @@ public class MusicWave {
     public float[] getSamplesForFFT(int pos, int i, float[] samples) {
         float[] newSamples = new float[i];
         for (int i2 = 0; i2 < i; i2++) {
-            newSamples[i2] = samples[pos + i2];
+            newSamples[i2] = samples[i2 + pos];
         }
         return newSamples;
     }
