@@ -47,6 +47,7 @@ import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.deo.mvis.jtransforms.fft.FloatFFT_1D;
+import com.deo.mvis.utils.CompositeSettings;
 import com.deo.mvis.utils.MusicWave;
 import com.deo.mvis.utils.SettingsEntry;
 import com.deo.mvis.utils.UIComposer;
@@ -65,6 +66,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 //TODO make a scratch-like visualiser programming system
@@ -75,7 +77,7 @@ public class MenuScreen implements Screen {
     
     private final Game game;
     private final Stage stage;
-    private final Array<ScrollPane> settings;
+    private final Array<ScrollPane> settingsPanes;
     private final UIComposer uiComposer;
     private final AssetManager assetManager;
     
@@ -133,7 +135,7 @@ public class MenuScreen implements Screen {
             assetManager.update();
         }
         
-        settings = new Array<>();
+        settingsPanes = new Array<>();
         
         if (menuVisualisation) {
             musicWave = new MusicWave(destinationMusic, false);
@@ -174,7 +176,7 @@ public class MenuScreen implements Screen {
         
         uiComposer = new UIComposer(assetManager);
         uiComposer.loadStyles("defaultLight", "checkBoxDefault", "sliderDefaultSmall");
-    
+        
         Table visualisersTable = new Table();
         
         stage = new Stage(viewport, batch);
@@ -205,7 +207,6 @@ public class MenuScreen implements Screen {
                 }
                 
                 row = !row;
-                aClass.getMethod("init").invoke(aClass);
                 
                 loadSettingsForVisualiser(aClass);
                 
@@ -213,8 +214,8 @@ public class MenuScreen implements Screen {
                 visualiserStartButton.addListener(new ClickListener() {
                     @Override
                     public void clicked(InputEvent event, float x, float y) {
-                        for (int d = 0; d < settings.size; d++) {
-                            settings.get(d).setVisible(d == finalI);
+                        for (int d = 0; d < settingsPanes.size; d++) {
+                            settingsPanes.get(d).setVisible(d == finalI);
                         }
                     }
                 });
@@ -257,7 +258,7 @@ public class MenuScreen implements Screen {
         } else {
             visualisersTable.add(menuVisButton).width(370).height(100).pad(7);
         }
-    
+        
         ScrollPane scrollPane = new ScrollPane(visualisersTable);
         scrollPane.setBounds(-WIDTH / 2f, -HEIGHT / 2f, WIDTH / 2f - 10, HEIGHT / 2f + 45);
         
@@ -407,17 +408,18 @@ public class MenuScreen implements Screen {
         
         Array<SettingsEntry> settingsEntries = new Array<>();
         Array<String> paletteNames = new Array<>();
-        Array<String> typeNames = new Array<>();
-    
+        Array<String> modeNames = new Array<>();
+        
         final int[] palette = {0};
         final int[] type = {0};
         
         String name = "noName";
         
         try {
-            settingsEntries = (Array<SettingsEntry>) visualiser.getMethod("getSettings").invoke(visualiser);
-            paletteNames = (Array<String>) visualiser.getMethod("getPaletteNames").invoke(visualiser);
-            typeNames = (Array<String>) visualiser.getMethod("getTypeNames").invoke(visualiser);
+            CompositeSettings compositeSettings = (CompositeSettings) visualiser.getMethod("init").invoke(visualiser);
+            settingsEntries = compositeSettings.getMainSettings();
+            paletteNames = compositeSettings.getPaletteNames();
+            modeNames = compositeSettings.getModeNames();
             name = visualiser.getSimpleName();
         } catch (Exception e) {
             e.printStackTrace();
@@ -467,23 +469,23 @@ public class MenuScreen implements Screen {
         File presetsFolder = Gdx.files.external("Mvis/" + name).file();
         
         try {
-            for (File m : musicFolder.listFiles()) {
+            for (File m : Objects.requireNonNull(musicFolder.listFiles())) {
                 if (m.getName().endsWith(".wav")) {
                     availableMusic.add(m.getName().replace(".wav", ""));
                     availableMusicFiles.add(Gdx.files.external("Mvis/" + m.getName()));
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("No Mvis folder");
         }
         
         try {
-            for (File m : presetsFolder.listFiles()) {
+            for (File m : Objects.requireNonNull(presetsFolder.listFiles())) {
                 availablePresets.add(m.getName());
                 availablePresetFiles.add(Gdx.files.external("Mvis/" + name + "/" + m.getName()));
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("No presets");
         }
         
         final String finalName = name;
@@ -508,7 +510,7 @@ public class MenuScreen implements Screen {
         
         musicSelector.setItems(availableMusic);
         paletteSelector.setItems(paletteNames);
-        typeSelector.setItems(typeNames);
+        typeSelector.setItems(modeNames);
         presetSelector.setItems(availablePresets);
         
         musicSelector.setMaxListCount(5);
@@ -561,7 +563,7 @@ public class MenuScreen implements Screen {
         
         TextButton settingsResetButton = uiComposer.addTextButton("defaultLight", "Reset to defaults", 0.45f);
         settingsResetButton.setColor(Color.LIGHT_GRAY);
-    
+        
         final Array<SettingsEntry> finalSettingsEntries = settingsEntries;
         loadPresetButton.addListener(new ClickListener() {
             @Override
@@ -590,7 +592,7 @@ public class MenuScreen implements Screen {
                 }
             }
         });
-    
+        
         
         addPresetButton.addListener(new ClickListener() {
             @Override
@@ -651,7 +653,7 @@ public class MenuScreen implements Screen {
                 try {
                     Gdx.input.setInputProcessor(null);
                     music.stop();
-                    visualiser.getMethod("setSettings", int.class, int.class).invoke(visualiser, type[0], palette[0]);
+                    visualiser.getMethod("setSettings", Array.class, int.class, int.class).invoke(visualiser, finalSettingsEntries, type[0], palette[0]);
                     visualiser.getMethod("setMusic", FileHandle.class).invoke(visualiser, availableMusicFiles.get(musicSelector.getSelectedIndex()));
                     game.setScreen((Screen) visualiser.getConstructor(Game.class).newInstance(game));
                     dispose();
@@ -718,7 +720,7 @@ public class MenuScreen implements Screen {
                             step, currentSettingsEntry.getName() + ": ", "", name + "_" + i, currentSettingsEntry.getType(), scrollPane);
                     
                     final Slider slider = (Slider) setting.getCells().get(0).getActor();
-    
+                    
                     currentSettingsEntry.setValue(slider.getValue());
                     
                     final int finalI = i;
@@ -783,7 +785,7 @@ public class MenuScreen implements Screen {
         settingsTable.add(middleTable2).row();
         settingsTable.add(presetSelector).width(WIDTH / 2f - 22).padBottom(5).padLeft(7).align(Align.left);
         
-        settings.add(scrollPane);
+        settingsPanes.add(scrollPane);
         stage.addActor(scrollPane);
     }
     

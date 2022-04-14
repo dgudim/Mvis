@@ -6,10 +6,9 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
+import com.deo.mvis.utils.CompositeSettings;
 import com.deo.mvis.utils.SettingsEntry;
 import com.deo.mvis.utils.Type;
-
-import java.util.Locale;
 
 public class RingScreen extends BaseVisualiser implements Screen {
     
@@ -112,36 +111,28 @@ public class RingScreen extends BaseVisualiser implements Screen {
         }
     }
     
-    public static void init() {
-    
-        settings = new Array<>();
-        settings.add(new SettingsEntry("Ring grow speed", 5, 25, ringGrowSpeed, Type.FLOAT));
-        settings.add(new SettingsEntry("Fadeout", 0.0005f, 0.05f, fadeout, Type.FLOAT));
-        settings.add(new SettingsEntry("Render", 0, 1, 0, Type.BOOLEAN));
+    public static CompositeSettings init() {
         
-        paletteNames = new Array<>();
-        for (int i = 0; i < RingScreen.Palette.values().length; i++) {
-            paletteNames.add(RingScreen.Palette.values()[i].name().toLowerCase(Locale.ROOT).replace("_", " "));
-        }
+        CompositeSettings compositeSettings = new CompositeSettings(enumToArray(Palette.class), enumToArray(Mode.class));
         
-        typeNames = new Array<>();
-        for (int i = 0; i < RingScreen.Mode.values().length; i++) {
-            typeNames.add(RingScreen.Mode.values()[i].name().toLowerCase(Locale.ROOT).replace("_", " "));
-        }
+        compositeSettings.addSetting("Ring grow speed", 5, 25, ringGrowSpeed, Type.FLOAT);
+        compositeSettings.addSetting("Fadeout", 0.0005f, 0.05f, fadeout, Type.FLOAT);
+        compositeSettings.addSetting("Render", 0, 1, 0, Type.BOOLEAN);
         
+        return compositeSettings;
     }
     
     public static String getName() {
         return "Ring";
     }
     
-    public static void setSettings(int mode, int palette) {
+    public static void setSettings(Array<SettingsEntry> settings, int mode, int palette) {
         RingScreen.mode = RingScreen.Mode.values()[mode];
         RingScreen.palette = RingScreen.Palette.values()[palette];
         
-        ringGrowSpeed = getSettingByName("Ring grow speed");
-        fadeout = getSettingByName("Fadeout");
-        render = getSettingByName("Render") > 0;
+        ringGrowSpeed = getSettingByName(settings, "Ring grow speed");
+        fadeout = getSettingByName(settings, "Fadeout");
+        render = getSettingByName(settings, "Render") > 0;
     }
     
     @Override

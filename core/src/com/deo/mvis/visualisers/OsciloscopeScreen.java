@@ -9,10 +9,9 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
+import com.deo.mvis.utils.CompositeSettings;
 import com.deo.mvis.utils.SettingsEntry;
 import com.deo.mvis.utils.Type;
-
-import java.util.Locale;
 
 public class OsciloscopeScreen extends BaseVisualiser implements Screen {
     
@@ -331,41 +330,34 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
         }
     }
     
-    public static void init() {
-    
-        settings = new Array<>();
-        settings.add(new SettingsEntry("Fadeout",0.0005f,0.05f,fadeout,Type.FLOAT));
-        settings.add(new SettingsEntry("Frequency display samples",2048,16192,freqDisplaySamples,Type.INT));
-        settings.add(new SettingsEntry("Frequency display sample multiplier",1,8,2,Type.INT));
-        settings.add(new SettingsEntry("Polar visualiser amplitude",15,450, polarAmplitude,Type.FLOAT));
-        settings.add(new SettingsEntry("Max bloom saturation",0,4,1,Type.FLOAT));
-        settings.add(new SettingsEntry("Render",0,1,0, Type.BOOLEAN));
-    
-        paletteNames = new Array<>();
-        for (int i = 0; i < OsciloscopeScreen.Palette.values().length; i++) {
-            paletteNames.add(OsciloscopeScreen.Palette.values()[i].name().toLowerCase(Locale.ROOT).replace("_", " "));
-        }
-    
-        typeNames = new Array<>();
-        for (int i = 0; i < OsciloscopeScreen.Mode.values().length; i++) {
-            typeNames.add(OsciloscopeScreen.Mode.values()[i].name().toLowerCase(Locale.ROOT).replace("_", " "));
-        }
+    public static CompositeSettings init() {
+        
+        CompositeSettings compositeSettings = new CompositeSettings(enumToArray(Palette.class), enumToArray(Mode.class));
+        
+        compositeSettings.addSetting("Fadeout", 0.0005f, 0.05f, fadeout, Type.FLOAT);
+        compositeSettings.addSetting("Frequency display samples", 2048, 16192, freqDisplaySamples, Type.INT);
+        compositeSettings.addSetting("Frequency display sample multiplier", 1, 8, 2, Type.INT);
+        compositeSettings.addSetting("Polar visualiser amplitude", 15, 450, polarAmplitude, Type.FLOAT);
+        compositeSettings.addSetting("Max bloom saturation", 0, 4, 1, Type.FLOAT);
+        compositeSettings.addSetting("Render", 0, 1, 0, Type.BOOLEAN);
+        
+        return compositeSettings;
     }
     
     public static String getName() {
         return "Oscilloscope";
     }
     
-    public static void setSettings(int mode, int palette) {
+    public static void setSettings(Array<SettingsEntry> settings, int mode, int palette) {
         OsciloscopeScreen.mode = OsciloscopeScreen.Mode.values()[mode];
         OsciloscopeScreen.palette = OsciloscopeScreen.Palette.values()[palette];
         
-        fadeout = getSettingByName("Fadeout");
-        freqDisplaySamples = (int) getSettingByName("Frequency display samples");
-        freqDisplaySampleMultiplier = (int) getSettingByName("Frequency display sample multiplier") + 4;
-        polarAmplitude = (int) getSettingByName("Polar visualiser amplitude");
-        maxSaturation = getSettingByName("Max bloom saturation");
-        render = getSettingByName("Render") > 0;
+        fadeout = getSettingByName(settings, "Fadeout");
+        freqDisplaySamples = (int) getSettingByName(settings, "Frequency display samples");
+        freqDisplaySampleMultiplier = (int) getSettingByName(settings, "Frequency display sample multiplier") + 4;
+        polarAmplitude = (int) getSettingByName(settings, "Polar visualiser amplitude");
+        maxSaturation = getSettingByName(settings, "Max bloom saturation");
+        render = getSettingByName(settings, "Render") > 0;
     }
     
     @Override

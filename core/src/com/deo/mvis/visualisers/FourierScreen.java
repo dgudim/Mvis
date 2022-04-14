@@ -18,10 +18,9 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.deo.mvis.jtransforms.fft.FloatFFT_1D;
+import com.deo.mvis.utils.CompositeSettings;
 import com.deo.mvis.utils.SettingsEntry;
 import com.deo.mvis.utils.Type;
-
-import java.util.Locale;
 
 public class FourierScreen extends BaseVisualiser implements Screen {
     
@@ -427,47 +426,39 @@ public class FourierScreen extends BaseVisualiser implements Screen {
         }
     }
     
-    public static void init() {
-    
-        settings = new Array<>();
-        settings.add(new SettingsEntry("Number of branches", 1, 5, 2, Type.INT));
-        settings.add(new SettingsEntry("Vary branch length", 0, 1, 1, Type.BOOLEAN));
-        settings.add(new SettingsEntry("Additional rotation", 0, 1, 1, Type.BOOLEAN));
-        settings.add(new SettingsEntry("Enable triangles", 0, 1, 1, Type.BOOLEAN));
-        settings.add(new SettingsEntry("Orbit amplitude", -3, 11, 3, Type.FLOAT));
-        settings.add(new SettingsEntry("Triangle count", 0, 72, 36, Type.INT));
-        settings.add(new SettingsEntry("Enable wall fire", 0, 1, 1, Type.BOOLEAN));
-        settings.add(new SettingsEntry("Enable stargate", 0, 1, 0, Type.BOOLEAN));
-        settings.add(new SettingsEntry("Enable flying balls", 0, 1, 1, Type.BOOLEAN));
-        settings.add(new SettingsEntry("Enable fft", 0, 1, 1, Type.BOOLEAN));
-        settings.add(new SettingsEntry("Enable trail triangles", 0, 1, 1, Type.BOOLEAN));
-        settings.add(new SettingsEntry("Color offset", 0, 180, 0, Type.FLOAT));
-        settings.add(new SettingsEntry("Sync color to the beats", 0, 1, 0, Type.BOOLEAN));
-        settings.add(new SettingsEntry("Synced color amplitude", 5, 180, 15, Type.FLOAT));
-        settings.add(new SettingsEntry("Stargate\n orbit reduction", 1, 5, 1, Type.FLOAT));
-        settings.add(new SettingsEntry("Fft\n orbit reduction", 1, 5, 1, Type.FLOAT));
-        settings.add(new SettingsEntry("Triangle\n orbit reduction", 1, 5, 1, Type.FLOAT));
-        settings.add(new SettingsEntry("Flying balls\n orbit reduction", -5, 11, 0, Type.FLOAT));
+    public static CompositeSettings init() {
         
-        paletteNames = new Array<>();
-        for (int i = 0; i < FourierScreen.Palette.values().length; i++) {
-            paletteNames.add(FourierScreen.Palette.values()[i].name().toLowerCase(Locale.ROOT).replace("_", " "));
-        }
+        CompositeSettings compositeSettings = new CompositeSettings(enumToArray(Palette.class), enumToArray(Mode.class));
+        compositeSettings.addSetting("Number of branches", 1, 5, 2, Type.INT);
+        compositeSettings.addSetting("Vary branch length", 0, 1, 1, Type.BOOLEAN);
+        compositeSettings.addSetting("Additional rotation", 0, 1, 1, Type.BOOLEAN);
+        compositeSettings.addSetting("Enable triangles", 0, 1, 1, Type.BOOLEAN);
+        compositeSettings.addSetting("Orbit amplitude", -3, 11, 3, Type.FLOAT);
+        compositeSettings.addSetting("Triangle count", 0, 72, 36, Type.INT);
+        compositeSettings.addSetting("Enable wall fire", 0, 1, 1, Type.BOOLEAN);
+        compositeSettings.addSetting("Enable stargate", 0, 1, 0, Type.BOOLEAN);
+        compositeSettings.addSetting("Enable flying balls", 0, 1, 1, Type.BOOLEAN);
+        compositeSettings.addSetting("Enable fft", 0, 1, 1, Type.BOOLEAN);
+        compositeSettings.addSetting("Enable trail triangles", 0, 1, 1, Type.BOOLEAN);
+        compositeSettings.addSetting("Color offset", 0, 180, 0, Type.FLOAT);
+        compositeSettings.addSetting("Sync color to the beats", 0, 1, 0, Type.BOOLEAN);
+        compositeSettings.addSetting("Synced color amplitude", 5, 180, 15, Type.FLOAT);
+        compositeSettings.addSetting("Stargate\n orbit reduction", 1, 5, 1, Type.FLOAT);
+        compositeSettings.addSetting("Fft\n orbit reduction", 1, 5, 1, Type.FLOAT);
+        compositeSettings.addSetting("Triangle\n orbit reduction", 1, 5, 1, Type.FLOAT);
+        compositeSettings.addSetting("Flying balls\n orbit reduction", -5, 11, 0, Type.FLOAT);
         
-        typeNames = new Array<>();
-        for (int i = 0; i < FourierScreen.Mode.values().length; i++) {
-            typeNames.add(FourierScreen.Mode.values()[i].name().toLowerCase(Locale.ROOT).replace("_", " "));
-        }
+        return compositeSettings;
     }
     
     public static String getName() {
         return "Fourier visualiser";
     }
     
-    public static void setSettings(int mode, int palette) {
+    public static void setSettings(Array<SettingsEntry> settings, int mode, int palette) {
         FourierScreen.mode = FourierScreen.Mode.values()[mode];
         FourierScreen.palette = FourierScreen.Palette.values()[palette];
-        switch ((int) getSettingByName("Number of branches")) {
+        switch ((int) getSettingByName(settings, "Number of branches")) {
             case (1):
                 numberOfLinks = 1;
                 break;
@@ -484,24 +475,24 @@ public class FourierScreen extends BaseVisualiser implements Screen {
                 numberOfLinks = 25;
                 break;
         }
-        changeBranchLength = getSettingByName("Vary branch length") > 0;
-        additionalRotation = getSettingByName("Additional rotation") > 0;
-        enableTriangles = getSettingByName("Enable triangles") > 0;
-        orbitAmplitude = getSettingByName("Orbit amplitude");
-        triangleCount = (int) getSettingByName("Triangle count");
-        triangleStep = 360 / (float)triangleCount;
-        enableWallFire = getSettingByName("Enable wall fire") > 0;
-        enableStarGateEffect = getSettingByName("Enable stargate") > 0;
-        enableFlyingBalls = getSettingByName("Enable flying balls") > 0;
-        enableBottomFFT = getSettingByName("Enable fft") > 0;
-        enableFlyingBallsTrails = getSettingByName("Enable trail triangles") > 0;
-        colorOffset = getSettingByName("Color offset");
-        syncColorOffsetToTheMusic = getSettingByName("Sync color to the beats") > 0;
-        syncedColorAmplitude = getSettingByName("Synced color amplitude");
-        starGateSizeModifier = getSettingByName("Stargate\n orbit reduction");
-        fftSizeModifier = getSettingByName("Fft\n orbit reduction");
-        triangleSizeModifier = getSettingByName("Triangle\n orbit reduction");
-        flyingBallsSizeModifier = getSettingByName("Flying balls\n orbit reduction");
+        changeBranchLength = getSettingByName(settings, "Vary branch length") > 0;
+        additionalRotation = getSettingByName(settings, "Additional rotation") > 0;
+        enableTriangles = getSettingByName(settings, "Enable triangles") > 0;
+        orbitAmplitude = getSettingByName(settings, "Orbit amplitude");
+        triangleCount = (int) getSettingByName(settings, "Triangle count");
+        triangleStep = 360 / (float) triangleCount;
+        enableWallFire = getSettingByName(settings, "Enable wall fire") > 0;
+        enableStarGateEffect = getSettingByName(settings, "Enable stargate") > 0;
+        enableFlyingBalls = getSettingByName(settings, "Enable flying balls") > 0;
+        enableBottomFFT = getSettingByName(settings, "Enable fft") > 0;
+        enableFlyingBallsTrails = getSettingByName(settings, "Enable trail triangles") > 0;
+        colorOffset = getSettingByName(settings, "Color offset");
+        syncColorOffsetToTheMusic = getSettingByName(settings, "Sync color to the beats") > 0;
+        syncedColorAmplitude = getSettingByName(settings, "Synced color amplitude");
+        starGateSizeModifier = getSettingByName(settings, "Stargate\n orbit reduction");
+        fftSizeModifier = getSettingByName(settings, "Fft\n orbit reduction");
+        triangleSizeModifier = getSettingByName(settings, "Triangle\n orbit reduction");
+        flyingBallsSizeModifier = getSettingByName(settings, "Flying balls\n orbit reduction");
     }
     
     @Override

@@ -28,10 +28,9 @@ import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.deo.mvis.utils.CompositeSettings;
 import com.deo.mvis.utils.SettingsEntry;
 import com.deo.mvis.utils.Type;
-
-import java.util.Locale;
 
 public class AttractorScreen extends BaseVisualiser implements Screen {
     
@@ -166,36 +165,28 @@ public class AttractorScreen extends BaseVisualiser implements Screen {
         }
     }
     
-    public static void init() {
-    
-        settings = new Array<>();
-        settings.add(new SettingsEntry("Number of points", 10, 450, 70, Type.INT));
-        settings.add(new SettingsEntry("Time step", 0.0001f, 0.5f, 0.01f, Type.FLOAT));
-        settings.add(new SettingsEntry("Render", 0, 1, 0, Type.BOOLEAN));
+    public static CompositeSettings init() {
         
-        paletteNames = new Array<>();
-        for (int i = 0; i < AttractorScreen.Palette.values().length; i++) {
-            paletteNames.add(AttractorScreen.Palette.values()[i].name().toLowerCase(Locale.ROOT).replace("_", " "));
-        }
+        CompositeSettings compositeSettings = new CompositeSettings(enumToArray(Palette.class), enumToArray(Mode.class));
         
-        typeNames = new Array<>();
-        for (int i = 0; i < AttractorScreen.Mode.values().length; i++) {
-            typeNames.add(AttractorScreen.Mode.values()[i].name().toLowerCase(Locale.ROOT).replace("_", " "));
-        }
+        compositeSettings.addSetting("Number of points", 10, 450, 70, Type.INT);
+        compositeSettings.addSetting("Time step", 0.0001f, 0.5f, 0.01f, Type.FLOAT);
+        compositeSettings.addSetting("Render", 0, 1, 0, Type.BOOLEAN);
         
+        return compositeSettings;
     }
     
     public static String getName() {
         return "Attractor";
     }
     
-    public static void setSettings(int mode, int palette) {
+    public static void setSettings(Array<SettingsEntry> settings, int mode, int palette) {
         AttractorScreen.mode = AttractorScreen.Mode.values()[mode];
         AttractorScreen.palette = AttractorScreen.Palette.values()[palette];
         
-        pointCount = (int) getSettingByName("Number of points");
-        timestep = getSettingByName("Time step");
-        render = getSettingByName("Render") > 0;
+        pointCount = (int) getSettingByName(settings, "Number of points");
+        timestep = getSettingByName(settings, "Time step");
+        render = getSettingByName(settings, "Render") > 0;
     }
     
     @Override
@@ -228,6 +219,7 @@ public class AttractorScreen extends BaseVisualiser implements Screen {
     }
 }
 
+@SuppressWarnings({"SuspiciousNameCombination"})
 class Point {
     
     private final ModelBuilder modelBuilder;
