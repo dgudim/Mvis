@@ -4,6 +4,8 @@ import static com.badlogic.gdx.graphics.GL20.GL_COLOR_BUFFER_BIT;
 import static com.deo.mvis.Launcher.HEIGHT;
 import static com.deo.mvis.Launcher.WIDTH;
 
+import static java.lang.Math.min;
+
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
@@ -34,9 +36,10 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
     private final Vector3[][] colorMask;
     private final int[][] colorMaskProgress;
     
-    private final FloatFFT_1D fft;
-    private final float[] displaySamples;
+    private FloatFFT_1D fft;
+    private float[] displaySamples;
     private final int fftSize = 512;
+    private final float fftStep = fieldWidth / (float) fftSize / 2f;
     
     private static GameOfLifeScreen.Mode mode;
     private static GameOfLifeScreen.Palette palette;
@@ -46,7 +49,7 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
     }
     
     private enum Mode {
-        BASIC
+        BOTTOM, FFT
     }
     
     public GameOfLifeScreen(Game game) {
@@ -57,7 +60,7 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         
         colorMask = new Vector3[fieldWidth][fieldHeight];
         colorMaskProgress = new int[fieldWidth][fieldHeight];
-    
+        
         threads = new Thread[NUM_THREADS];
         
         for (int x = 0; x < fieldWidth; x++) {
@@ -65,13 +68,14 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
                 colorMask[x][y] = new Vector3(0, 0, 0);
             }
         }
-        for (int x = 0; x < fieldWidth; x++) {
-            cells[x][0] = MathUtils.randomBoolean();
+        if (mode == Mode.BOTTOM) {
+            for (int x = 0; x < fieldWidth; x++) {
+                cells[x][0] = MathUtils.randomBoolean();
+            }
+        } else {
+            fft = new FloatFFT_1D(fftSize);
+            displaySamples = new float[fftSize];
         }
-    
-        fft = new FloatFFT_1D(fftSize);
-        displaySamples = new float[fftSize];
-        
     }
     
     public void updateMainField(int threadIndex) {
@@ -95,7 +99,7 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
     }
     
     public void updateBottomField() {
-        int limit = (int) ((render ? samplesSmoothed[frame] : samplesSmoothed[(int) (music.getPosition() * sampleRate)]) * 15 + 1);
+        int limit = (int) ((render ? samplesNormalizedSmoothed[frame] : samplesNormalizedSmoothed[(int) (music.getPosition() * sampleRate)]) * 15 + 1);
         
         for (int x = 0; x < fieldWidth; x++) {
             for (int y = oneDRuleHeight - 1; y >= 0; y--) {
@@ -115,38 +119,31 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         }
     }
     
-    public void update() {
-    
+    public void updateFFT() {
         float[] samples = musicWave.getSamplesForFFT((int) (music.getPosition() * sampleRate), fftSize, samplesForFFT);
         fft.realForward(samples);
-    
-        for (int t = 0; t < 2; t++) {
-            for (int i = 2; i < samples.length - 2; i++) {
-                float neighbours = Math.abs(samples[i - 2]) + Math.abs(samples[i + 2]) + Math.abs(samples[i - 1]) + Math.abs(samples[i + 1]);
-                samples[i] = (neighbours + Math.abs(samples[i])) / 5f;
-            }
-        }
-    
-        samples[samples.length - 1] = Math.abs(samples[samples.length - 1]);
-        samples[samples.length - 2] = Math.abs(samples[samples.length - 2]);
-    
-        float step = fieldWidth / (float) fftSize / 2f;
         
-        for (int i = 0; i < fftSize - 5; i++) {
-            int index = i + 5;
-            displaySamples[i] += samples[index] / 16 * (i * 0.01 + 1);
-        
-            for(int y = 0; y < displaySamples[i] / 1000 + 2; y++){
-                cells[(int) (fieldWidth / 2 - i * step)][fieldHeight / 2 + y] = true;
-                cells[(int) (fieldWidth / 2 + i * step)][fieldHeight / 2 + y] = true;
-                cells[(int) (fieldWidth / 2 - i * step)][fieldHeight / 2 - y] = true;
-                cells[(int) (fieldWidth / 2 + i * step)][fieldHeight / 2 - y] = true;
+        musicWave.smoothSamples(samples, 2, 4, false, false); // TODO: 2022-04-17 make like in FFTScreen
+        musicWave.applyLogarithmicScaling(samples, 0.001f);
+        musicWave.normaliseSamples(false, false, samples);
+        musicWave.accumulate(samples, displaySamples, 1.7f, (samples_, i) -> {
+            for (int y = 0; y < min(samples_[i] * fieldHeight + 1, fieldHeight / 2f); y++) {
+                cells[(int) (fieldWidth / 2 - i * fftStep)][fieldHeight / 2 + y] = true;
+                cells[(int) (fieldWidth / 2 + i * fftStep)][fieldHeight / 2 + y] = true;
+                cells[(int) (fieldWidth / 2 - i * fftStep)][fieldHeight / 2 - y] = true;
+                cells[(int) (fieldWidth / 2 + i * fftStep)][fieldHeight / 2 - y] = true;
             }
-            
-            displaySamples[i] /= 1.7f;
+        });
+    }
+    
+    public void update() {
+        
+        if (mode == Mode.BOTTOM) {
+            updateBottomField();
+        } else {
+            updateFFT();
         }
         
-        //updateBottomField();
         for (int i = 0; i < NUM_THREADS; i++) {
             int finalI = i;
             threads[i] = new Thread(() -> updateMainField(finalI));
@@ -162,7 +159,7 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         }
         
         if (render) {
-            frame += step;
+            frame += sampleStep;
             recorderFrame++;
             utils.makeAScreenShot(recorderFrame);
             utils.displayData(recorderFrame, frame, camera.combined);
@@ -196,7 +193,7 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         
         renderer.setProjectionMatrix(camera.combined);
         
-        utils.bloomBegin(true, render ? frame : (int) (music.getPosition() * sampleRate));
+        //utils.bloomBegin(true, render ? frame : (int) (music.getPosition() * sampleRate));
         
         renderer.begin(ShapeRenderer.ShapeType.Filled);
         {
@@ -221,7 +218,7 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         }
         renderer.end();
         
-        utils.bloomRender();
+        //utils.bloomRender();
     }
     
     private boolean isRevivable(int xPos, int yPos) {
@@ -410,7 +407,7 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         }
     }
     
-    public void waitUntilAllThreadsFinish(){
+    public void waitUntilAllThreadsFinish() {
         for (int i = 0; i < NUM_THREADS; i++) {
             try {
                 threads[i].join();

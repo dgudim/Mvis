@@ -52,7 +52,7 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
         colors = new Array<>();
         
         if (mode == Mode.BUBBLE || mode == Mode.SHAPES || mode == Mode.POLAR_BUBBLE || mode == Mode.SINUS) {
-            skipOver = step;
+            skipOver = sampleStep;
             maxSaturation = 1;
         } else {
             skipOver = 1;
@@ -68,7 +68,7 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
             if (!render) {
                 fadeout *= 5;
             } else {
-                fadeout /= step / (float) freqDisplaySamples * 16;
+                fadeout /= sampleStep / (float) freqDisplaySamples * 16;
             }
             utils.setBloomIntensity(1.3f);
         }
@@ -136,7 +136,7 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
             
         } else {
             
-            for (int i = 0; i < step; i += skipOver) {
+            for (int i = 0; i < sampleStep; i += skipOver) {
                 addCoords(frame);
                 frame += skipOver;
                 fadeOut();
@@ -264,8 +264,8 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
                     if (pos >= freqDisplaySamples) {
                         for (int i = 0; i < freqDisplaySamples; i += freqDisplaySampleMultiplier) {
                             freqDisplayRenderAngle += angleStep * freqDisplaySampleMultiplier;
-                            x = -MathUtils.cosDeg(freqDisplayRenderAngle) * samplesSmoothed[pos - freqDisplaySamples / 2 + i] * (HEIGHT / 2f - 10);
-                            y = -MathUtils.sinDeg(freqDisplayRenderAngle) * samplesSmoothed[pos - freqDisplaySamples / 2 + i] * (HEIGHT / 2f - 10);
+                            x = -MathUtils.cosDeg(freqDisplayRenderAngle) * samplesNormalizedSmoothed[pos - freqDisplaySamples / 2 + i] * (HEIGHT / 2f - 10);
+                            y = -MathUtils.sinDeg(freqDisplayRenderAngle) * samplesNormalizedSmoothed[pos - freqDisplaySamples / 2 + i] * (HEIGHT / 2f - 10);
                             dots.add(new Vector3().set(x, y, 0));
                             colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
                         }
@@ -275,8 +275,8 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
                     }
                 } else {
                     freqDisplayRenderAngle += angleStep;
-                    x = -MathUtils.cosDeg(freqDisplayRenderAngle) * samplesSmoothed[pos] * (HEIGHT / 2f - 10);
-                    y = -MathUtils.sinDeg(freqDisplayRenderAngle) * samplesSmoothed[pos] * (HEIGHT / 2f - 10);
+                    x = -MathUtils.cosDeg(freqDisplayRenderAngle) * samplesNormalizedSmoothed[pos] * (HEIGHT / 2f - 10);
+                    y = -MathUtils.sinDeg(freqDisplayRenderAngle) * samplesNormalizedSmoothed[pos] * (HEIGHT / 2f - 10);
                     dots.add(new Vector3().set(x, y, 0));
                     colors.add(new Vector3(palletColor.r, palletColor.g, palletColor.b));
                 }

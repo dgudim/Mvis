@@ -37,7 +37,7 @@ public class BaseVisualiser {
     public SpriteBatch batch;
     
     final int FPS = 30;
-    public final int step;
+    public final int sampleStep;
     public static boolean render = false;
     public int frame;
     public int recorderFrame;
@@ -49,7 +49,7 @@ public class BaseVisualiser {
     
     float[] samplesForFFT;
     float[] samplesRaw;
-    public float[] samplesSmoothed;
+    public float[] samplesNormalizedSmoothed;
     
     float[] rSamplesNormalised;
     float[] lSamplesNormalised;
@@ -119,7 +119,7 @@ public class BaseVisualiser {
                 sampleMode == LEFT_AND_RIGHT_SMOOTHED ||
                 sampleMode == ALL_SAMPLES_RAW);
         sampleRate = musicWave.sampleRate;
-        step = sampleRate / FPS;
+        sampleStep = sampleRate / FPS;
         music = musicWave.getMusic();
         
         if (sampleMode == FFT || sampleMode == FFT_AND_RAW) {
@@ -138,14 +138,14 @@ public class BaseVisualiser {
                 rSamplesNormalised = musicWave.normaliseSamples(false, false, musicWave.getRightChannelSamples());
                 break;
             case (LEFT_AND_RIGHT_SMOOTHED):
-                lSamplesNormalisedSmoothed = musicWave.smoothSamples(musicWave.getLeftChannelSamples(), 2, 32);
-                rSamplesNormalisedSmoothed = musicWave.smoothSamples(musicWave.getRightChannelSamples(), 2, 32);
+                lSamplesNormalisedSmoothed = musicWave.smoothSamples(musicWave.getLeftChannelSamples(), 2, 32, false, true);
+                rSamplesNormalisedSmoothed = musicWave.smoothSamples(musicWave.getRightChannelSamples(), 2, 32, false, true);
                 break;
             case (LEFT_AND_RIGHT_RAW_AND_SMOOTHED):
                 lSamplesNormalised = musicWave.normaliseSamples(false, false, musicWave.getLeftChannelSamples());
                 rSamplesNormalised = musicWave.normaliseSamples(false, false, musicWave.getRightChannelSamples());
-                lSamplesNormalisedSmoothed = musicWave.smoothSamples(musicWave.getLeftChannelSamples().clone(), 2, 32);
-                rSamplesNormalisedSmoothed = musicWave.smoothSamples(musicWave.getRightChannelSamples().clone(), 2, 32);
+                lSamplesNormalisedSmoothed = musicWave.smoothSamples(musicWave.getLeftChannelSamples().clone(), 2, 32, false, true);
+                rSamplesNormalisedSmoothed = musicWave.smoothSamples(musicWave.getRightChannelSamples().clone(), 2, 32, false, true);
                 break;
             case (ALL_SAMPLES_RAW):
                 samplesRaw = musicWave.normaliseSamples(false, false, musicWave.getSamples());
@@ -154,12 +154,12 @@ public class BaseVisualiser {
                 break;
         }
         if (!(sampleMode == DEFAULT)) {
-            samplesSmoothed = musicWave.smoothSamples(musicWave.getSamples().clone(), 2, 32);
+            samplesNormalizedSmoothed = musicWave.smoothSamples(musicWave.getSamples().clone(), 2, 32, false, true);
         } else {
-            samplesSmoothed = musicWave.smoothSamples(musicWave.getSamples(), 2, 32);
+            samplesNormalizedSmoothed = musicWave.smoothSamples(musicWave.getSamples(), 2, 32, false, true);
         }
         
-        utils = new Utils(FPS, step, musicWave, samplesSmoothed, 3, 1, 1, true, batch);
+        utils = new Utils(FPS, sampleStep, musicWave, samplesNormalizedSmoothed, 3, 1, 1, true, batch);
         
         if (!render) {
             music.setOnCompletionListener(new Music.OnCompletionListener() {
@@ -231,7 +231,7 @@ public class BaseVisualiser {
         batch.dispose();
         assetManager.dispose();
         samplesRaw = null;
-        samplesSmoothed = null;
+        samplesNormalizedSmoothed = null;
         lSamplesNormalised = null;
         rSamplesNormalised = null;
         lSamplesNormalisedSmoothed = null;

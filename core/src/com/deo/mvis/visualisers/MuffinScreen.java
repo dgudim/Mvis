@@ -27,8 +27,6 @@ import com.deo.mvis.utils.CompositeSettings;
 import com.deo.mvis.utils.SettingsEntry;
 import com.deo.mvis.utils.Type;
 
-import java.util.Locale;
-
 public class MuffinScreen extends BaseVisualiser implements Screen {
     
     private final PerspectiveCamera cam;
@@ -100,7 +98,7 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
         
         int pos;
         if (render) {
-            frame += step;
+            frame += sampleStep;
             recorderFrame++;
             pos = frame;
         } else {
@@ -128,7 +126,7 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
         drawExitButton();
         batch.end();
         
-        if (pos > step * 51 && !preloaded) {
+        if (pos > sampleStep * 51 && !preloaded) {
             preloaded = true;
         }
         
@@ -137,14 +135,14 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
     private void transform3d(final int pos) {
         switch (mode) {
             case CUBE:
-                degrees += samplesSmoothed[pos] * 2;
+                degrees += samplesNormalizedSmoothed[pos] * 2;
                 
-                instances.get(0).transform.setToScaling(samplesSmoothed[pos] * 0.8f + 1, samplesSmoothed[pos] * 0.8f + 1, samplesSmoothed[pos] * 0.8f + 1);
+                instances.get(0).transform.setToScaling(samplesNormalizedSmoothed[pos] * 0.8f + 1, samplesNormalizedSmoothed[pos] * 0.8f + 1, samplesNormalizedSmoothed[pos] * 0.8f + 1);
                 instances.get(0).transform.rotate(new Vector3(1, 0, 0), degrees);
                 instances.get(0).transform.rotate(new Vector3(0, 1, 0), degrees);
                 instances.get(0).transform.rotate(new Vector3(0, 0, 1), degrees);
                 
-                fadeColor = new Color().fromHsv(160 - samplesSmoothed[pos] * 120, 1f, 1).add(0, 0, 0, 1);
+                fadeColor = new Color().fromHsv(160 - samplesNormalizedSmoothed[pos] * 120, 1f, 1).add(0, 0, 0, 1);
                 
                 environment.remove(prevLight);
                 prevLight = new DirectionalLight().set(fadeColor.r, fadeColor.g, fadeColor.b, -1f, -0.8f, -0.2f);
@@ -276,12 +274,12 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
         
         float fadeFactor = radius / 51f + 1;
         
-        instances.get(pos).transform.translate(0, samplesSmoothed[Mpos - radius * step] * 4 / fadeFactor - modelYPoses.get(pos), 0);
+        instances.get(pos).transform.translate(0, samplesNormalizedSmoothed[Mpos - radius * sampleStep] * 4 / fadeFactor - modelYPoses.get(pos), 0);
         
-        fadeColor = new Color().fromHsv(-samplesSmoothed[Mpos - radius * step] * 180 / fadeFactor, 0.75f, 0.85f).add(0, 0, 0, 1);
+        fadeColor = new Color().fromHsv(-samplesNormalizedSmoothed[Mpos - radius * sampleStep] * 180 / fadeFactor, 0.75f, 0.85f).add(0, 0, 0, 1);
         instances.get(pos).materials.get(0).set(ColorAttribute.createDiffuse(fadeColor));
         
-        modelYPoses.set(pos, samplesSmoothed[Mpos - radius * step] * 4 / fadeFactor);
+        modelYPoses.set(pos, samplesNormalizedSmoothed[Mpos - radius * sampleStep] * 4 / fadeFactor);
     }
     
     private void rubensTransform(int pos) {
@@ -290,7 +288,7 @@ public class MuffinScreen extends BaseVisualiser implements Screen {
                 for (int y = 0; y < 101 * visualiserQuality / 100f; y++) {
                     int arrayPos = (int) Math.ceil(101 * visualiserQuality / 100f) * x + y;
                     
-                    float height = (rSamplesNormalised[pos - x * step / 512] + lSamplesNormalised[pos - y * step / 512]);
+                    float height = (rSamplesNormalised[pos - x * sampleStep / 512] + lSamplesNormalised[pos - y * sampleStep / 512]);
                     
                     float currentTranslation = modelYPoses.get(arrayPos);
                     float nextTranslation = (modelYPoses.get(arrayPos) + height) / 1.2f;

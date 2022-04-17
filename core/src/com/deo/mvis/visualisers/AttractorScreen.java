@@ -125,13 +125,13 @@ public class AttractorScreen extends BaseVisualiser implements Screen {
         int pos;
         if (render) {
             pos = frame;
-            frame += step;
+            frame += sampleStep;
             recorderFrame++;
         } else {
             pos = (int) (music.getPosition() * sampleRate);
         }
         
-        float volume = samplesSmoothed[pos];
+        float volume = samplesNormalizedSmoothed[pos];
         
         utils.bloomBegin(true, pos);
         modelBatch.begin(cam);

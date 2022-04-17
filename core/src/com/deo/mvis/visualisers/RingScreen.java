@@ -57,7 +57,7 @@ public class RingScreen extends BaseVisualiser implements Screen {
             pos = (int) (music.getPosition() * sampleRate);
         } else {
             pos = frame;
-            frame += step;
+            frame += sampleStep;
             recorderFrame++;
         }
         

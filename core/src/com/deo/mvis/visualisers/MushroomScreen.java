@@ -14,8 +14,6 @@ import com.deo.mvis.utils.CompositeSettings;
 import com.deo.mvis.utils.SettingsEntry;
 import com.deo.mvis.utils.Type;
 
-import java.util.Locale;
-
 public class MushroomScreen extends BaseVisualiser implements Screen {
     
     private final Array<Array<Vector2>> branches;
@@ -66,14 +64,14 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
         int iterations;
         int pos;
         if (!render) {
-            angle = samplesSmoothed[(int) (music.getPosition() * sampleRate)] * maxAngle + baseAngle;
+            angle = samplesNormalizedSmoothed[(int) (music.getPosition() * sampleRate)] * maxAngle + baseAngle;
             iterations = (int) (lSamplesNormalisedSmoothed[(int) (music.getPosition() * sampleRate)] * maxIterations) + baseIterations;
             pos = (int) (music.getPosition() * sampleRate);
         } else {
-            angle = samplesSmoothed[frame] * maxAngle + baseAngle;
+            angle = samplesNormalizedSmoothed[frame] * maxAngle + baseAngle;
             iterations = (int) (lSamplesNormalisedSmoothed[frame] * maxIterations) + baseIterations;
             pos = frame;
-            frame += step;
+            frame += sampleStep;
             recorderFrame++;
         }
         

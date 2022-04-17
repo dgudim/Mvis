@@ -148,7 +148,7 @@ public class FourierScreen extends BaseVisualiser implements Screen {
         
         int pos = (int) (music.getPosition() * sampleRate);
         if (syncColorOffsetToTheMusic) {
-            colorOffset = baseColorOffset + samplesSmoothed[pos] * syncedColorAmplitude;
+            colorOffset = baseColorOffset + samplesNormalizedSmoothed[pos] * syncedColorAmplitude;
         }
         
         float[] samples = musicWave.getSamplesForFFT(pos, 525, samplesForFFT);
@@ -210,17 +210,17 @@ public class FourierScreen extends BaseVisualiser implements Screen {
             }
         }
         if (enableStarGateEffect) {
-            for (int i = 0; i < samplesSmoothed[pos] * 15; i++) {
+            for (int i = 0; i < samplesNormalizedSmoothed[pos] * 15; i++) {
                 starGateTriangles.add(new Vector3().set(0, 0, 10));
-                starGateTriangleSpeeds.add(new Vector3(getRandomInRange(-200, 200) / 50f * (samplesSmoothed[pos] + 1), getRandomInRange(-200, 200) / 50f * (samplesSmoothed[pos] + 1), getRandomInRange(-180, 180)));
+                starGateTriangleSpeeds.add(new Vector3(getRandomInRange(-200, 200) / 50f * (samplesNormalizedSmoothed[pos] + 1), getRandomInRange(-200, 200) / 50f * (samplesNormalizedSmoothed[pos] + 1), getRandomInRange(-180, 180)));
                 starGateTriangleColors.add(new Color().fromHsv(samplesRaw[pos] * 120 - 50 + colorOffset, 0.75f, 0.9f));
             }
         }
         if (enableTriangles) {
             for (int i = 0; i < triangleCount; i++) {
                 triangles.add(new Vector3().set(
-                        -MathUtils.sinDeg(offsetAngle * 7 + i * triangleStep) * (HEIGHT / 2f - 30 * (samplesSmoothed[pos] * orbitAmplitude + triangleSizeModifier)),
-                        -MathUtils.cosDeg(offsetAngle * 7 + i * triangleStep) * (HEIGHT / 2f - 30 * (samplesSmoothed[pos] * orbitAmplitude + triangleSizeModifier)),
+                        -MathUtils.sinDeg(offsetAngle * 7 + i * triangleStep) * (HEIGHT / 2f - 30 * (samplesNormalizedSmoothed[pos] * orbitAmplitude + triangleSizeModifier)),
+                        -MathUtils.cosDeg(offsetAngle * 7 + i * triangleStep) * (HEIGHT / 2f - 30 * (samplesNormalizedSmoothed[pos] * orbitAmplitude + triangleSizeModifier)),
                         30));
             }
         }
@@ -249,18 +249,18 @@ public class FourierScreen extends BaseVisualiser implements Screen {
         }
         
         if (changeBranchLength) {
-            radiuses[0] = defaultRadius * (1 + samplesSmoothed[pos] * 0.5f);
+            radiuses[0] = defaultRadius * (1 + samplesNormalizedSmoothed[pos] * 0.5f);
         }
         
         if (additionalRotation && music.isPlaying()) {
-            offsetAngle += delta * 10 * (samplesSmoothed[pos] + 0.5f);
+            offsetAngle += delta * 10 * (samplesNormalizedSmoothed[pos] + 0.5f);
         }
         
         if (enableFlyingBalls) {
             drawFlyingBalls(newSamples, delta, pos);
         }
         if (enableTriangles || enableFlyingBallsTrails) {
-            renderer.setColor(new Color().fromHsv(samplesSmoothed[pos] * 45 + colorOffset, 0.75f, 1));
+            renderer.setColor(new Color().fromHsv(samplesNormalizedSmoothed[pos] * 45 + colorOffset, 0.75f, 1));
             for (int i = 0; i < triangles.size; i++) {
                 renderer.circle(triangles.get(i).x, triangles.get(i).y, triangles.get(i).z, 3);
                 triangles.get(i).z -= delta * 100f;
@@ -298,11 +298,11 @@ public class FourierScreen extends BaseVisualiser implements Screen {
                 aAngle = 5 * (i - 525) / 300f;
             }
             
-            float xStart = -MathUtils.cosDeg(i * ffStep + offsetAngle * 1.3f) * (HEIGHT / 2f - 30 * (samplesSmoothed[pos] * orbitAmplitude + fftSizeModifier));
-            float yStart = -MathUtils.sinDeg(i * ffStep + offsetAngle * 1.3f) * (HEIGHT / 2f - 30 * (samplesSmoothed[pos] * orbitAmplitude + fftSizeModifier));
+            float xStart = -MathUtils.cosDeg(i * ffStep + offsetAngle * 1.3f) * (HEIGHT / 2f - 30 * (samplesNormalizedSmoothed[pos] * orbitAmplitude + fftSizeModifier));
+            float yStart = -MathUtils.sinDeg(i * ffStep + offsetAngle * 1.3f) * (HEIGHT / 2f - 30 * (samplesNormalizedSmoothed[pos] * orbitAmplitude + fftSizeModifier));
             
-            float xEnd = -MathUtils.cosDeg(i * ffStep + offsetAngle * 1.3f + aAngle) * (HEIGHT / 2f - 30 * (samplesSmoothed[pos] * orbitAmplitude + fftSizeModifier) + displaySamples[i] / 10000f);
-            float yEnd = -MathUtils.sinDeg(i * ffStep + offsetAngle * 1.3f + aAngle) * (HEIGHT / 2f - 30 * (samplesSmoothed[pos] * orbitAmplitude + fftSizeModifier) + displaySamples[i] / 10000f);
+            float xEnd = -MathUtils.cosDeg(i * ffStep + offsetAngle * 1.3f + aAngle) * (HEIGHT / 2f - 30 * (samplesNormalizedSmoothed[pos] * orbitAmplitude + fftSizeModifier) + displaySamples[i] / 10000f);
+            float yEnd = -MathUtils.sinDeg(i * ffStep + offsetAngle * 1.3f + aAngle) * (HEIGHT / 2f - 30 * (samplesNormalizedSmoothed[pos] * orbitAmplitude + fftSizeModifier) + displaySamples[i] / 10000f);
             
             displaySamples[i] += samplesToDisplay[i];
             Color color = new Color().fromHsv(MathUtils.clamp(displaySamples[i] / 10100 + colorOffset, 0, 190), 0.9f, 1);
@@ -334,7 +334,7 @@ public class FourierScreen extends BaseVisualiser implements Screen {
         }
         
         points.add(new Vector2().set(currentX, currentY));
-        colors.add(new Color().fromHsv(samplesSmoothed[pos] * 45 + colorOffset, 0.75f, 1));
+        colors.add(new Color().fromHsv(samplesNormalizedSmoothed[pos] * 45 + colorOffset, 0.75f, 1));
         
         prevX = 0;
         prevY = 0;
@@ -351,7 +351,7 @@ public class FourierScreen extends BaseVisualiser implements Screen {
         }
         
         points2.add(new Vector2().set(currentX, currentY));
-        colors2.add(new Color().fromHsv(-samplesSmoothed[pos] * 45 + colorOffset, 0.75f, 1));
+        colors2.add(new Color().fromHsv(-samplesNormalizedSmoothed[pos] * 45 + colorOffset, 0.75f, 1));
         
         float fadeout = delta / 2f;
         
@@ -397,7 +397,7 @@ public class FourierScreen extends BaseVisualiser implements Screen {
             float radius = starGateTriangles.get(i).x * starGateTriangles.get(i).x + starGateTriangles.get(i).y * starGateTriangles.get(i).y;
             radius = (float) Math.sqrt(radius);
             
-            if (radius > HEIGHT / 2f - 30 * (samplesSmoothed[pos] * orbitAmplitude + starGateSizeModifier) || starGateTriangles.get(i).z <= 0) {
+            if (radius > HEIGHT / 2f - 30 * (samplesNormalizedSmoothed[pos] * orbitAmplitude + starGateSizeModifier) || starGateTriangles.get(i).z <= 0) {
                 starGateTriangles.removeIndex(i);
                 starGateTriangleSpeeds.removeIndex(i);
                 starGateTriangleColors.removeIndex(i);

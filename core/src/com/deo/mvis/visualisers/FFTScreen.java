@@ -141,7 +141,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
         
         int pos;
         if (render) {
-            frame += step;
+            frame += sampleStep;
             recorderFrame++;
             pos = frame;
         } else {
@@ -218,7 +218,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                 if (waterfall) {
                     renderer.begin();
                     for (int i2 = 0; i2 < glassShards.size; i2++) {
-                        glassShards.get(i2).draw(renderer, 1 / (samplesSmoothed[pos] + 0.5f));
+                        glassShards.get(i2).draw(renderer, 1 / (samplesNormalizedSmoothed[pos] + 0.5f));
                         glassShards.get(i2).y -= flyingSpeed * 10 * delta;
                         if (glassShards.get(i2).y < -HEIGHT / 2f - glassShards.get(i2).radius) {
                             glassShards.removeIndex(i2);
@@ -240,8 +240,8 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                             if (invertColors) {
                                 colorHSV = displaySamples[i] / 2048 * waterfallColorAmplitude + colorShift + waterfallColorShift;
                             }
-                            glassShards.add(new GradientShape().buildGradientPolygon(displaySamples[i] / (2024 - maxRadius * 100) + baseRadius, gradientSteps, 90, -i * step + step / 2f, 0, faces, 0, new Color().fromHsv(colorHSV, 0.75f, 1), Color.CLEAR, 1 / (samplesSmoothed[pos] + 0.5f)));
-                            glassShards.add(new GradientShape().buildGradientPolygon(displaySamples[i] / (2024 - maxRadius * 100) + baseRadius, gradientSteps, 90, i * step + step / 2f, 0, faces, 0, new Color().fromHsv(colorHSV, 0.75f, 1), Color.CLEAR, 1 / (samplesSmoothed[pos] + 0.5f)));
+                            glassShards.add(new GradientShape().buildGradientPolygon(displaySamples[i] / (2024 - maxRadius * 100) + baseRadius, gradientSteps, 90, -i * step + step / 2f, 0, faces, 0, new Color().fromHsv(colorHSV, 0.75f, 1), Color.CLEAR, 1 / (samplesNormalizedSmoothed[pos] + 0.5f)));
+                            glassShards.add(new GradientShape().buildGradientPolygon(displaySamples[i] / (2024 - maxRadius * 100) + baseRadius, gradientSteps, 90, i * step + step / 2f, 0, faces, 0, new Color().fromHsv(colorHSV, 0.75f, 1), Color.CLEAR, 1 / (samplesNormalizedSmoothed[pos] + 0.5f)));
                             shardTimers[i] = minSpawnDelay * delta;
                         }
                         
@@ -274,8 +274,8 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                     renderer.setColor(littleTrianglesColors.get(i));
                     renderer.triangle(triangle[0], triangle[1], triangle[2], triangle[3], triangle[4], triangle[5]);
                     
-                    float xSpeed = littleTrianglesSpeeds.get(i).x * samplesSmoothed[pos] * triangleFlyingSpeed * delta * 30;
-                    float ySpeed = littleTrianglesSpeeds.get(i).y * samplesSmoothed[pos] * triangleFlyingSpeed * delta * 30;
+                    float xSpeed = littleTrianglesSpeeds.get(i).x * samplesNormalizedSmoothed[pos] * triangleFlyingSpeed * delta * 30;
+                    float ySpeed = littleTrianglesSpeeds.get(i).y * samplesNormalizedSmoothed[pos] * triangleFlyingSpeed * delta * 30;
                     
                     littleTriangles.set(i, littleTriangles.get(i).add(xSpeed, ySpeed, 37 * delta * (triangleFlyingSpeed / 49)));
                     
