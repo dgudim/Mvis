@@ -26,17 +26,14 @@ import com.deo.mvis.utils.SettingsEntry;
 import com.deo.mvis.utils.SyncedWord;
 import com.deo.mvis.utils.Type;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Locale;
-
 public class FFTScreen extends BaseVisualiser implements Screen {
     
     private final FloatFFT_1D fft;
     private final float[] displaySamples;
-    private final float[] shardTimers;
+    private final int fftSize = 512;
     
     private final Array<GradientShape> glassShards;
+    private final float[] shardTimers;
     
     private final Array<Vector3> littleTriangles;
     private final Array<Vector2> littleTrianglesSpeeds;
@@ -67,8 +64,6 @@ public class FFTScreen extends BaseVisualiser implements Screen {
     private boolean lyricsAvailable = false;
     private final Array<SyncedWord> songWords;
     
-    private final int fftSize = 512;
-    
     private static Mode mode;
     private static Palette palette;
     
@@ -87,8 +82,6 @@ public class FFTScreen extends BaseVisualiser implements Screen {
         
         displaySamples = new float[fftSize];
         shardTimers = new float[fftSize];
-        Arrays.fill(displaySamples, 0);
-        Arrays.fill(shardTimers, 0);
         
         littleTriangles = new Array<>();
         littleTrianglesSpeeds = new Array<>();

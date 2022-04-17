@@ -12,6 +12,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
+import com.deo.mvis.jtransforms.fft.FloatFFT_1D;
 import com.deo.mvis.utils.CompositeSettings;
 import com.deo.mvis.utils.SettingsEntry;
 import com.deo.mvis.utils.Type;
@@ -33,6 +34,10 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
     private final Vector3[][] colorMask;
     private final int[][] colorMaskProgress;
     
+    private final FloatFFT_1D fft;
+    private final float[] displaySamples;
+    private final int fftSize = 512;
+    
     private static GameOfLifeScreen.Mode mode;
     private static GameOfLifeScreen.Palette palette;
     
@@ -45,7 +50,7 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
     }
     
     public GameOfLifeScreen(Game game) {
-        super(game, DEFAULT);
+        super(game, FFT_AND_RAW);
         
         cells = new boolean[fieldWidth][fieldHeight];
         next_cells = new boolean[fieldWidth][fieldHeight];
@@ -63,6 +68,10 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         for (int x = 0; x < fieldWidth; x++) {
             cells[x][0] = MathUtils.randomBoolean();
         }
+    
+        fft = new FloatFFT_1D(fftSize);
+        displaySamples = new float[fftSize];
+        
     }
     
     public void updateMainField(int threadIndex) {
@@ -107,8 +116,37 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
     }
     
     public void update() {
+    
+        float[] samples = musicWave.getSamplesForFFT((int) (music.getPosition() * sampleRate), fftSize, samplesForFFT);
+        fft.realForward(samples);
+    
+        for (int t = 0; t < 2; t++) {
+            for (int i = 2; i < samples.length - 2; i++) {
+                float neighbours = Math.abs(samples[i - 2]) + Math.abs(samples[i + 2]) + Math.abs(samples[i - 1]) + Math.abs(samples[i + 1]);
+                samples[i] = (neighbours + Math.abs(samples[i])) / 5f;
+            }
+        }
+    
+        samples[samples.length - 1] = Math.abs(samples[samples.length - 1]);
+        samples[samples.length - 2] = Math.abs(samples[samples.length - 2]);
+    
+        float step = fieldWidth / (float) fftSize / 2f;
         
-        updateBottomField();
+        for (int i = 0; i < fftSize - 5; i++) {
+            int index = i + 5;
+            displaySamples[i] += samples[index] / 16 * (i * 0.01 + 1);
+        
+            for(int y = 0; y < displaySamples[i] / 1000 + 2; y++){
+                cells[(int) (fieldWidth / 2 - i * step)][fieldHeight / 2 + y] = true;
+                cells[(int) (fieldWidth / 2 + i * step)][fieldHeight / 2 + y] = true;
+                cells[(int) (fieldWidth / 2 - i * step)][fieldHeight / 2 - y] = true;
+                cells[(int) (fieldWidth / 2 + i * step)][fieldHeight / 2 - y] = true;
+            }
+            
+            displaySamples[i] /= 1.7f;
+        }
+        
+        //updateBottomField();
         for (int i = 0; i < NUM_THREADS; i++) {
             int finalI = i;
             threads[i] = new Thread(() -> updateMainField(finalI));
