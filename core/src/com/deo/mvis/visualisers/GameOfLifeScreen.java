@@ -6,32 +6,32 @@ import static com.deo.mvis.Launcher.WIDTH;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.deo.mvis.utils.CompositeSettings;
 import com.deo.mvis.utils.SettingsEntry;
 import com.deo.mvis.utils.Type;
 
-import java.util.Locale;
-
 public class GameOfLifeScreen extends BaseVisualiser implements Screen {
     
-    private final int fieldWidth = 800;
-    private static final int fieldHeight = 450;
+    private final static float cellSize = 1;
+    private final int fieldWidth = (int) (WIDTH / cellSize);
+    private final static int fieldHeight = (int) (HEIGHT / cellSize);
+    
     private static int oneDRuleHeight = 100;
-    private static boolean oneDRuleEnabled = true;
+    
+    private final int NUM_THREADS = 4;
+    int chunkSize = fieldWidth / NUM_THREADS;
+    Thread[] threads;
     
     private final boolean[][] cells;
+    private final boolean[][] next_cells;
     private final Vector3[][] colorMask;
     private final int[][] colorMaskProgress;
-    
-    private final Vector2 dimensions;
     
     private static GameOfLifeScreen.Mode mode;
     private static GameOfLifeScreen.Palette palette;
@@ -44,62 +44,82 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         BASIC
     }
     
-    private int drawSquareSize = 10;
-    
     public GameOfLifeScreen(Game game) {
         super(game, DEFAULT);
         
         cells = new boolean[fieldWidth][fieldHeight];
+        next_cells = new boolean[fieldWidth][fieldHeight];
+        
         colorMask = new Vector3[fieldWidth][fieldHeight];
         colorMaskProgress = new int[fieldWidth][fieldHeight];
+    
+        threads = new Thread[NUM_THREADS];
         
         for (int x = 0; x < fieldWidth; x++) {
             for (int y = 0; y < fieldHeight; y++) {
                 colorMask[x][y] = new Vector3(0, 0, 0);
             }
         }
-        if (oneDRuleEnabled) {
-            for (int x = 0; x < fieldWidth; x++) {
-                cells[x][0] = MathUtils.randomBoolean();
-            }
+        for (int x = 0; x < fieldWidth; x++) {
+            cells[x][0] = MathUtils.randomBoolean();
         }
-        dimensions = new Vector2(2, 2);
-        
     }
     
-    public void update() {
-        for (int x = 0; x < fieldWidth; x++) {
+    public void updateMainField(int threadIndex) {
+        for (int x = threadIndex * chunkSize; x < (threadIndex + 1) * chunkSize; x++) {
             for (int y = oneDRuleHeight; y < fieldHeight; y++) {
                 if (cells[x][y]) {
                     if (isCrowded(x, y) || isAlone(x, y)) {
-                        die(x, y);
+                        kill(x, y);
+                    } else {
+                        next_cells[x][y] = cells[x][y];
                     }
                 } else {
-                    if (isAlive(x, y)) {
-                        alive(x, y);
+                    if (isRevivable(x, y)) {
+                        revive(x, y);
+                    } else {
+                        next_cells[x][y] = cells[x][y];
                     }
                 }
+            }
+        }
+    }
+    
+    public void updateBottomField() {
+        int limit = (int) ((render ? samplesSmoothed[frame] : samplesSmoothed[(int) (music.getPosition() * sampleRate)]) * 15 + 1);
+        
+        for (int x = 0; x < fieldWidth; x++) {
+            for (int y = oneDRuleHeight - 1; y >= 0; y--) {
+                cells[x][y + limit] = cells[x][y];
+                cells[x][y] = false;
             }
         }
         
-        float limit;
-        if (!render) {
-            limit = (samplesSmoothed[(int) (music.getPosition() * sampleRate)]) * 5;
-        } else {
-            limit = (samplesSmoothed[frame]) * 5;
-        }
-        if (!oneDRuleEnabled) {
-            limit = -1;
-        }
-        for (int i = 0; i < limit; i++) {
+        for (int y = limit - 1; y >= 0; y--) {
             for (int x = 0; x < fieldWidth; x++) {
-                for (int y = oneDRuleHeight; y >= 0; y--) {
-                    cells[x][y + 1] = cells[x][y];
-                    cells[x][y] = false;
-                }
+                cells[x][y] = alive1D(x, y);
             }
-            for (int x = 0; x < fieldWidth; x++) {
-                cells[x][0] = alive1D(x);
+        }
+        
+        for (int x = 0; x < fieldWidth; x++) {
+            System.arraycopy(cells[x], 0, next_cells[x], 0, oneDRuleHeight + limit);
+        }
+    }
+    
+    public void update() {
+        
+        updateBottomField();
+        for (int i = 0; i < NUM_THREADS; i++) {
+            int finalI = i;
+            threads[i] = new Thread(() -> updateMainField(finalI));
+            threads[i].start();
+        }
+        waitUntilAllThreadsFinish();
+        
+        for (int x = 0; x < fieldWidth; x++) {
+            for (int y = 0; y < fieldHeight; y++) {
+                cells[x][y] = next_cells[x][y];
+                next_cells[x][y] = false;
             }
         }
         
@@ -121,22 +141,12 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         super.show();
     }
     
-    private void alive(final int xPos, final int yPos) {
-        Gdx.app.postRunnable(new Runnable() {
-            @Override
-            public void run() {
-                cells[xPos][yPos] = true;
-            }
-        });
+    private void revive(final int xPos, final int yPos) {
+        next_cells[xPos][yPos] = true;
     }
     
-    private void die(final int xPos, final int yPos) {
-        Gdx.app.postRunnable(new Runnable() {
-            @Override
-            public void run() {
-                cells[xPos][yPos] = false;
-            }
-        });
+    private void kill(final int xPos, final int yPos) {
+        next_cells[xPos][yPos] = false;
     }
     
     @Override
@@ -146,16 +156,9 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         
         Gdx.gl.glClear(GL_COLOR_BUFFER_BIT);
         
-        int pos;
-        if (render) {
-            pos = frame;
-        } else {
-            pos = (int) (music.getPosition() * sampleRate);
-        }
-        
         renderer.setProjectionMatrix(camera.combined);
         
-        utils.bloomBegin(true, pos);
+        utils.bloomBegin(true, render ? frame : (int) (music.getPosition() * sampleRate));
         
         renderer.begin(ShapeRenderer.ShapeType.Filled);
         {
@@ -163,13 +166,13 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
                 for (int y = 0; y < fieldHeight; y++) {
                     if (colorMask[x][y].x + colorMask[x][y].y + colorMask[x][y].z > 0) {
                         renderer.setColor(colorMask[x][y].x, colorMask[x][y].y, colorMask[x][y].z, 1);
-                        renderer.rect(x * dimensions.x - WIDTH / 2f, y * dimensions.y - HEIGHT / 2f, dimensions.x, dimensions.y);
+                        renderer.rect(x * cellSize - WIDTH / 2f, y * cellSize - HEIGHT / 2f, cellSize, cellSize);
                         renderer.setColor(Color.WHITE);
                         colorMask[x][y] = shiftColor(colorMask[x][y], colorMaskProgress[x][y]);
                         colorMaskProgress[x][y]++;
                     }
                     if (cells[x][y]) {
-                        renderer.rect(x * dimensions.x - WIDTH / 2f, y * dimensions.y - HEIGHT / 2f, dimensions.x, dimensions.y);
+                        renderer.rect(x * cellSize - WIDTH / 2f, y * cellSize - HEIGHT / 2f, cellSize, cellSize);
                         colorMask[x][y].x = 0;
                         colorMask[x][y].y = 1;
                         colorMask[x][y].z = 1;
@@ -181,74 +184,9 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         renderer.end();
         
         utils.bloomRender();
-        
-        if (Gdx.input.isKeyPressed(Input.Keys.Q)) {
-            for (int i = 0; i < drawSquareSize; i++) {
-                for (int i2 = 0; i2 < drawSquareSize; i2++) {
-                    try {
-                        Vector2 tCords = new Vector2(Gdx.input.getX(), Gdx.input.getY());
-                        Vector2 newCords = viewport.unproject(tCords);
-                        cells[(int) (newCords.x + fieldWidth / 2f - Math.floor(drawSquareSize / 2f) + i2)][(int) (newCords.y + fieldHeight / 2f - Math.floor(drawSquareSize / 2f) + i)] = true;
-                    } catch (Exception e) {
-                        System.out.println(e.getMessage());
-                    }
-                }
-            }
-        }
-        
-        if (Gdx.input.isKeyPressed(Input.Keys.A)) {
-            oneDRuleHeight--;
-            oneDRuleHeight = MathUtils.clamp(oneDRuleHeight, 0, fieldHeight - 1);
-        }
-        
-        if (Gdx.input.isKeyPressed(Input.Keys.D)) {
-            oneDRuleHeight++;
-            oneDRuleHeight = MathUtils.clamp(oneDRuleHeight, 0, fieldHeight - 1);
-        }
-        
-        if (Gdx.input.isKeyPressed(Input.Keys.S)) {
-            drawSquareSize = MathUtils.clamp(drawSquareSize - 1, 1, 1000);
-        }
-        
-        if (Gdx.input.isKeyPressed(Input.Keys.W)) {
-            drawSquareSize++;
-        }
-        
-        if (Gdx.input.isKeyPressed(Input.Keys.P)) {
-            utils.setBloomIntensity(utils.bloom.getBloomIntensity() + 0.01f);
-        }
-        
-        if (Gdx.input.isKeyPressed(Input.Keys.O)) {
-            utils.setBloomIntensity(utils.bloom.getBloomIntensity() - 0.01f);
-        }
-        
-        if (Gdx.input.isKeyPressed(Input.Keys.L)) {
-            utils.setBloomIntensity(utils.bloom.getBloomSaturation() + 0.01f);
-        }
-        
-        if (Gdx.input.isKeyPressed(Input.Keys.K)) {
-            utils.setBloomIntensity(utils.bloom.getBloomSaturation() - 0.01f);
-        }
-        
-        if (Gdx.input.isKeyPressed(Input.Keys.I)) {
-            utils.setBloomIntensity(utils.bloom.getBlurAmount() + 0.01f);
-        }
-        
-        if (Gdx.input.isKeyPressed(Input.Keys.U)) {
-            utils.setBloomIntensity(utils.bloom.getBlurAmount() - 0.01f);
-        }
-        
-        if (Gdx.input.isKeyJustPressed(Input.Keys.J)) {
-            utils.setBloomIntensity(utils.bloom.getBlurPasses() + 1);
-        }
-        
-        if (Gdx.input.isKeyJustPressed(Input.Keys.K)) {
-            utils.setBloomIntensity(utils.bloom.getBlurPasses() - 1);
-        }
-        
     }
     
-    private boolean isAlive(int xPos, int yPos) {
+    private boolean isRevivable(int xPos, int yPos) {
         return getNeighbours(xPos, yPos) == 3;
     }
     
@@ -278,12 +216,12 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         return num;
     }
     
-    private Vector3 getNeighbours1D(int xPos) {
-        return new Vector3().set(new float[]{getNeighbours(xPos, 0, 0, 1), getNeighbours(xPos, 0, 1, 1), getNeighbours(xPos, 0, -1, 1)});
+    private Vector3 getNeighbours1D(int xPos, int yPos) {
+        return new Vector3().set(new float[]{getNeighbours(xPos, yPos, 0, 1), getNeighbours(xPos, yPos, 1, 1), getNeighbours(xPos, yPos, -1, 1)});
     }
     
-    private boolean alive1D(int xPos) {
-        Vector3 neighbours = getNeighbours1D(xPos);
+    private boolean alive1D(int xPos, int yPos) {
+        Vector3 neighbours = getNeighbours1D(xPos, yPos);
         if (neighbours.x == 0 && neighbours.y == 0 && neighbours.z == 0) {
             return true;
         }
@@ -318,6 +256,7 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
     }
     
     private Vector3 shiftColor(Vector3 prevColor, int progress) {
+        Color tempColor = new Color();
         switch (palette) {
             case LONG_FADEOUT_CYAN:
                 if (prevColor.x > 0.8f && prevColor.y > 0.8f && prevColor.z > 0.8f) {
@@ -357,12 +296,11 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
                 }
                 return prevColor;
             case RAINBOW_WATER:
-                Color newColor = new Color();
-                newColor = newColor.fromHsv(progress * 2, 1, 1).add(0, 0, 0, 1);
+                tempColor = tempColor.fromHsv(progress * 2, 1, 1).add(0, 0, 0, 1);
                 if (progress < 180) {
-                    prevColor.x = newColor.r;
-                    prevColor.y = newColor.g;
-                    prevColor.z = newColor.b;
+                    prevColor.x = tempColor.r;
+                    prevColor.y = tempColor.g;
+                    prevColor.z = tempColor.b;
                     
                     if (prevColor.x > prevColor.y && prevColor.x > prevColor.z) {
                         prevColor.x /= 2f;
@@ -379,12 +317,11 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
                 }
                 return prevColor;
             case PASTEL_RAINBOW:
-                Color newColor2 = new Color();
-                newColor2 = newColor2.fromHsv(progress * 2, 0.5f, 1).add(0, 0, 0, 1);
+                tempColor = tempColor.fromHsv(progress * 2, 0.5f, 1).add(0, 0, 0, 1);
                 if (progress < 180) {
-                    prevColor.x = newColor2.r;
-                    prevColor.y = newColor2.g;
-                    prevColor.z = newColor2.b;
+                    prevColor.x = tempColor.r;
+                    prevColor.y = tempColor.g;
+                    prevColor.z = tempColor.b;
                     
                 } else {
                     prevColor.x -= 0.005;
@@ -393,12 +330,11 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
                 }
                 return prevColor;
             case LONG_FADEOUT_PASTEL_RAINBOW:
-                Color newColor3 = new Color();
-                newColor3 = newColor3.fromHsv(progress * 2, 0.5f, 1).add(0, 0, 0, 1);
+                tempColor = tempColor.fromHsv(progress * 2, 0.5f, 1).add(0, 0, 0, 1);
                 if (progress < 90) {
-                    prevColor.x = newColor3.r;
-                    prevColor.y = newColor3.g;
-                    prevColor.z = newColor3.b;
+                    prevColor.x = tempColor.r;
+                    prevColor.y = tempColor.g;
+                    prevColor.z = tempColor.b;
                     
                 } else {
                     prevColor.x -= 0.0005;
@@ -407,12 +343,11 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
                 }
                 return prevColor;
             case WINTER:
-                Color newColor4 = new Color();
-                newColor4 = newColor4.fromHsv(progress * 2, progress / 180f, 1 - progress / 180f).add(0, 0, 0, 1);
+                tempColor = tempColor.fromHsv(progress * 2, progress / 180f, 1 - progress / 180f).add(0, 0, 0, 1);
                 if (progress < 180) {
-                    prevColor.x = newColor4.r;
-                    prevColor.y = newColor4.g;
-                    prevColor.z = newColor4.b;
+                    prevColor.x = tempColor.r;
+                    prevColor.y = tempColor.g;
+                    prevColor.z = tempColor.b;
                     
                 } else {
                     prevColor.x -= 0.0005;
@@ -421,12 +356,11 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
                 }
                 return prevColor;
             case CYAN_PURPLE:
-                Color newColor6 = new Color();
-                newColor6 = newColor6.fromHsv(progress + 90, 0.5f, 0.5f).add(0, 0, 0, 1);
+                tempColor = tempColor.fromHsv(progress + 90, 0.5f, 0.5f).add(0, 0, 0, 1);
                 if (progress < 180) {
-                    prevColor.x = newColor6.r;
-                    prevColor.y = newColor6.g;
-                    prevColor.z = newColor6.b;
+                    prevColor.x = tempColor.r;
+                    prevColor.y = tempColor.g;
+                    prevColor.z = tempColor.b;
                 } else {
                     prevColor.x -= 0.001;
                     prevColor.z -= 0.001;
@@ -438,11 +372,20 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         }
     }
     
+    public void waitUntilAllThreadsFinish(){
+        for (int i = 0; i < NUM_THREADS; i++) {
+            try {
+                threads[i].join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    
     public static CompositeSettings init() {
         CompositeSettings compositeSettings = new CompositeSettings(enumToArray(Palette.class), enumToArray(Mode.class));
         
-        compositeSettings.addSetting("Bottom enabled", 0, 1, 0, Type.BOOLEAN);
-        compositeSettings.addSetting("Bottom rule height", 0, fieldHeight - 50, oneDRuleHeight, Type.INT);
+        compositeSettings.addSetting("Bottom rule height", 1, fieldHeight - 50, oneDRuleHeight, Type.INT);
         compositeSettings.addSetting("Render", 0, 1, 0, Type.BOOLEAN);
         
         return compositeSettings;
@@ -455,7 +398,6 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
     public static void setSettings(Array<SettingsEntry> settings, int mode, int palette) {
         GameOfLifeScreen.mode = GameOfLifeScreen.Mode.values()[mode];
         GameOfLifeScreen.palette = GameOfLifeScreen.Palette.values()[palette];
-        oneDRuleEnabled = getSettingByName(settings, "Bottom enabled") > 0;
         oneDRuleHeight = (int) getSettingByName(settings, "Bottom rule height");
         render = getSettingByName(settings, "Render") > 0;
     }
@@ -482,6 +424,10 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
     
     @Override
     public void dispose() {
+        waitUntilAllThreadsFinish();
+        for (int i = 0; i < NUM_THREADS; i++) {
+            threads[i].interrupt();
+        }
         super.dispose();
     }
 }

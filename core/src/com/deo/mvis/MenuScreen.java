@@ -93,7 +93,7 @@ public class MenuScreen implements Screen {
     private final BitmapFont font_small;
     
     private MusicWave musicWave;
-    private float[] displaySamples;
+    private float[] displaySamples, currentSamples, currentSamplesSmoothed;
     private final Music music;
     private FloatFFT_1D fft;
     
@@ -143,7 +143,7 @@ public class MenuScreen implements Screen {
             fft = new FloatFFT_1D(32);
             
             displaySamples = new float[32];
-            Arrays.fill(displaySamples, 0);
+            currentSamplesSmoothed = new float[36];
         } else {
             music = Gdx.audio.newMusic(destinationMusic);
         }
@@ -282,33 +282,40 @@ public class MenuScreen implements Screen {
         batch.setProjectionMatrix(camera.combined);
         
         renderer.begin(ShapeRenderer.ShapeType.Filled);
+        
+        if (menuVisualisation) {
+            currentSamples = musicWave.getSamplesForFFT(pos, 32, musicWave.getSamples());
+            fft.realForward(currentSamples);
     
-        float[] samples = musicWave.getSamplesForFFT(pos, 32, musicWave.getSamples());
-        fft.realForward(samples);
-    
-        float[] samples2 = new float[samples.length + 4];
-    
-        for (int t = 2; t < samples.length - 2; t++) {
-            samples2[t] = samples[t - 2];
-        }
-    
-        for (int t = 0; t < 2; t++) {
-            for (int i = 2; i < samples2.length - 2; i++) {
-                float neighbours = samples2[i - 2] + samples2[i + 2] + samples2[i - 1] + samples2[i + 1];
-                samples2[i] = (Math.abs(neighbours) + Math.abs(samples2[i])) / 5f * (1 + i / 100f);
+            Arrays.fill(currentSamplesSmoothed, 0);
+            
+            System.arraycopy(currentSamples, 0, currentSamplesSmoothed, 2, currentSamples.length - 4);
+            
+            for (int t = 0; t < 2; t++) {
+                for (int i = 2; i < currentSamplesSmoothed.length - 2; i++) {
+                    float neighbours = currentSamplesSmoothed[i - 2] + currentSamplesSmoothed[i + 2] + currentSamplesSmoothed[i - 1] + currentSamplesSmoothed[i + 1];
+                    currentSamplesSmoothed[i] = (Math.abs(neighbours) + Math.abs(currentSamplesSmoothed[i])) / 5f * (1 + i / 100f);
+                }
             }
-        }
-        
-        for (int i = 2; i < samples2.length - 2; i++) {
-            displaySamples[i - 2] /= 1.3f;
-            displaySamples[i - 2] += samples2[i] / 1.5f;
-        }
-        
-        float[] triangle;
-        for (int i = 2; i < samples2.length - 2; i++) {
-            triangle = makeATriangle(displaySamples[i - 2] / 1000 + 725 - triangleAnimation);
-            renderer.setColor(new Color().fromHsv(i * 5 + 100, 0.6f, 0.9f).add(0, 0, 0, 0.3f));
-            renderer.triangle(triangle[0], triangle[1], triangle[2], triangle[3], triangle[4], triangle[5]);
+            
+            for (int i = 2; i < currentSamplesSmoothed.length - 2; i++) {
+                displaySamples[i - 2] /= 1.3f;
+                displaySamples[i - 2] += currentSamplesSmoothed[i] / 1.5f;
+            }
+            
+            float[] triangle;
+            for (int i = 2; i < currentSamplesSmoothed.length - 2; i++) {
+                triangle = makeATriangle(displaySamples[i - 2] / 1000 + 725 - triangleAnimation);
+                renderer.setColor(new Color().fromHsv(i * 5 + 100, 0.6f, 0.9f).add(0, 0, 0, 0.3f));
+                renderer.triangle(triangle[0], triangle[1], triangle[2], triangle[3], triangle[4], triangle[5]);
+            }
+        } else {
+            float[] triangle;
+            for (int i = 0; i < 4; i++) {
+                triangle = makeATriangle(i * 20 + 725 - triangleAnimation);
+                renderer.setColor(new Color().fromHsv(i * 50 + 100, 0.6f, 0.9f).add(0, 0, 0, 0.3f));
+                renderer.triangle(triangle[0], triangle[1], triangle[2], triangle[3], triangle[4], triangle[5]);
+            }
         }
         
         renderer.setColor(0, 0, 0, 0.55f);
@@ -323,7 +330,9 @@ public class MenuScreen implements Screen {
         }
         
         if (!musicStarted && triangleAnimation < 70) {
-            music.play();
+            if (menuVisualisation) {
+                music.play();
+            }
             musicStarted = true;
         }
         
@@ -357,9 +366,9 @@ public class MenuScreen implements Screen {
         renderer.begin(ShapeRenderer.ShapeType.Filled);
         
         if (menuVisualisation) {
-            for (int i = 2; i < samples2.length - 2; i++) {
+            for (int i = 2; i < currentSamplesSmoothed.length - 2; i++) {
                 renderer.setColor(new Color().fromHsv(displaySamples[i - 2] / 2048, 0.75f, 0.9f));
-                renderer.rect(i * 37.8f - samples.length / 2f * 37.8f - 62, 420, 11, displaySamples[i - 2] / 512 + 0.5f);
+                renderer.rect(i * 37.8f - currentSamples.length / 2f * 37.8f - 62, 420, 11, displaySamples[i - 2] / 512 + 0.5f);
             }
         }
         

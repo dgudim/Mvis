@@ -141,9 +141,7 @@ public class MusicWave {
 
     public float[] getSamplesForFFT(int pos, int i, float[] samples) {
         float[] newSamples = new float[i];
-        for (int i2 = 0; i2 < i; i2++) {
-            newSamples[i2] = samples[i2 + pos];
-        }
+        System.arraycopy(samples, pos, newSamples, 0, i);
         return newSamples;
     }
 
