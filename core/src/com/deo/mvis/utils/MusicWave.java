@@ -162,6 +162,13 @@ public class MusicWave {
         return accumulator;
     }
     
+    public float[] absSamples(float[] samples){
+        for (int i = 0; i < samples.length; i++) {
+            samples[i] = abs(samples[i]);
+        }
+        return samples;
+    }
+    
     public float[] multiplySamples(float[] samples, float factor) {
         for (int i = 0; i < samples.length; i++) {
             samples[i] *= factor;

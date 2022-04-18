@@ -31,6 +31,10 @@ public class FFTScreen extends BaseVisualiser implements Screen {
     private final FloatFFT_1D fft;
     private final float[] displaySamples;
     private final int fftSize = 512;
+    private final float FFTStep = WIDTH / (float) fftSize / 2f;
+    
+    float triangleFFTSize = (float) (fftSize * Math.sqrt(3));
+    float triangleStep = WIDTH / triangleFFTSize - .07f;
     
     private final Array<GradientShape> glassShards;
     private final float[] shardTimers;
@@ -152,6 +156,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
         fft.realForward(samples);
         
         musicWave.smoothSamples(samples, 2, 2, true, false);
+        musicWave.absSamples(samples);
         
         samples[samples.length - 1] = Math.abs(samples[samples.length - 1]);
         samples[samples.length - 2] = Math.abs(samples[samples.length - 2]);
@@ -173,21 +178,13 @@ public class FFTScreen extends BaseVisualiser implements Screen {
         
         utils.bloomBegin(true, pos);
         
-        float step = WIDTH / (float) fftSize / 2f;
-        float L = (float) ((fftSize) * Math.sqrt(3d));
-        float triangleStep = WIDTH / L - .07f;
-        
         renderer.setProjectionMatrix(camera.combined);
         batch.setProjectionMatrix(camera.combined);
         
         utils.bloomBegin(true, pos);
         
         if (!(mode == Mode.BASIC && waterfall)) {
-            if (!outline) {
-                renderer.begin(ShapeRenderer.ShapeType.Filled);
-            } else {
-                renderer.begin();
-            }
+            renderer.begin(outline ? ShapeRenderer.ShapeType.Line : ShapeRenderer.ShapeType.Filled);
         }
         
         float delta;
@@ -220,11 +217,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                         }
                     }
                     renderer.end();
-                    if (!outline) {
-                        renderer.begin(ShapeRenderer.ShapeType.Filled);
-                    } else {
-                        renderer.begin();
-                    }
+                    renderer.begin(outline ? ShapeRenderer.ShapeType.Line : ShapeRenderer.ShapeType.Filled);
                 }
                 
                 for (int i = 0; i < fftSize - 5; i++) {
@@ -238,8 +231,8 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                             if (invertColors) {
                                 colorHSV = displaySamples[i] / 2048 * waterfallColorAmplitude + colorShift + waterfallColorShift;
                             }
-                            glassShards.add(new GradientShape().buildGradientPolygon(displaySamples[i] / (2024 - maxRadius * 100) + baseRadius, gradientSteps, 90, -i * step + step / 2f, 0, faces, 0, new Color().fromHsv(colorHSV, 0.75f, 1), Color.CLEAR, 1 / (samplesNormalizedSmoothed[pos] + 0.5f)));
-                            glassShards.add(new GradientShape().buildGradientPolygon(displaySamples[i] / (2024 - maxRadius * 100) + baseRadius, gradientSteps, 90, i * step + step / 2f, 0, faces, 0, new Color().fromHsv(colorHSV, 0.75f, 1), Color.CLEAR, 1 / (samplesNormalizedSmoothed[pos] + 0.5f)));
+                            glassShards.add(new GradientShape().buildGradientPolygon(displaySamples[i] / (2024 - maxRadius * 100) + baseRadius, gradientSteps, 90, -i * FFTStep + FFTStep / 2f, 0, faces, 0, new Color().fromHsv(colorHSV, 0.75f, 1), Color.CLEAR, 1 / (samplesNormalizedSmoothed[pos] + 0.5f)));
+                            glassShards.add(new GradientShape().buildGradientPolygon(displaySamples[i] / (2024 - maxRadius * 100) + baseRadius, gradientSteps, 90, i * FFTStep + FFTStep / 2f, 0, faces, 0, new Color().fromHsv(colorHSV, 0.75f, 1), Color.CLEAR, 1 / (samplesNormalizedSmoothed[pos] + 0.5f)));
                             shardTimers[i] = minSpawnDelay * delta;
                         }
                         
@@ -248,12 +241,12 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                     }
                     
                     renderer.setColor(new Color().fromHsv(MathUtils.clamp(displaySamples[i] / 2048 * colorAmplitude, 0, 130) + colorShift + colorShift2, 0.75f, 0.9f));
-                    renderer.rect(-i * step, 0, step, displaySamples[i] / 1024 * fftHeight + 0.5f);
-                    renderer.rect(+i * step, 0, step, displaySamples[i] / 1024 * fftHeight + 0.5f);
+                    renderer.rect(-i * FFTStep, 0, FFTStep, displaySamples[i] / 1024 * fftHeight + 0.5f);
+                    renderer.rect(+i * FFTStep, 0, FFTStep, displaySamples[i] / 1024 * fftHeight + 0.5f);
                     
                     renderer.setColor(new Color().fromHsv(-MathUtils.clamp(displaySamples[i] / 2048 * colorAmplitude, 0, 130) + colorShift - colorShift2, 0.75f, 0.9f));
-                    renderer.rect(-i * step, 0, step, -displaySamples[i] / 1024 * fftHeight + 0.5f);
-                    renderer.rect(+i * step, 0, step, -displaySamples[i] / 1024 * fftHeight + 0.5f);
+                    renderer.rect(-i * FFTStep, 0, FFTStep, -displaySamples[i] / 1024 * fftHeight + 0.5f);
+                    renderer.rect(+i * FFTStep, 0, FFTStep, -displaySamples[i] / 1024 * fftHeight + 0.5f);
                     
                     displaySamples[i] /= 1.7f;
                 }
@@ -301,11 +294,11 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                     displaySamples[i] += samples[i + 5] / 16 * (i * 0.01 + 1);
                 }
                 
-                renderFFTForTriangle(triangleStep, L);
+                renderFFTForTriangle(triangleStep, triangleFFTSize);
                 renderer.setTransformMatrix(new Matrix4().rotate(0, 0, 1, 120));
-                renderFFTForTriangle(triangleStep, L);
+                renderFFTForTriangle(triangleStep, triangleFFTSize);
                 renderer.setTransformMatrix(new Matrix4().rotate(0, 0, 1, -120));
-                renderFFTForTriangle(triangleStep, L);
+                renderFFTForTriangle(triangleStep, triangleFFTSize);
                 
                 for (int i = 0; i < fftSize - 5; i++) {
                     displaySamples[i] /= 1.7f;
