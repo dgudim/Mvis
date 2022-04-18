@@ -151,12 +151,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
         float[] samples = musicWave.getSamplesForFFT(pos, fftSize, samplesForFFT);
         fft.realForward(samples);
         
-        for (int t = 0; t < 2; t++) {
-            for (int i = 2; i < samples.length - 2; i++) {
-                float neighbours = Math.abs(samples[i - 2]) + Math.abs(samples[i + 2]) + Math.abs(samples[i - 1]) + Math.abs(samples[i + 1]);
-                samples[i] = (neighbours + Math.abs(samples[i])) / 5f;
-            }
-        }
+        musicWave.smoothSamples(samples, 2, 2, true, false);
         
         samples[samples.length - 1] = Math.abs(samples[samples.length - 1]);
         samples[samples.length - 2] = Math.abs(samples[samples.length - 2]);
@@ -233,6 +228,9 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                 }
                 
                 for (int i = 0; i < fftSize - 5; i++) {
+    
+                    int index = i + 5;
+                    displaySamples[i] += samples[index] / 16 * (i * 0.01 + 1);
                     
                     if (waterfall) {
                         if (displaySamples[i] > spawnThreshold * 100 && shardTimers[i] <= 0 && i % numOfHoles == 0) {
@@ -248,9 +246,6 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                         shardTimers[i] -= delta;
                         
                     }
-                    
-                    int index = i + 5;
-                    displaySamples[i] += samples[index] / 16 * (i * 0.01 + 1);
                     
                     renderer.setColor(new Color().fromHsv(MathUtils.clamp(displaySamples[i] / 2048 * colorAmplitude, 0, 130) + colorShift + colorShift2, 0.75f, 0.9f));
                     renderer.rect(-i * step, 0, step, displaySamples[i] / 1024 * fftHeight + 0.5f);
@@ -286,7 +281,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                     }
                 }
                 
-                for (int i = 0; i < samplesRaw[pos] * 50; i++) {
+                for (int i = 0; i < samplesNormalizedRaw[pos] * 50; i++) {
                     
                     float x = getRandomInRange(-WIDTH, WIDTH);
                     float y = getRandomInRange(-HEIGHT, HEIGHT);
@@ -295,7 +290,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                     
                     littleTriangles.add(new Vector3(x, y, 0));
                     littleTrianglesSpeeds.add(new Vector2(x / max, y / max));
-                    littleTrianglesColors.add(new Color().fromHsv(samplesRaw[pos] * 120 - 60, 0.75f, 0.9f));
+                    littleTrianglesColors.add(new Color().fromHsv(samplesNormalizedRaw[pos] * 120 - 60, 0.75f, 0.9f));
                 }
                 
                 for (int i = 0; i < fftSize - 5; i++) {

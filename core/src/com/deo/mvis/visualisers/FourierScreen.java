@@ -213,7 +213,7 @@ public class FourierScreen extends BaseVisualiser implements Screen {
             for (int i = 0; i < samplesNormalizedSmoothed[pos] * 15; i++) {
                 starGateTriangles.add(new Vector3().set(0, 0, 10));
                 starGateTriangleSpeeds.add(new Vector3(getRandomInRange(-200, 200) / 50f * (samplesNormalizedSmoothed[pos] + 1), getRandomInRange(-200, 200) / 50f * (samplesNormalizedSmoothed[pos] + 1), getRandomInRange(-180, 180)));
-                starGateTriangleColors.add(new Color().fromHsv(samplesRaw[pos] * 120 - 50 + colorOffset, 0.75f, 0.9f));
+                starGateTriangleColors.add(new Color().fromHsv(samplesNormalizedRaw[pos] * 120 - 50 + colorOffset, 0.75f, 0.9f));
             }
         }
         if (enableTriangles) {

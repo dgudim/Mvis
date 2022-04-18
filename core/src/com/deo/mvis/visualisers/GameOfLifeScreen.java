@@ -125,7 +125,7 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         
         musicWave.smoothSamples(samples, 2, 4, false, false); // TODO: 2022-04-17 make like in FFTScreen
         musicWave.applyLogarithmicScaling(samples, 0.001f);
-        musicWave.normaliseSamples(false, false, samples);
+        musicWave.normalizeSamples(false, false, samples);
         musicWave.accumulate(samples, displaySamples, 1.7f, (samples_, i) -> {
             for (int y = 0; y < min(samples_[i] * fieldHeight + 1, fieldHeight / 2f); y++) {
                 cells[(int) (fieldWidth / 2 - i * fftStep)][fieldHeight / 2 + y] = true;

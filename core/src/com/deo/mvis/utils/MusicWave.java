@@ -102,7 +102,7 @@ public class MusicWave {
         return music;
     }
     
-    public float[] normaliseSamples(boolean cutoff, boolean absolute, float[] samples) {
+    public float[] normalizeSamples(boolean cutoff, boolean absolute, float[] samples) {
         float maxValue = 0;
         for (float sample : samples) {
             if (abs(sample) > maxValue) {
@@ -128,16 +128,15 @@ public class MusicWave {
         for (int i = 0; i < smoothingFactor; i++) {
             for (int i2 = smoothingSampleRange; i2 < samples.length - smoothingSampleRange; i2++) {
                 float sum = absolute ? abs(samples[i2]) : samples[i2]; // middle sample
-                for (int i3 = 1; i3 < smoothingSampleRange; i3++) {
-                    sum = sum +
-                            (absolute ? abs(samples[i2 + i3]) : samples[i2 + i3]) +
-                            (absolute ? abs(samples[i2 - i3]) : samples[i2 - i3]);
+                for (int i3 = 1; i3 <= smoothingSampleRange; i3++) {
+                    sum += (absolute ? abs(samples[i2 + i3]) : samples[i2 + i3]);
+                    sum += (absolute ? abs(samples[i2 - i3]) : samples[i2 - i3]);
                     // samples to the left and to the right
                 }
-                samples[i2] = sum / (float) (smoothingSampleRange + 1); //smooth out the sample
+                samples[i2] = sum / (float) (smoothingSampleRange * 2 + 1); //smooth out the sample
             }
         }
-        return normalize ? normaliseSamples(false, false, samples) : samples;
+        return normalize ? normalizeSamples(false, false, samples) : samples;
     }
     
     public float[] applyLinearScaling(float[] samples, float slope) {
