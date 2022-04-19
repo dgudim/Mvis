@@ -120,14 +120,10 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
     }
     
     public void updateFFT() {
-        float[] samples = musicWave.getSamplesForFFT((int) (music.getPosition() * sampleRate), fftSize, samplesForFFT);
-        fft.realForward(samples);
+        float[] samples = musicWave.getSmoothedFFT((int) (music.getPosition() * sampleRate), fftSize, samplesForFFT, 5, fft);
         
-        musicWave.smoothSamples(samples, 2, 4, false, false); // TODO: 2022-04-17 make like in FFTScreen
-        musicWave.applyLogarithmicScaling(samples, 0.001f);
-        musicWave.normalizeSamples(false, false, samples);
-        musicWave.accumulate(samples, displaySamples, 1.7f, (samples_, i) -> {
-            for (int y = 0; y < min(samples_[i] * fieldHeight + 1, fieldHeight / 2f); y++) {
+        musicWave.accumulate(samples, displaySamples, 0.01f, 16, 1.7f, (samples_, i) -> {
+            for (int y = 0; y < min(samples_[i] / 2048 + 1, fieldHeight / 2f); y++) {
                 cells[(int) (fieldWidth / 2 - i * fftStep)][fieldHeight / 2 + y] = true;
                 cells[(int) (fieldWidth / 2 + i * fftStep)][fieldHeight / 2 + y] = true;
                 cells[(int) (fieldWidth / 2 - i * fftStep)][fieldHeight / 2 - y] = true;
@@ -193,7 +189,7 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         
         renderer.setProjectionMatrix(camera.combined);
         
-        //utils.bloomBegin(true, render ? frame : (int) (music.getPosition() * sampleRate));
+        utils.bloomBegin(true, render ? frame : (int) (music.getPosition() * sampleRate));
         
         renderer.begin(ShapeRenderer.ShapeType.Filled);
         {
@@ -218,7 +214,7 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         }
         renderer.end();
         
-        //utils.bloomRender();
+        utils.bloomRender();
     }
     
     private boolean isRevivable(int xPos, int yPos) {
