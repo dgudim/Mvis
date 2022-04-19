@@ -6,11 +6,13 @@ import static java.lang.Math.log;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.files.FileHandle;
+import com.deo.mvis.jtransforms.fft.FloatFFT_1D;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
 
 public class MusicWave {
     
@@ -146,43 +148,30 @@ public class MusicWave {
         return samples;
     }
     
-    public float[] applyLogarithmicScaling(float[] samples, float logOffset) {
+    public float[] accumulate(float[] samples, float[] accumulator, float slope, float divider, float falloffFactor, LoopAction loopAction) {
         for (int i = 0; i < samples.length; i++) {
-            samples[i] *= (float) log(i + logOffset);
-        }
-        return samples;
-    }
-    
-    public float[] accumulate(float[] samples, float[] accumulator, float falloffFactor, LoopAction loopAction) {
-        for (int i = 0; i < samples.length; i++) {
-            accumulator[i] += samples[i];
+            accumulator[i] += samples[i] / divider * (i * slope + 1);
             loopAction.act(accumulator, i);
             accumulator[i] /= falloffFactor;
         }
         return accumulator;
     }
     
-    public float[] absSamples(float[] samples){
-        for (int i = 0; i < samples.length; i++) {
-            samples[i] = abs(samples[i]);
-        }
-        return samples;
-    }
-    
-    public float[] multiplySamples(float[] samples, float factor) {
-        for (int i = 0; i < samples.length; i++) {
-            samples[i] *= factor;
-        }
-        return samples;
-    }
-    
     public float[] getSamplesForFFT(int pos, int i, float[] samples) {
         float[] newSamples = new float[i];
         System.arraycopy(samples, pos, newSamples, 0, i);
-        newSamples[2] = (newSamples[3] + newSamples[4]) / 2;
-        newSamples[1] = (newSamples[2] + newSamples[3]) / 2;
-        newSamples[0] = (newSamples[1] + newSamples[2]) / 2;
         return newSamples;
+    }
+    
+    public float[] getSmoothedFFT(int pos, int numSamples, float[] samplesIN, int fftDirty, FloatFFT_1D fft_1D){
+        float[] fullSamples = new float[numSamples + fftDirty * 2];
+        float[] cutSamples = new float[numSamples];
+        System.arraycopy(samplesIN, pos, fullSamples, 0, numSamples + fftDirty * 2);
+        fft_1D.realForward(fullSamples);
+        Arrays.fill(fullSamples, (int) (fullSamples.length - fftDirty * 1.5f), fullSamples.length, 0);
+        smoothSamples(fullSamples, 2, 2, true, false);
+        System.arraycopy(fullSamples, fftDirty, cutSamples, 0, numSamples);
+        return cutSamples;
     }
     
     protected void checkFormat(boolean assertion, String message) throws IOException {

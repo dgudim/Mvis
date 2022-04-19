@@ -22,6 +22,7 @@ import com.badlogic.gdx.utils.JsonValue;
 import com.deo.mvis.jtransforms.fft.FloatFFT_1D;
 import com.deo.mvis.utils.CompositeSettings;
 import com.deo.mvis.utils.GradientShape;
+import com.deo.mvis.utils.MusicWave;
 import com.deo.mvis.utils.SettingsEntry;
 import com.deo.mvis.utils.SyncedWord;
 import com.deo.mvis.utils.Type;
@@ -152,16 +153,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
             pos = (int) (music.getPosition() * sampleRate);
         }
         
-        float[] samples = musicWave.getSamplesForFFT(pos, fftSize, samplesForFFT);
-        fft.realForward(samples);
-        
-        musicWave.smoothSamples(samples, 2, 2, true, false);
-        musicWave.absSamples(samples);
-        
-        samples[samples.length - 1] = Math.abs(samples[samples.length - 1]);
-        samples[samples.length - 2] = Math.abs(samples[samples.length - 2]);
-        
-        displayFFT(samples, pos);
+        displayFFT(musicWave.getSmoothedFFT(pos, fftSize, samplesForFFT, 5, fft), pos);
         
         if (render) {
             utils.makeAScreenShot(recorderFrame);
@@ -220,37 +212,30 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                     renderer.begin(outline ? ShapeRenderer.ShapeType.Line : ShapeRenderer.ShapeType.Filled);
                 }
                 
-                for (int i = 0; i < fftSize - 5; i++) {
-    
-                    int index = i + 5;
-                    displaySamples[i] += samples[index] / 16 * (i * 0.01 + 1);
-                    
+                musicWave.accumulate(samples, displaySamples, 0.01f, 16, 1.7f, (samples1, i) -> {
                     if (waterfall) {
-                        if (displaySamples[i] > spawnThreshold * 100 && shardTimers[i] <= 0 && i % numOfHoles == 0) {
-                            float colorHSV = -displaySamples[i] / 2048 * waterfallColorAmplitude + colorShift - waterfallColorShift;
+                        if (samples1[i] > spawnThreshold * 100 && shardTimers[i] <= 0 && i % numOfHoles == 0) {
+                            float colorHSV = -samples1[i] / 2048 * waterfallColorAmplitude + colorShift - waterfallColorShift;
                             if (invertColors) {
-                                colorHSV = displaySamples[i] / 2048 * waterfallColorAmplitude + colorShift + waterfallColorShift;
+                                colorHSV = samples1[i] / 2048 * waterfallColorAmplitude + colorShift + waterfallColorShift;
                             }
-                            glassShards.add(new GradientShape().buildGradientPolygon(displaySamples[i] / (2024 - maxRadius * 100) + baseRadius, gradientSteps, 90, -i * FFTStep + FFTStep / 2f, 0, faces, 0, new Color().fromHsv(colorHSV, 0.75f, 1), Color.CLEAR, 1 / (samplesNormalizedSmoothed[pos] + 0.5f)));
-                            glassShards.add(new GradientShape().buildGradientPolygon(displaySamples[i] / (2024 - maxRadius * 100) + baseRadius, gradientSteps, 90, i * FFTStep + FFTStep / 2f, 0, faces, 0, new Color().fromHsv(colorHSV, 0.75f, 1), Color.CLEAR, 1 / (samplesNormalizedSmoothed[pos] + 0.5f)));
+                            glassShards.add(new GradientShape().buildGradientPolygon(samples1[i] / (2024 - maxRadius * 100) + baseRadius, gradientSteps, 90, -i * FFTStep + FFTStep / 2f, 0, faces, 0, new Color().fromHsv(colorHSV, 0.75f, 1), Color.CLEAR, 1 / (samplesNormalizedSmoothed[pos] + 0.5f)));
+                            glassShards.add(new GradientShape().buildGradientPolygon(samples1[i] / (2024 - maxRadius * 100) + baseRadius, gradientSteps, 90, i * FFTStep + FFTStep / 2f, 0, faces, 0, new Color().fromHsv(colorHSV, 0.75f, 1), Color.CLEAR, 1 / (samplesNormalizedSmoothed[pos] + 0.5f)));
                             shardTimers[i] = minSpawnDelay * delta;
                         }
-                        
+    
                         shardTimers[i] -= delta;
-                        
+    
                     }
-                    
-                    renderer.setColor(new Color().fromHsv(MathUtils.clamp(displaySamples[i] / 2048 * colorAmplitude, 0, 130) + colorShift + colorShift2, 0.75f, 0.9f));
-                    renderer.rect(-i * FFTStep, 0, FFTStep, displaySamples[i] / 1024 * fftHeight + 0.5f);
-                    renderer.rect(+i * FFTStep, 0, FFTStep, displaySamples[i] / 1024 * fftHeight + 0.5f);
-                    
-                    renderer.setColor(new Color().fromHsv(-MathUtils.clamp(displaySamples[i] / 2048 * colorAmplitude, 0, 130) + colorShift - colorShift2, 0.75f, 0.9f));
-                    renderer.rect(-i * FFTStep, 0, FFTStep, -displaySamples[i] / 1024 * fftHeight + 0.5f);
-                    renderer.rect(+i * FFTStep, 0, FFTStep, -displaySamples[i] / 1024 * fftHeight + 0.5f);
-                    
-                    displaySamples[i] /= 1.7f;
-                }
-                
+
+                    renderer.setColor(new Color().fromHsv(MathUtils.clamp(samples1[i] / 2048 * colorAmplitude, 0, 130) + colorShift + colorShift2, 0.75f, 0.9f));
+                    renderer.rect(-i * FFTStep, 0, FFTStep, samples1[i] / 1024 * fftHeight + 0.5f);
+                    renderer.rect(+i * FFTStep, 0, FFTStep, samples1[i] / 1024 * fftHeight + 0.5f);
+
+                    renderer.setColor(new Color().fromHsv(-MathUtils.clamp(samples1[i] / 2048 * colorAmplitude, 0, 130) + colorShift - colorShift2, 0.75f, 0.9f));
+                    renderer.rect(-i * FFTStep, 0, FFTStep, -samples1[i] / 1024 * fftHeight + 0.5f);
+                    renderer.rect(+i * FFTStep, 0, FFTStep, -samples1[i] / 1024 * fftHeight + 0.5f);
+                });
                 break;
             
             case TRIANGLE:
@@ -286,12 +271,12 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                     littleTrianglesColors.add(new Color().fromHsv(samplesNormalizedRaw[pos] * 120 - 60, 0.75f, 0.9f));
                 }
                 
-                for (int i = 0; i < fftSize - 5; i++) {
-                    float[] triangle = calculatePolygon(0, 0, fftSize - i, -30, 3, 0);
+                for (int i = 0; i < fftSize; i++) {
+                    float[] triangle = calculatePolygon(0, 0, fftSize - i + 5, -30, 3, 0);
                     
                     renderer.setColor(new Color().fromHsv(displaySamples[i] / 256 * colorAmplitude + colorShift - colorShift2, 0.75f, 0.9f));
                     renderer.triangle(triangle[0], triangle[1], triangle[2], triangle[3], triangle[4], triangle[5]);
-                    displaySamples[i] += samples[i + 5] / 16 * (i * 0.01 + 1);
+                    displaySamples[i] += samples[i] / 16 * (i * 0.01 + 1);
                 }
                 
                 renderFFTForTriangle(triangleStep, triangleFFTSize);
