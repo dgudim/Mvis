@@ -1,5 +1,8 @@
 package com.deo.mvis.utils;
 
+import static com.deo.mvis.Launcher.HEIGHT;
+import static com.deo.mvis.Launcher.WIDTH;
+
 import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Preferences;
@@ -10,16 +13,12 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Matrix4;
-import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.BufferUtils;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.deo.mvis.postprocessing.PostProcessor;
 import com.deo.mvis.postprocessing.effects.Bloom;
 
 import java.util.Locale;
-
-import static com.deo.mvis.Launcher.HEIGHT;
-import static com.deo.mvis.Launcher.WIDTH;
 
 public class Utils {
 

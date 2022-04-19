@@ -153,7 +153,7 @@ public class BaseVisualiser {
                 rSamplesNormalised = musicWave.normalizeSamples(false, false, musicWave.getRightChannelSamples());
                 break;
         }
-        if (!(sampleMode == DEFAULT)) {
+        if (sampleMode != DEFAULT) {
             samplesNormalizedSmoothed = musicWave.smoothSamples(musicWave.getSamples().clone(), 2, 32, false, true);
         } else {
             samplesNormalizedSmoothed = musicWave.smoothSamples(musicWave.getSamples(), 2, 32, false, true);

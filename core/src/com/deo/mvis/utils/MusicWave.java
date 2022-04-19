@@ -1,7 +1,6 @@
 package com.deo.mvis.utils;
 
 import static java.lang.Math.abs;
-import static java.lang.Math.log;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Music;
@@ -146,6 +145,12 @@ public class MusicWave {
             samples[i] *= (1 + i * slope);
         }
         return samples;
+    }
+    
+    public void iterate(float[] samples, LoopAction loopAction){
+        for (int i = 0; i < samples.length; i++) {
+            loopAction.act(samples, i);
+        }
     }
     
     public float[] accumulate(float[] samples, float[] accumulator, float slope, float divider, float falloffFactor, LoopAction loopAction) {

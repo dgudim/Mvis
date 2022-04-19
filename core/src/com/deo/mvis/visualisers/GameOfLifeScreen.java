@@ -3,7 +3,6 @@ package com.deo.mvis.visualisers;
 import static com.badlogic.gdx.graphics.GL20.GL_COLOR_BUFFER_BIT;
 import static com.deo.mvis.Launcher.HEIGHT;
 import static com.deo.mvis.Launcher.WIDTH;
-
 import static java.lang.Math.min;
 
 import com.badlogic.gdx.Game;
@@ -39,6 +38,7 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
     private FloatFFT_1D fft;
     private float[] displaySamples;
     private final int fftSize = 512;
+    private static float fftSlope;
     private final float fftStep = fieldWidth / (float) fftSize / 2f;
     
     private static GameOfLifeScreen.Mode mode;
@@ -119,25 +119,25 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         }
     }
     
-    public void updateFFT() {
-        float[] samples = musicWave.getSmoothedFFT((int) (music.getPosition() * sampleRate), fftSize, samplesForFFT, 5, fft);
-        
-        musicWave.accumulate(samples, displaySamples, 0.01f, 16, 1.7f, (samples_, i) -> {
-            for (int y = 0; y < min(samples_[i] / 2048 + 1, fieldHeight / 2f); y++) {
-                cells[(int) (fieldWidth / 2 - i * fftStep)][fieldHeight / 2 + y] = true;
-                cells[(int) (fieldWidth / 2 + i * fftStep)][fieldHeight / 2 + y] = true;
-                cells[(int) (fieldWidth / 2 - i * fftStep)][fieldHeight / 2 - y] = true;
-                cells[(int) (fieldWidth / 2 + i * fftStep)][fieldHeight / 2 - y] = true;
-            }
-        });
+    public void updateFFT(int pos) {
+        musicWave.accumulate(
+                musicWave.getSmoothedFFT(pos, fftSize, samplesForFFT, 5, fft),
+                displaySamples, fftSlope, 16, 1.7f, (samples_, i) -> {
+                    for (int y = 0; y < min(samples_[i] / 1024 + 1, fieldHeight / 2f); y++) {
+                        cells[(int) (fieldWidth / 2 - i * fftStep)][fieldHeight / 2 + y] = true;
+                        cells[(int) (fieldWidth / 2 + i * fftStep)][fieldHeight / 2 + y] = true;
+                        cells[(int) (fieldWidth / 2 - i * fftStep)][fieldHeight / 2 - y] = true;
+                        cells[(int) (fieldWidth / 2 + i * fftStep)][fieldHeight / 2 - y] = true;
+                    }
+                });
     }
     
-    public void update() {
+    public void update(int pos) {
         
         if (mode == Mode.BOTTOM) {
             updateBottomField();
         } else {
-            updateFFT();
+            updateFFT(pos);
         }
         
         for (int i = 0; i < NUM_THREADS; i++) {
@@ -153,18 +153,6 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
                 next_cells[x][y] = false;
             }
         }
-        
-        if (render) {
-            frame += sampleStep;
-            recorderFrame++;
-            utils.makeAScreenShot(recorderFrame);
-            utils.displayData(recorderFrame, frame, camera.combined);
-        }
-        
-        batch.begin();
-        drawExitButton();
-        batch.end();
-        
     }
     
     @Override
@@ -183,13 +171,14 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
     @Override
     public void render(float delta) {
         
-        update();
+        int pos = render ? frame : (int) (music.getPosition() * sampleRate);
         
+        update(pos);
+    
         Gdx.gl.glClear(GL_COLOR_BUFFER_BIT);
-        
         renderer.setProjectionMatrix(camera.combined);
         
-        utils.bloomBegin(true, render ? frame : (int) (music.getPosition() * sampleRate));
+        utils.bloomBegin(true, pos);
         
         renderer.begin(ShapeRenderer.ShapeType.Filled);
         {
@@ -204,7 +193,7 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
                     }
                     if (cells[x][y]) {
                         renderer.rect(x * cellSize - WIDTH / 2f, y * cellSize - HEIGHT / 2f, cellSize, cellSize);
-                        colorMask[x][y].x = 0;
+                        colorMask[x][y].x = 1;
                         colorMask[x][y].y = 1;
                         colorMask[x][y].z = 1;
                         colorMaskProgress[x][y] = 0;
@@ -215,6 +204,18 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         renderer.end();
         
         utils.bloomRender();
+    
+        if (render) {
+            frame += sampleStep;
+            recorderFrame++;
+            utils.makeAScreenShot(recorderFrame);
+            utils.displayData(recorderFrame, frame, camera.combined);
+        }
+        
+        batch.begin();
+        drawExitButton();
+        batch.end();
+        
     }
     
     private boolean isRevivable(int xPos, int yPos) {
@@ -366,7 +367,6 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
                     prevColor.x = tempColor.r;
                     prevColor.y = tempColor.g;
                     prevColor.z = tempColor.b;
-                    
                 } else {
                     prevColor.x -= 0.0005;
                     prevColor.z -= 0.0005;
@@ -379,7 +379,6 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
                     prevColor.x = tempColor.r;
                     prevColor.y = tempColor.g;
                     prevColor.z = tempColor.b;
-                    
                 } else {
                     prevColor.x -= 0.0005;
                     prevColor.z -= 0.0005;
@@ -417,6 +416,7 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         CompositeSettings compositeSettings = new CompositeSettings(enumToArray(Palette.class), enumToArray(Mode.class));
         
         compositeSettings.addSetting("Bottom rule height", 1, fieldHeight - 50, oneDRuleHeight, Type.INT);
+        compositeSettings.addSetting("FFT slope", 0.01f, 0.04f, 0.01f, Type.FLOAT);
         compositeSettings.addSetting("Render", 0, 1, 0, Type.BOOLEAN);
         
         return compositeSettings;
@@ -430,6 +430,7 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         GameOfLifeScreen.mode = GameOfLifeScreen.Mode.values()[mode];
         GameOfLifeScreen.palette = GameOfLifeScreen.Palette.values()[palette];
         oneDRuleHeight = (int) getSettingByName(settings, "Bottom rule height");
+        fftSlope = getSettingByName(settings, "FFT slope");
         render = getSettingByName(settings, "Render") > 0;
     }
     
