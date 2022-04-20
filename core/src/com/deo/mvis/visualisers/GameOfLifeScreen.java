@@ -26,14 +26,15 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
     
     private static int oneDRuleHeight = 100;
     
-    private final int NUM_THREADS = 4;
-    int chunkSize = fieldWidth / NUM_THREADS;
-    Thread[] threads;
+    private final int NUM_THREADS = 6;
+    private final int chunkSize = fieldWidth / NUM_THREADS;
+    private final Thread[] threads;
     
     private final boolean[][] cells;
     private final boolean[][] next_cells;
     private final Vector3[][] colorMask;
     private final int[][] colorMaskProgress;
+    private final float[] colorMaskProgress_wave;
     
     private FloatFFT_1D fft;
     private float[] displaySamples;
@@ -45,6 +46,8 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
     
     private static GameOfLifeScreen.Mode mode;
     private static GameOfLifeScreen.Palette palette;
+    
+    int pos;
     
     private enum Palette {
         CYAN_PURPLE, CYAN_FADEOUT, PURPLE_FADEOUT, PINK_GREEN, RAINBOW_WATER, PASTEL_RAINBOW, LONG_FADEOUT_PASTEL_RAINBOW, WINTER, LONG_FADEOUT_CYAN
@@ -62,6 +65,7 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         
         colorMask = new Vector3[fieldWidth][fieldHeight];
         colorMaskProgress = new int[fieldWidth][fieldHeight];
+        colorMaskProgress_wave = new float[1000];
         
         threads = new Thread[NUM_THREADS];
         
@@ -154,7 +158,7 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
                 for (int y = 0; y < fieldHeight; y++) {
                     cells[x][y] = next_cells[x][y];
                     next_cells[x][y] = false;
-                    if(cells[x][y]){
+                    if (cells[x][y]) {
                         colorMask[x][y].x = 1;
                         colorMask[x][y].y = 1;
                         colorMask[x][y].z = 1;
@@ -181,7 +185,7 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
     @Override
     public void render(float delta) {
         
-        int pos = render ? frame : (int) (music.getPosition() * sampleRate);
+        pos = render ? frame : (int) (music.getPosition() * sampleRate);
         
         update(pos);
         
@@ -191,21 +195,26 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         utils.bloomBegin(true, pos);
         
         renderer.begin(ShapeRenderer.ShapeType.Filled);
-        {
-            for (int x = 0; x < fieldWidth; x++) {
-                for (int y = 0; y < fieldHeight; y++) {
-                    if (colorMask[x][y].x + colorMask[x][y].y + colorMask[x][y].z > 0) {
-                        renderer.setColor(colorMask[x][y].x, colorMask[x][y].y, colorMask[x][y].z, 1);
-                        renderer.rect(x * cellSize - WIDTH / 2f, y * cellSize - HEIGHT / 2f, cellSize, cellSize);
-                        renderer.setColor(Color.WHITE);
-                        colorMask[x][y] = shiftColor(colorMask[x][y], colorMaskProgress[x][y]);
-                        colorMaskProgress[x][y]++;
-                    }
+        
+        for (int x = 0; x < fieldWidth; x++) {
+            for (int y = 0; y < fieldHeight; y++) {
+                if (colorMask[x][y].x + colorMask[x][y].y + colorMask[x][y].z > 0) {
+                    renderer.setColor(colorMask[x][y].x, colorMask[x][y].y, colorMask[x][y].z, 1);
+                    renderer.rect(x * cellSize - WIDTH / 2f, y * cellSize - HEIGHT / 2f, cellSize, cellSize);
+                    renderer.setColor(Color.WHITE);
+                    colorMask[x][y] = shiftColor(colorMask[x][y], (int) (colorMaskProgress[x][y] + colorMaskProgress_wave[min(colorMaskProgress[x][y], colorMaskProgress_wave.length - 1)]));
+                    colorMaskProgress[x][y]++;
                 }
             }
         }
+        
         renderer.end();
         utils.bloomRender();
+        
+        for(int i = 0; i < 2; i++){
+            System.arraycopy(colorMaskProgress_wave, 0, colorMaskProgress_wave, 1, colorMaskProgress_wave.length - 1);
+            colorMaskProgress_wave[0] = samplesNormalizedSmoothed[pos] * 50;
+        }
         
         if (render) {
             frame += sampleStep;
@@ -419,7 +428,7 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         
         compositeSettings.addSetting("Bottom rule height", 1, fieldHeight - 50, oneDRuleHeight, Type.INT);
         compositeSettings.addSetting("FFT slope", 0, 0.04f, 0.01f, Type.FLOAT);
-        compositeSettings.addSetting("Max simulation speed", 1, 15, 1, Type.INT);
+        compositeSettings.addSetting("Max simulation speed", 1, 20, 1, Type.INT);
         compositeSettings.addSetting("Render", 0, 1, 0, Type.BOOLEAN);
         
         return compositeSettings;
