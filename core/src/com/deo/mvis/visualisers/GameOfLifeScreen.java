@@ -43,6 +43,7 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
     private final float fftStep = fieldWidth / (float) fftSize / 2f;
     
     private static int maxSimulationSpeed = 1;
+    private static int waveEffectAmplitude = 1;
     
     private static GameOfLifeScreen.Mode mode;
     private static GameOfLifeScreen.Palette palette;
@@ -81,6 +82,7 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         } else {
             fft = new FloatFFT_1D(fftSize);
             displaySamples = new float[fftSize];
+            oneDRuleHeight = 0;
         }
     }
     
@@ -213,7 +215,7 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         
         for(int i = 0; i < 2; i++){
             System.arraycopy(colorMaskProgress_wave, 0, colorMaskProgress_wave, 1, colorMaskProgress_wave.length - 1);
-            colorMaskProgress_wave[0] = samplesNormalizedSmoothed[pos] * 50;
+            colorMaskProgress_wave[0] = samplesNormalizedSmoothed[pos] * waveEffectAmplitude;
         }
         
         if (render) {
@@ -429,6 +431,7 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         compositeSettings.addSetting("Bottom rule height", 1, fieldHeight - 50, oneDRuleHeight, Type.INT);
         compositeSettings.addSetting("FFT slope", 0, 0.04f, 0.01f, Type.FLOAT);
         compositeSettings.addSetting("Max simulation speed", 1, 20, 1, Type.INT);
+        compositeSettings.addSetting("Wave effect amplitude", 5, 100, 1, Type.INT);
         compositeSettings.addSetting("Render", 0, 1, 0, Type.BOOLEAN);
         
         return compositeSettings;
@@ -444,6 +447,8 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         oneDRuleHeight = (int) getSettingByName(settings, "Bottom rule height");
         fftSlope = getSettingByName(settings, "FFT slope");
         maxSimulationSpeed = (int) getSettingByName(settings, "Max simulation speed");
+        waveEffectAmplitude = (int) getSettingByName(settings, "Wave effect amplitude");
+        
         render = getSettingByName(settings, "Render") > 0;
     }
     
