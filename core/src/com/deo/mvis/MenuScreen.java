@@ -3,7 +3,9 @@ package com.deo.mvis;
 import static com.deo.mvis.Launcher.HEIGHT;
 import static com.deo.mvis.Launcher.WIDTH;
 import static com.deo.mvis.utils.Type.INT;
+import static com.deo.mvis.utils.Utils.deleteKey;
 import static com.deo.mvis.utils.Utils.getBoolean;
+import static com.deo.mvis.utils.Utils.getFloat;
 import static com.deo.mvis.utils.Utils.getInteger;
 import static com.deo.mvis.utils.Utils.putBoolean;
 import static com.deo.mvis.utils.Utils.putFloat;
@@ -286,7 +288,7 @@ public class MenuScreen implements Screen {
         if (menuVisualisation) {
             currentSamples = musicWave.getSamplesForFFT(pos, 32, musicWave.getSamples());
             fft.realForward(currentSamples);
-    
+            
             Arrays.fill(currentSamplesSmoothed, 0);
             
             System.arraycopy(currentSamples, 0, currentSamplesSmoothed, 2, currentSamples.length - 4);
@@ -698,6 +700,28 @@ public class MenuScreen implements Screen {
         scrollPane.setBounds(10, -HEIGHT / 2f, WIDTH / 2f - 10, HEIGHT / 2f + 45);
         scrollPane.setVisible(false);
         SettingsEntry currentSettingsEntry;
+    
+        for (int i = 0; i < finalSettingsEntries.size; i++) {
+            try {
+                switch (finalSettingsEntries.get(i).getType()) {
+                    case INT:
+                    case FLOAT:
+                        getFloat(name + "_" + i);
+                        break;
+                    case BOOLEAN:
+                        getBoolean(name + "_" + i);
+                        break;
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Resetting keys, layout changed");
+                for (int s = 0; s < finalSettingsEntries.size; s++) {
+                    deleteKey(name + "_" + s);
+                    deleteKey(name + "_" + s + "_changed");
+                }
+                break;
+            }
+        }
+        
         for (int i = 0; i < finalSettingsEntries.size; i++) {
             currentSettingsEntry = finalSettingsEntries.get(i);
             switch (currentSettingsEntry.getType()) {

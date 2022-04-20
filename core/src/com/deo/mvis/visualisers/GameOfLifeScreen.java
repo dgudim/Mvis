@@ -41,6 +41,8 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
     private static float fftSlope;
     private final float fftStep = fieldWidth / (float) fftSize / 2f;
     
+    private static int maxSimulationSpeed = 1;
+    
     private static GameOfLifeScreen.Mode mode;
     private static GameOfLifeScreen.Palette palette;
     
@@ -140,17 +142,25 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
             updateFFT(pos);
         }
         
-        for (int i = 0; i < NUM_THREADS; i++) {
-            int finalI = i;
-            threads[i] = new Thread(() -> updateMainField(finalI));
-            threads[i].start();
-        }
-        waitUntilAllThreadsFinish();
-        
-        for (int x = 0; x < fieldWidth; x++) {
-            for (int y = 0; y < fieldHeight; y++) {
-                cells[x][y] = next_cells[x][y];
-                next_cells[x][y] = false;
+        for (int t = 0; t < samplesNormalizedSmoothed[pos] * maxSimulationSpeed; t++) {
+            for (int i = 0; i < NUM_THREADS; i++) {
+                int finalI = i;
+                threads[i] = new Thread(() -> updateMainField(finalI));
+                threads[i].start();
+            }
+            waitUntilAllThreadsFinish();
+            
+            for (int x = 0; x < fieldWidth; x++) {
+                for (int y = 0; y < fieldHeight; y++) {
+                    cells[x][y] = next_cells[x][y];
+                    next_cells[x][y] = false;
+                    if(cells[x][y]){
+                        colorMask[x][y].x = 1;
+                        colorMask[x][y].y = 1;
+                        colorMask[x][y].z = 1;
+                        colorMaskProgress[x][y] = 0;
+                    }
+                }
             }
         }
     }
@@ -174,7 +184,7 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         int pos = render ? frame : (int) (music.getPosition() * sampleRate);
         
         update(pos);
-    
+        
         Gdx.gl.glClear(GL_COLOR_BUFFER_BIT);
         renderer.setProjectionMatrix(camera.combined);
         
@@ -191,20 +201,12 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
                         colorMask[x][y] = shiftColor(colorMask[x][y], colorMaskProgress[x][y]);
                         colorMaskProgress[x][y]++;
                     }
-                    if (cells[x][y]) {
-                        renderer.rect(x * cellSize - WIDTH / 2f, y * cellSize - HEIGHT / 2f, cellSize, cellSize);
-                        colorMask[x][y].x = 1;
-                        colorMask[x][y].y = 1;
-                        colorMask[x][y].z = 1;
-                        colorMaskProgress[x][y] = 0;
-                    }
                 }
             }
         }
         renderer.end();
-        
         utils.bloomRender();
-    
+        
         if (render) {
             frame += sampleStep;
             recorderFrame++;
@@ -416,7 +418,8 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         CompositeSettings compositeSettings = new CompositeSettings(enumToArray(Palette.class), enumToArray(Mode.class));
         
         compositeSettings.addSetting("Bottom rule height", 1, fieldHeight - 50, oneDRuleHeight, Type.INT);
-        compositeSettings.addSetting("FFT slope", 0.01f, 0.04f, 0.01f, Type.FLOAT);
+        compositeSettings.addSetting("FFT slope", 0, 0.04f, 0.01f, Type.FLOAT);
+        compositeSettings.addSetting("Max simulation speed", 1, 15, 1, Type.INT);
         compositeSettings.addSetting("Render", 0, 1, 0, Type.BOOLEAN);
         
         return compositeSettings;
@@ -431,6 +434,7 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         GameOfLifeScreen.palette = GameOfLifeScreen.Palette.values()[palette];
         oneDRuleHeight = (int) getSettingByName(settings, "Bottom rule height");
         fftSlope = getSettingByName(settings, "FFT slope");
+        maxSimulationSpeed = (int) getSettingByName(settings, "Max simulation speed");
         render = getSettingByName(settings, "Render") > 0;
     }
     

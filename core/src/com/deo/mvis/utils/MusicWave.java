@@ -147,12 +147,6 @@ public class MusicWave {
         return samples;
     }
     
-    public void iterate(float[] samples, LoopAction loopAction){
-        for (int i = 0; i < samples.length; i++) {
-            loopAction.act(samples, i);
-        }
-    }
-    
     public float[] accumulate(float[] samples, float[] accumulator, float slope, float divider, float falloffFactor, LoopAction loopAction) {
         for (int i = 0; i < samples.length; i++) {
             accumulator[i] += samples[i] / divider * (i * slope + 1);
