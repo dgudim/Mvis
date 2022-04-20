@@ -1,10 +1,14 @@
 package com.deo.mvis.utils;
 
+import static com.deo.mvis.utils.Utils.getBoolean;
+import static com.deo.mvis.utils.Utils.getFloat;
+import static com.deo.mvis.utils.Utils.putBoolean;
+import static com.deo.mvis.utils.Utils.putFloat;
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
@@ -22,11 +26,6 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
 
-import static com.deo.mvis.utils.Utils.getBoolean;
-import static com.deo.mvis.utils.Utils.getFloat;
-import static com.deo.mvis.utils.Utils.putBoolean;
-import static com.deo.mvis.utils.Utils.putFloat;
-
 import java.util.Locale;
 
 public class UIComposer {
@@ -39,7 +38,7 @@ public class UIComposer {
     Array<String> sliderStyleNames;
     Array<String> checkBoxStyleNames;
     
-    private AssetManager assetManager;
+    private final AssetManager assetManager;
     
     public UIComposer(AssetManager assetManager) {
         this.assetManager = assetManager;
@@ -57,13 +56,13 @@ public class UIComposer {
         String[] fontNames = styles.get("fonts").asStringArray();
         Array<String> dependencies = new Array<>();
         Skin textures = new Skin();
-        for (int i = 0; i < fontNames.length; i++) {
-            BitmapFont font = assetManager.get(fontNames[i]);
+        for (String fontName : fontNames) {
+            BitmapFont font = assetManager.get(fontName);
             font.setUseIntegerPositions(false);
             fonts.add(font);
         }
-        for (int i = 0; i < styleNames.length; i++) {
-            loadStyle(styles, styleNames[i], textures, dependencies, fonts);
+        for (String styleName : styleNames) {
+            loadStyle(styles, styleName, textures, dependencies, fonts);
         }
     }
     
@@ -76,7 +75,7 @@ public class UIComposer {
         }
         if (!dependencies.contains(dependency, false)) {
             dependencies.add(dependency);
-            textures.addRegions((TextureAtlas) assetManager.get(dependency));
+            textures.addRegions(assetManager.get(dependency));
         }
         switch (treeJson.get(style).getString("type")) {
             case ("buttonStyle"):
@@ -363,7 +362,7 @@ public class UIComposer {
     public Table addButton(String style, String text, float fontScale) {
         Table table = new Table();
         table.add(addButton(style));
-        table.add(addText(text, (BitmapFont) assetManager.get("font2(old).fnt"), fontScale));
+        table.add(addText(text, assetManager.get("font2(old).fnt"), fontScale));
         return table;
     }
     

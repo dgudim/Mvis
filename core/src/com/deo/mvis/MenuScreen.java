@@ -813,6 +813,8 @@ public class MenuScreen implements Screen {
     
     @Override
     public void resize(int width, int height) {
+        WIDTH = width;
+        HEIGHT = height;
         viewport.update(width, height);
         camera.position.set(0, 0, 0);
         float tempScaleH = height / (float) HEIGHT;

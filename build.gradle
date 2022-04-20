@@ -9,7 +9,7 @@ buildscript {
         google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.0.2'
+        classpath 'com.android.tools.build:gradle:7.1.3'
     }
 }
 
@@ -72,6 +72,5 @@ project(":core") {
         api "com.badlogicgames.gdx:gdx:$gdxVersion"
         api "com.badlogicgames.gdx:gdx-box2d:$gdxVersion"
         implementation "pl.edu.icm:JLargeArrays:1.6"
-        runtime "pl.edu.icm:JLargeArrays:1.6"
     }
 }

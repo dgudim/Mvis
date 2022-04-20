@@ -162,12 +162,9 @@ public class BaseVisualiser {
         utils = new Utils(FPS, sampleStep, musicWave, samplesNormalizedSmoothed, 3, 1, 1, true, batch);
         
         if (!render) {
-            music.setOnCompletionListener(new Music.OnCompletionListener() {
-                @Override
-                public void onCompletion(Music music) {
-                    music.setPosition(0);
-                    music.play();
-                }
+            music.setOnCompletionListener(music -> {
+                music.setPosition(0);
+                music.play();
             });
         }
         
@@ -211,6 +208,8 @@ public class BaseVisualiser {
     }
     
     public void resize(int width, int height, int yOffset, boolean maxScale) {
+        WIDTH = width;
+        HEIGHT = height;
         viewport.update(width, height);
         camera.position.set(0, yOffset, 0);
         float tempScaleH = height / (float) HEIGHT;

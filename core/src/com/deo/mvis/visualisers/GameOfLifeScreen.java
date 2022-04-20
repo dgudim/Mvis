@@ -145,7 +145,7 @@ public class GameOfLifeScreen extends BaseVisualiser implements Screen {
         for (int t = 0; t < samplesNormalizedSmoothed[pos] * maxSimulationSpeed; t++) {
             for (int i = 0; i < NUM_THREADS; i++) {
                 int finalI = i;
-                threads[i] = new Thread(() -> updateMainField(finalI));
+                threads[i] = new Thread(() -> GameOfLifeScreen.this.updateMainField(finalI));
                 threads[i].start();
             }
             waitUntilAllThreadsFinish();
