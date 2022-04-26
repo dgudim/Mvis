@@ -232,7 +232,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                     float height = samples1[i] / 1024 * fftHeight + 0.5f;
                     if (mode == Mode.BASIC) {
                         renderer.rect(-i * FFTStep, -height / 2, FFTStep, height);
-                        renderer.rect(+i * FFTStep, -height / 2, FFTStep, height);
+                        renderer.rect(i * FFTStep, -height / 2, FFTStep, height);
                     } else {
                         renderer.ellipse(i * FFTStep, -height / 2, FFTStep * 16, height, 0, 20);
                         renderer.ellipse(-i * FFTStep, -height / 2, FFTStep * 16, height, 0, 20);
@@ -273,7 +273,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                     littleTrianglesColors.add(new Color().fromHsv(samplesNormalizedRaw[pos] * 120 - 60, 0.75f, 0.9f));
                 }
                 
-                for (int i = 0; i < fftSize; i++) {
+                for (int i = 0; i < fftSize - 5; i++) {
                     float[] triangle = calculatePolygon(0, 0, fftSize - i + 5, -30, 3, 0);
                     
                     renderer.setColor(new Color().fromHsv(displaySamples[i] / 256 * colorAmplitude + colorShift - colorShift2, 0.75f, 0.9f));
@@ -287,7 +287,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                 renderer.setTransformMatrix(new Matrix4().rotate(0, 0, 1, -120));
                 renderFFTForTriangle(triangleStep, triangleFFTSize);
                 
-                for (int i = 0; i < fftSize - 5; i++) {
+                for (int i = 0; i < fftSize; i++) {
                     displaySamples[i] /= 1.7f;
                 }
                 
