@@ -22,7 +22,6 @@ import com.badlogic.gdx.utils.JsonValue;
 import com.deo.mvis.jtransforms.fft.FloatFFT_1D;
 import com.deo.mvis.utils.CompositeSettings;
 import com.deo.mvis.utils.GradientShape;
-import com.deo.mvis.utils.MusicWave;
 import com.deo.mvis.utils.SettingsEntry;
 import com.deo.mvis.utils.SyncedWord;
 import com.deo.mvis.utils.Type;
@@ -77,7 +76,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
     }
     
     private enum Mode {
-        BASIC, TRIANGLE
+        BASIC, ELLIPSE, TRIANGLE
     }
     
     public FFTScreen(Game game) {
@@ -197,6 +196,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
         
         switch (mode) {
             case BASIC:
+            case ELLIPSE:
             default:
                 
                 if (waterfall) {
@@ -223,18 +223,20 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                             glassShards.add(new GradientShape().buildGradientPolygon(samples1[i] / (2024 - maxRadius * 100) + baseRadius, gradientSteps, 90, i * FFTStep + FFTStep / 2f, 0, faces, 0, new Color().fromHsv(colorHSV, 0.75f, 1), Color.CLEAR, 1 / (samplesNormalizedSmoothed[pos] + 0.5f)));
                             shardTimers[i] = minSpawnDelay * delta;
                         }
-    
+                        
                         shardTimers[i] -= delta;
-    
+                        
                     }
-
+                    
                     renderer.setColor(new Color().fromHsv(MathUtils.clamp(samples1[i] / 2048 * colorAmplitude, 0, 130) + colorShift + colorShift2, 0.75f, 0.9f));
-                    renderer.rect(-i * FFTStep, 0, FFTStep, samples1[i] / 1024 * fftHeight + 0.5f);
-                    renderer.rect(+i * FFTStep, 0, FFTStep, samples1[i] / 1024 * fftHeight + 0.5f);
-
-                    renderer.setColor(new Color().fromHsv(-MathUtils.clamp(samples1[i] / 2048 * colorAmplitude, 0, 130) + colorShift - colorShift2, 0.75f, 0.9f));
-                    renderer.rect(-i * FFTStep, 0, FFTStep, -samples1[i] / 1024 * fftHeight + 0.5f);
-                    renderer.rect(+i * FFTStep, 0, FFTStep, -samples1[i] / 1024 * fftHeight + 0.5f);
+                    float height = samples1[i] / 1024 * fftHeight + 0.5f;
+                    if (mode == Mode.BASIC) {
+                        renderer.rect(-i * FFTStep, -height / 2, FFTStep, height);
+                        renderer.rect(+i * FFTStep, -height / 2, FFTStep, height);
+                    } else {
+                        renderer.ellipse(i * FFTStep, -height / 2, FFTStep * 16, height, 0, 20);
+                        renderer.ellipse(-i * FFTStep, -height / 2, FFTStep * 16, height, 0, 20);
+                    }
                 });
                 break;
             

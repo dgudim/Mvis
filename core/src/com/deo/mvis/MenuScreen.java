@@ -150,12 +150,9 @@ public class MenuScreen implements Screen {
             music = Gdx.audio.newMusic(destinationMusic);
         }
         
-        music.setOnCompletionListener(new Music.OnCompletionListener() {
-            @Override
-            public void onCompletion(Music music) {
-                music.setPosition(0);
-                music.play();
-            }
+        music.setOnCompletionListener(music -> {
+            music.setPosition(0);
+            music.play();
         });
         
         renderer = new ShapeRenderer();
