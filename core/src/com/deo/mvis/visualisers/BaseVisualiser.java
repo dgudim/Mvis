@@ -1,5 +1,6 @@
 package com.deo.mvis.visualisers;
 
+import static com.badlogic.gdx.math.MathUtils.clamp;
 import static com.deo.mvis.Launcher.HEIGHT;
 import static com.deo.mvis.Launcher.WIDTH;
 
@@ -14,7 +15,6 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
@@ -203,7 +203,7 @@ public class BaseVisualiser {
         stage.draw();
         stage.act();
         if (Gdx.graphics.getDeltaTime() < 1f) {
-            transparency = MathUtils.clamp(transparency - 0.5f * Gdx.graphics.getDeltaTime(), 0, 1);
+            transparency = clamp(transparency - 0.5f * Gdx.graphics.getDeltaTime(), 0, 1);
         }
     }
     
