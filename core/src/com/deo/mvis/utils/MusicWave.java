@@ -166,8 +166,8 @@ public class MusicWave {
         float[] cutSamples = new float[numSamples];
         System.arraycopy(samplesIN, pos, fullSamples, 0, numSamples + fftDirty * 2);
         fft_1D.realForward(fullSamples);
-        for(int i = fullSamples.length - fftDirty; i < fullSamples.length; i++){
-            fullSamples[i] = fullSamples[fullSamples.length - fftDirty - 1];
+        for(int i = fullSamples.length - fftDirty * 2; i < fullSamples.length; i++){
+            fullSamples[i] = fullSamples[fullSamples.length - fftDirty * 2 - 1];
         }
         smoothSamples(fullSamples, 2, 2, true, false);
         System.arraycopy(fullSamples, fftDirty, cutSamples, 0, numSamples);
