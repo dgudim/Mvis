@@ -34,7 +34,7 @@ public class FFTScreen extends BaseVisualiser implements Screen {
     private final float FFTStep = WIDTH / (float) fftSize / 2f;
     
     float triangleFFTSize = (float) (fftSize * Math.sqrt(3));
-    float triangleStep = WIDTH / triangleFFTSize - .07f;
+    float triangleStep = (float) (Math.sqrt(3));
     
     private final Array<GradientShape> glassShards;
     private final float[] shardTimers;
@@ -273,8 +273,8 @@ public class FFTScreen extends BaseVisualiser implements Screen {
                     littleTrianglesColors.add(new Color().fromHsv(samplesNormalizedRaw[pos] * 120 - 60, 0.75f, 0.9f));
                 }
                 
-                for (int i = 0; i < fftSize - 5; i++) {
-                    float[] triangle = calculatePolygon(0, 0, fftSize - i + 5, -30, 3, 0);
+                for (int i = 0; i < fftSize; i++) {
+                    float[] triangle = calculatePolygon(0, 0, fftSize - i, -30, 3, 0);
                     
                     renderer.setColor(new Color().fromHsv(displaySamples[i] / 256 * colorAmplitude + colorShift - colorShift2, 0.75f, 0.9f));
                     renderer.triangle(triangle[0], triangle[1], triangle[2], triangle[3], triangle[4], triangle[5]);

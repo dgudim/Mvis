@@ -1,5 +1,7 @@
 package com.deo.mvis.utils;
 
+import static com.badlogic.gdx.math.MathUtils.clamp;
+
 public class SettingsEntry {
     
     private final String name;
@@ -39,7 +41,7 @@ public class SettingsEntry {
     }
     
     public float getCurrent() {
-        return current_val;
+        return clamp(current_val, min, max);
     }
     
     public Type getType() {

@@ -11,8 +11,8 @@ import static com.deo.mvis.utils.ColorPallets.fadeBetweenTwoColors;
 public class GradientShape {
 
     Array<float[]> vertices;
-    static int verticesPerGradient;
-    static int gradientSteps;
+    int verticesPerGradient;
+    int gradientSteps;
     public float x;
     public float y;
     public float radius;
@@ -44,7 +44,8 @@ public class GradientShape {
 
     public GradientShape buildGradientPolygon(float radius, int gradientSteps, float rotationOffset, float x, float y, int faces, float angleStep, Color from, Color to, float colorFadeout) {
         radius = 11 * radius / 10f;
-        GradientShape.gradientSteps = gradientSteps;
+        this.gradientSteps = gradientSteps;
+        verticesPerGradient = faces*2;
         this.radius = radius;
         float step = 1 / (float) gradientSteps;
         float radiusStep = radius * step;
@@ -60,7 +61,6 @@ public class GradientShape {
     }
 
     public static float[] calculatePolygon(float x, float y, float size, float angleOffset, int faces, float angleStep) {
-        verticesPerGradient = faces*2;
         float[] vertices = new float[faces * 2];
         if (angleStep == 0) {
             angleStep = 360 / (float)faces;
