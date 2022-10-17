@@ -23,7 +23,6 @@ public class AndroidLauncher extends AndroidApplication {
         config.useAccelerometer = false;
         config.useCompass = false;
         config.useGyroscope = false;
-        config.hideStatusBar = true;
         config.useWakelock = true;
         
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
