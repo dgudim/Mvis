@@ -1,7 +1,6 @@
-# Mvis
-<br>
-<img src="https://github.com/dgudim/Mvis/blob/master/android/res/drawable-hdpi/ic_launcher.png" height=130></img>
-<br>
+<h1 id="title">Mvis</h1>
+
+<img src="https://github.com/dgudim/Mvis/blob/master/android/res/drawable-hdpi/ic_launcher.png" height=150 id="icon"></img>
 
 A collection of different audio visualisers written in java and libGDX
 
@@ -24,7 +23,7 @@ https://github.com/dgudim/Mvis
 
 | [Fractal tree](https://www.youtube.com/watch?v=alKbPWIPB9Q) | [Triangle frequency spectrum](https://www.youtube.com/watch?v=S6ol8-rD5GA) |
 | ------------------------- | --------------------------- |
-| <a href="https://www.youtube.com/watch?v=alKbPWIPB9Q"><img src="https://user-images.githubusercontent.com/34401005/196237728-514366a1-a070-4670-9059-71d2d9a7d5a6.png"><img></a> | <a href="https://www.youtube.com/watch?v=S6ol8-rD5GA"><img src="https://user-images.githubusercontent.com/34401005/196234495-3d5105a9-3d80-4c4a-bdd7-c6a51a15a766.png"><img></a>
+| <a href="https://www.youtube.com/watch?v=alKbPWIPB9Q"><img id="thumb" src="https://user-images.githubusercontent.com/34401005/196237728-514366a1-a070-4670-9059-71d2d9a7d5a6.png"><img></a> | <a href="https://www.youtube.com/watch?v=S6ol8-rD5GA"><img src="https://user-images.githubusercontent.com/34401005/196234495-3d5105a9-3d80-4c4a-bdd7-c6a51a15a766.png"><img></a>
 
 
 | [Flat frequency spectrum](https://youtu.be/dhFDtwm975w) | [Fourier](https://www.youtube.com/watch?v=lPdYnZGORko) |
