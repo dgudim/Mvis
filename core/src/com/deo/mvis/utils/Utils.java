@@ -2,6 +2,7 @@ package com.deo.mvis.utils;
 
 import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.PixmapIO;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -17,6 +18,8 @@ import static com.deo.mvis.Launcher.HEIGHT;
 import static com.deo.mvis.Launcher.WIDTH;
 
 public class Utils {
+
+    private static Preferences prefs = Gdx.app.getPreferences("MvisPrefs");
 
     private int step;
     private int FPS;
@@ -59,6 +62,10 @@ public class Utils {
         if (enableBloom) {
             blurProcessor.render();
         }
+    }
+
+    public void changeBloomEnabledState(boolean enableBloom){
+        this.enableBloom = enableBloom;
     }
 
     public void setBatchProjMat(Matrix4 mat) {
@@ -104,6 +111,33 @@ public class Utils {
 
     public static int getRandomInRange(int min, int max) {
         return (MathUtils.random(max - min) + min);
+    }
+
+    public static float getFloat(String key) {
+        return prefs.getFloat(key);
+    }
+
+    public static void putFloat(String key, float val) {
+        prefs.putFloat(key, val);
+        prefs.flush();
+    }
+
+    public static boolean getBoolean(String key) {
+        return (prefs.getBoolean(key));
+    }
+
+    public static void putBoolean(String key, boolean val) {
+        prefs.putBoolean(key, val);
+        prefs.flush();
+    }
+
+    public static void putInteger(String key, int val) {
+        prefs.putInteger(key, val);
+        prefs.flush();
+    }
+
+    public static int getInteger(String key) {
+        return (prefs.getInteger(key));
     }
 
     public void dispose() {

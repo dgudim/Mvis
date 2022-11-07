@@ -21,10 +21,6 @@ public class MusicWave {
 
     public MusicWave(FileHandle musicFile) {
 
-        if(musicFile == null){
-            musicFile = Gdx.files.internal("away.wav");
-        }
-
         try {
 
             InputStream wavStream = musicFile.read();

@@ -42,8 +42,8 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
 
     private float maxSaturation = 4;
 
-    private static int type;
-    private static int palette;
+    private static int type = 0;
+    private static int palette = 100;
 
     public OsciloscopeScreen() {
 
@@ -331,11 +331,15 @@ public class OsciloscopeScreen extends BaseVisualiser implements Screen {
 
     public static void init() {
         paletteNames = new String[]{"Lime", "Fire", "Water"};
-        typeNames = new String[]{"Oscilloscope", "Oscilloscope2", "Bubble", "Bubble2", "Shapes", "Sinus", "Frequency in circle"};
+        typeNames = new String[]{"Oscilloscope", "Radial", "Bubble", "Bubble2", "Shapes", "Sinus", "Frequency in circle"};
 
-        settings = new String[]{"Type", "Pallet", "Fadeout", "Frequency display samples(512 is enough)", "Radial visualiser amplitude"};
-        settingTypes = new String[]{"int", "int", "float", "int", "int"};
-        settingMaxValues = new float[]{typeNames.length, paletteNames.length, 1, 1024, 450};
+        settings = new String[]{"Type", "Pallet", "Fadeout", "Frequency display samples", "Radial visualiser amplitude"};
+        settingTypes = new String[]{"int", "int", "float", "int", "float"};
+
+        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 0.05f, 1024, 450};
+        settingMinValues = new float[]{0, 0, 0.0005f, 256, 15};
+
+        defaultSettings = new float[]{0, 0, fadeout, freqDisplaySamples, radialAmplitude};
     }
 
     public static String getName() {

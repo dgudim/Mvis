@@ -16,7 +16,8 @@ public class RingScreen extends BaseVisualiser implements Screen {
     private Array<Float> radiuses, radiuses2;
     private Array<Vector2> positions;
     private Array<Vector3> colors;
-    private static float fadeout, ringGrowSpeed;
+    private static float fadeout = 0.006f;
+    private static float ringGrowSpeed = 12f;
 
     private static int palette, type;
 
@@ -29,8 +30,6 @@ public class RingScreen extends BaseVisualiser implements Screen {
         radiuses2 = new Array<>();
         positions = new Array<>();
         colors = new Array<>();
-        fadeout = 0.006f;
-        ringGrowSpeed = 12f;
 
         musicWave.multiplySamples(samplesRaw, 3);
 
@@ -112,7 +111,11 @@ public class RingScreen extends BaseVisualiser implements Screen {
 
         settings = new String[]{"Type", "Pallet", "Ring grow speed", "Fadeout"};
         settingTypes = new String[]{"int", "int", "float", "float"};
-        settingMaxValues = new float[]{typeNames.length, paletteNames.length, 1, 1};
+
+        settingMaxValues = new float[]{typeNames.length-1, paletteNames.length-1, 25, 0.05f};
+        settingMinValues = new float[]{0, 0, 5, 0.0005f};
+
+        defaultSettings = new float[]{0, 0, ringGrowSpeed, fadeout};
     }
 
     public static String getName(){
@@ -121,7 +124,7 @@ public class RingScreen extends BaseVisualiser implements Screen {
 
     public static void setSettings(float[] newSettings) {
         type = (int) newSettings[0];
-        palette = (int) newSettings[1];
+        palette = (int) newSettings[1] + 100;
         ringGrowSpeed = newSettings[2];
         fadeout = newSettings[3];
     }

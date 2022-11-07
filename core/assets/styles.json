@@ -245,19 +245,19 @@
     "type": "sliderStyle",
     "background": {
       "texture": "progressBarBg",
-      "size": [35, 10]
+      "size": [35, 50]
     },
     "knob":{
       "texture": "progressBarKnob",
-      "size": [6, 10]
+      "size": [36, 50]
     },
     "knobDown":{
       "texture": "progressBarKnob_enabled",
-      "size": [6, 10]
+      "size": [36, 50]
     },
     "knobOver":{
       "texture": "progressBarKnob_over",
-      "size": [6, 10]
+      "size": [36, 50]
     },
     "loadFrom": "ui.atlas"
   },

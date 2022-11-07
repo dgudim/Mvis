@@ -2,6 +2,7 @@ package com.deo.mvis.visualisers;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.MathUtils;
@@ -174,10 +175,14 @@ public class MushroomScreen extends BaseVisualiser implements Screen {
 
         settings = new String[]{"Type", "Pallet", "Exponential"};
         settingTypes = new String[]{"int", "int", "boolean"};
-        settingMaxValues = new float[]{typeNames.length, paletteNames.length, 1};
+
+        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 1};
+        settingMinValues = new float[]{0, 0, 0};
+
+        defaultSettings = new float[]{0, 0, 0};
     }
 
-    public static String getName(){
+    public static String getName() {
         return "Fractal tree";
     }
 

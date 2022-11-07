@@ -217,8 +217,12 @@ public class FFTScreen extends BaseVisualiser implements Screen {
         typeNames = new String[]{"Basic", "Triangle"};
 
         settings = new String[]{"Type", "Pallet", "Triangle flying speed"};
-        settingTypes = new String[]{"int", "int", "int"};
-        settingMaxValues = new float[]{typeNames.length, paletteNames.length, 200};
+        settingTypes = new String[]{"int", "int", "float"};
+
+        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 200};
+        settingMinValues = new float[]{0, 0, 0};
+
+        defaultSettings = new float[]{0, 0, 75};
     }
 
     public static String getName(){

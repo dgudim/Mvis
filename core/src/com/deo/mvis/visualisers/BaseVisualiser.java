@@ -1,7 +1,9 @@
 package com.deo.mvis.visualisers;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
@@ -35,16 +37,18 @@ public class BaseVisualiser {
     float[] lSamplesNormalisedSmoothed;
 
     public static String[] typeNames, paletteNames, settings, settingTypes;
-    public static float[] settingMaxValues;
+    public static float[] settingMaxValues, settingMinValues, defaultSettings;
 
     int numOfSamples;
+
+    public static FileHandle musicFile = Gdx.files.internal("away.wav");
 
     public BaseVisualiser() {
 
         renderer = new ShapeRenderer();
         renderer.setAutoShapeType(true);
 
-        musicWave = new MusicWave(Gdx.files.external("!Deltacore/visions.wav"));
+        musicWave = new MusicWave(musicFile);
         music = musicWave.getMusic();
 
         samplesRaw = musicWave.normaliseSamples(false, false, musicWave.getSamples());
@@ -105,6 +109,18 @@ public class BaseVisualiser {
 
     public static float[] getSettingMaxValues() {
         return settingMaxValues;
+    }
+
+    public static float[] getSettingMinValues() {
+        return settingMinValues;
+    }
+
+    public static float[] getDefaultSettings() {
+        return defaultSettings;
+    }
+
+    public static void setMusic(FileHandle fileHandle){
+        musicFile = fileHandle;
     }
 
 }

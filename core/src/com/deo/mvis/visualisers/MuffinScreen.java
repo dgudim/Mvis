@@ -20,13 +20,11 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.deo.mvis.utils.MusicWave;
-import com.deo.mvis.utils.Utils;
 
 import static com.deo.mvis.Launcher.HEIGHT;
 import static com.deo.mvis.Launcher.WIDTH;
 
-public class MuffinScreen extends BaseVisualiser implements Screen{
+public class MuffinScreen extends BaseVisualiser implements Screen {
 
     private PerspectiveCamera cam;
     private ModelBatch modelBatch;
@@ -47,7 +45,9 @@ public class MuffinScreen extends BaseVisualiser implements Screen{
     private final int GRID = 1;
     private final int RUBENSTUBE = 2;
 
-    private static int type;
+    private static int type = 1;
+    private static float visualiserQuality = 100f;
+    private static boolean flushSpriteBatch = false;
     private static int palette;
 
     public MuffinScreen() {
@@ -72,6 +72,8 @@ public class MuffinScreen extends BaseVisualiser implements Screen{
 
         environment = new Environment();
 
+        utils.changeBloomEnabledState(type == SINGULAR);
+
         initialiseScene();
     }
 
@@ -83,7 +85,7 @@ public class MuffinScreen extends BaseVisualiser implements Screen{
     @Override
     public void render(float delta) {
 
-        Gdx.gl.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
         Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
         Gdx.gl.glEnable(GL20.GL_CULL_FACE);
@@ -103,7 +105,7 @@ public class MuffinScreen extends BaseVisualiser implements Screen{
         modelBatch.begin(cam);
         for (int i = instances.size - 1; i >= 0; i--) {
             modelBatch.render(instances.get(i), environment);
-            if (type == GRID && render) {
+            if (flushSpriteBatch) {
                 modelBatch.flush();
             }
         }
@@ -178,15 +180,15 @@ public class MuffinScreen extends BaseVisualiser implements Screen{
                 prevLight = new DirectionalLight().set(0, 1, 1, -1f, -0.8f, -0.2f);
                 environment.add(prevLight);
 
-                for (int x = 0; x < 101; x++) {
-                    for (int z = 0; z < 101; z++) {
-                        Model model2 = modelBuilder.createBox(0.5f, 8f, 0.5f,
+                for (int x = 0; x < 101 * visualiserQuality/100f ; x++) {
+                    for (int z = 0; z < 101 * visualiserQuality/100f; z++) {
+                        Model model2 = modelBuilder.createBox(0.5f * 100/visualiserQuality, 8f, 0.5f * 100/visualiserQuality,
                                 new Material(ColorAttribute.createDiffuse(Color.valueOf("#00000000")), new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA)),
                                 VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal);
 
                         ModelInstance instance2 = new ModelInstance(model2);
 
-                        instance2.transform.translate(-x * 0.5f, -17, -z * 0.5f);
+                        instance2.transform.translate(-x * 0.5f * 100/visualiserQuality, -17, -z * 0.5f * 100/visualiserQuality);
 
                         models.add(model2);
                         instances.add(instance2);
@@ -209,7 +211,7 @@ public class MuffinScreen extends BaseVisualiser implements Screen{
         if (!preloaded) {
             float prevPos = 0;
             Array<Integer> positions = new Array<>();
-            for (float i = 0; i < 360; i += 0.01f) {
+            for (float i = 0; i < 360; i += 0.5f * 100/visualiserQuality) {
                 float x = -MathUtils.cosDeg(i) * radius + 49.5f;
                 float y = -MathUtils.sinDeg(i) * radius + 49.5f;
                 float x2 = x;
@@ -261,11 +263,11 @@ public class MuffinScreen extends BaseVisualiser implements Screen{
 
     private void rubensTransform(int pos) {
         try {
-            for (int x = 0; x < 101; x++) {
-                for (int y = 0; y < 101; y++) {
-                    int arrayPos = 101 * x + y;
+            for (int x = 0; x < 101 * visualiserQuality/100f; x++) {
+                for (int y = 0; y < 101 * visualiserQuality/100f; y++) {
+                    int arrayPos = (int)Math.ceil(101 * visualiserQuality/100f) * x + y;
 
-                    float height = (rSamplesNormalised[pos - x * step / 128] + lSamplesNormalised[pos - y * step / 128]) * 2;
+                    float height = (rSamplesNormalised[pos - x * step / 512] + lSamplesNormalised[pos - y * step / 512]);
 
                     float currentTranslation = modelYPoses.get(arrayPos);
                     float nextTranslation = (modelYPoses.get(arrayPos) + height) / 1.2f;
@@ -285,20 +287,26 @@ public class MuffinScreen extends BaseVisualiser implements Screen{
 
     public static void init() {
         paletteNames = new String[]{"Default"};
-        typeNames = new String[]{"Muffin", "Flat"};
+        typeNames = new String[]{"Cube", "Muffin", "Flat"};
 
-        settings = new String[]{"Type", "Pallet"};
-        settingTypes = new String[]{"int", "int"};
-        settingMaxValues = new float[]{typeNames.length, paletteNames.length};
+        settings = new String[]{"Type", "Pallet", "VisualiserQuality", "Batch flush (looks better, but runs slower)"};
+        settingTypes = new String[]{"int", "int", "int", "boolean"};
+
+        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 100, 1};
+        settingMinValues = new float[]{0, 0, 1, 0};
+
+        defaultSettings = new float[]{0, 0, 100, 0};
     }
 
-    public static String getName(){
+    public static String getName() {
         return "3D";
     }
 
     public static void setSettings(float[] newSettings) {
         type = (int) newSettings[0];
         palette = (int) newSettings[1];
+        visualiserQuality = newSettings[2];
+        flushSpriteBatch = newSettings[3]>0;
     }
 
     @Override

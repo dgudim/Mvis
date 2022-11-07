@@ -5,6 +5,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -16,32 +17,46 @@ import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.CheckBox;
 import com.badlogic.gdx.scenes.scene2d.ui.List;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Slider;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.deo.mvis.jtransforms.fft.FloatFFT_1D;
+import com.deo.mvis.otherScreens.GameOfLife;
 import com.deo.mvis.utils.MusicWave;
 import com.deo.mvis.utils.UIComposer;
 import com.deo.mvis.visualisers.BaseVisualiser;
+import com.deo.mvis.visualisers.FFTScreen;
+import com.deo.mvis.visualisers.MuffinScreen;
+import com.deo.mvis.visualisers.MushroomScreen;
+import com.deo.mvis.visualisers.OsciloscopeScreen;
+import com.deo.mvis.visualisers.RingScreen;
 
-import org.reflections8.Reflections;
-
-import java.lang.reflect.InvocationTargetException;
+import java.io.File;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 import static com.deo.mvis.Launcher.HEIGHT;
 import static com.deo.mvis.Launcher.WIDTH;
+import static com.deo.mvis.utils.Utils.getBoolean;
+import static com.deo.mvis.utils.Utils.getFloat;
+import static com.deo.mvis.utils.Utils.getInteger;
+import static com.deo.mvis.utils.Utils.putBoolean;
+import static com.deo.mvis.utils.Utils.putInteger;
 
 public class MenuScreen implements Screen {
 
@@ -78,7 +93,7 @@ public class MenuScreen implements Screen {
 
         this.game = game;
 
-        settings = new Array<ScrollPane>();
+        settings = new Array<>();
 
         musicWave = new MusicWave(Gdx.files.internal("liquid.wav"));
 
@@ -86,7 +101,13 @@ public class MenuScreen implements Screen {
 
         averageSamples = musicWave.smoothSamples(musicWave.getSamples(), 2, 32);
 
-        music.setLooping(true);
+        music.setOnCompletionListener(new Music.OnCompletionListener() {
+            @Override
+            public void onCompletion(Music music) {
+                music.setPosition(0);
+                music.play();
+            }
+        });
 
         fft = new FloatFFT_1D(32);
 
@@ -121,14 +142,20 @@ public class MenuScreen implements Screen {
         font_small.getData().scale(0.01f);
 
         uiComposer = new UIComposer(assetManager);
-        uiComposer.loadStyles("defaultLight", "checkBoxSmall", "sliderDefaultSmall");
+        uiComposer.loadStyles("defaultLight", "checkBoxDefault", "sliderDefaultSmall");
 
         visualisersTable = new Table();
 
         stage = new Stage(viewport, batch);
 
-        Reflections reflections = new Reflections("com.deo.mvis");
-        visualiserClasses = reflections.getSubTypesOf(BaseVisualiser.class);
+        visualiserClasses = new HashSet<>();
+
+        visualiserClasses.add(OsciloscopeScreen.class);
+        visualiserClasses.add(MuffinScreen.class);
+        visualiserClasses.add(RingScreen.class);
+        visualiserClasses.add(MushroomScreen.class);
+        visualiserClasses.add(FFTScreen.class);
+        visualiserClasses.add(GameOfLife.class);
 
         boolean row = false;
         int i = 0;
@@ -137,12 +164,12 @@ public class MenuScreen implements Screen {
 
                 TextButton visualiserStartButton = uiComposer.addTextButton("defaultLight", (String) aClass.getMethod("getName").invoke(aClass), 0.45f);
                 visualiserStartButton.setColor(Color.LIGHT_GRAY);
-
                 if (row) {
                     visualisersTable.add(visualiserStartButton).width(370).height(100).pad(7).row();
                 } else {
                     visualisersTable.add(visualiserStartButton).width(370).height(100).pad(7);
                 }
+
                 row = !row;
                 aClass.getMethod("init").invoke(aClass);
 
@@ -309,6 +336,10 @@ public class MenuScreen implements Screen {
         String[] paletteNames = new String[0];
         String[] typeNames = new String[0];
         float[] settingMaxValues = new float[0];
+        float[] settingMinValues = new float[0];
+        float[] defaultSettings = new float[0];
+
+        String name = "noName";
 
         try {
             settingNames = (String[]) visualiser.getMethod("getSettings").invoke(BaseVisualiser.class);
@@ -316,9 +347,14 @@ public class MenuScreen implements Screen {
             paletteNames = (String[]) visualiser.getMethod("getPaletteNames").invoke(BaseVisualiser.class);
             typeNames = (String[]) visualiser.getMethod("getTypeNames").invoke(BaseVisualiser.class);
             settingMaxValues = (float[]) visualiser.getMethod("getSettingMaxValues").invoke(BaseVisualiser.class);
+            settingMinValues = (float[]) visualiser.getMethod("getSettingMinValues").invoke(BaseVisualiser.class);
+            defaultSettings = (float[]) visualiser.getMethod("getDefaultSettings").invoke(BaseVisualiser.class);
+            name = visualiser.getSimpleName();
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        final float[] newSettings = defaultSettings.clone();
 
         Pixmap pixmap = new Pixmap(100, 30, Pixmap.Format.RGBA8888);
         pixmap.setColor(Color.BLACK);
@@ -345,11 +381,50 @@ public class MenuScreen implements Screen {
                 new ScrollPane.ScrollPaneStyle(BarBackgroundGrey, BarBackgroundEmpty, BarBackgroundEmpty, BarBackgroundEmpty, BarBackgroundEmpty),
                 new List.ListStyle(font_small, Color.CORAL, Color.SKY, BarBackgroundGrey));
 
-        SelectBox<String> paletteSelector = new SelectBox<>(selectBoxStyle);
-        SelectBox<String> typeSelector = new SelectBox<>(selectBoxStyle);
+        final SelectBox<String> paletteSelector = new SelectBox<>(selectBoxStyle);
+        final SelectBox<String> typeSelector = new SelectBox<>(selectBoxStyle);
+        final SelectBox<String> musicSelector = new SelectBox<>(selectBoxStyle);
 
+        Array<String> availableMusic = new Array<>();
+        availableMusic.add("Up and away", "liquid cinema", "customMusic");
+        final Array<FileHandle> availableMusicFiles = new Array<>();
+        availableMusicFiles.add(Gdx.files.internal("away.wav"), Gdx.files.internal("liquid.wav"));
+
+        File musicFolder = Gdx.files.external("Mvis").file();
+        try {
+            for (File m : musicFolder.listFiles()) {
+                availableMusic.add(m.getName().replace(".wav", ""));
+                availableMusicFiles.add(Gdx.files.external("Mvis/" + m.getName()));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        musicSelector.setItems(availableMusic);
         paletteSelector.setItems(paletteNames);
         typeSelector.setItems(typeNames);
+
+        typeSelector.setSelectedIndex(getInteger("type" + name));
+        newSettings[0] = getInteger("type" + name);
+        paletteSelector.setSelectedIndex(getInteger("palette" + name));
+        newSettings[1] = getInteger("palette" + name);
+
+        final String finalName = name;
+        typeSelector.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                newSettings[0] = typeSelector.getSelectedIndex() - 1;
+                putInteger("type" + finalName, (int) newSettings[0]);
+            }
+        });
+
+        paletteSelector.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                newSettings[1] = paletteSelector.getSelectedIndex();
+                putInteger("palette" + finalName, (int) newSettings[1]);
+            }
+        });
 
         Table settingsTable = new Table();
         settingsTable.align(Align.bottom);
@@ -361,6 +436,8 @@ public class MenuScreen implements Screen {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 try {
+                    visualiser.getMethod("setSettings", newSettings.getClass()).invoke(visualiser, newSettings);
+                    visualiser.getMethod("setMusic", FileHandle.class).invoke(visualiser, availableMusicFiles.get(musicSelector.getSelectedIndex() - 1));
                     game.setScreen((Screen) visualiser.newInstance());
                     MenuScreen.this.dispose();
                 } catch (Exception e) {
@@ -369,18 +446,72 @@ public class MenuScreen implements Screen {
             }
         });
 
-        for(int i = 0; i<settingTypes.length; i++){
-            switch (settingTypes[i]){
-                case("int"):
+        for (int i = 2; i < settingTypes.length; i++) {
+            switch (settingTypes[i]) {
+                case ("int"):
+                case ("float"):
 
+                    float step = 0.001f;
+                    if (settingTypes[i].equals("int")) {
+                        step = 1;
+                    }
+
+                    Table setting = uiComposer.addSlider("sliderDefaultSmall", settingMinValues[i], settingMaxValues[i],
+                            step, settingNames[i] + ": ", "", name + "_" + i, settingTypes[i]);
+
+                    final Slider slider = (Slider) setting.getCells().get(0).getActor();
+
+                    if (!getBoolean(name + "_" + i + "_changed")) {
+                        slider.setValue(defaultSettings[i]);
+                    } else {
+                        newSettings[i] = slider.getValue();
+                    }
+
+                    final int finalI = i;
+                    slider.addListener(new ChangeListener() {
+                        @Override
+                        public void changed(ChangeEvent event, Actor actor) {
+                            newSettings[finalI] = slider.getValue();
+                            putBoolean(finalName + "_" + finalI + "_changed", true);
+                        }
+                    });
+
+                    settingsTable.add(setting).padBottom(5).padLeft(7).align(Align.left).row();
                     break;
-                case("float"):
-                    break;
-                case("boolean"):
+                case ("boolean"):
+
+                    final CheckBox setting2 = uiComposer.addCheckBox("checkBoxDefault", settingNames[i], name + "_" + i);
+
+                    if (!getBoolean(name + "_" + i + "_changed")) {
+                        setting2.setChecked(defaultSettings[i] > 0);
+                    } else {
+                        int set = 0;
+                        if (setting2.isChecked()) {
+                            set = 1;
+                        }
+                        newSettings[i] = set;
+                    }
+
+                    final int finalI1 = i;
+                    setting2.addListener(new ChangeListener() {
+                        @Override
+                        public void changed(ChangeEvent event, Actor actor) {
+                            int set = 0;
+                            if (setting2.isChecked()) {
+                                set = 1;
+                            }
+                            newSettings[finalI1] = set;
+                            putBoolean(finalName + "_" + finalI1 + "_changed", true);
+                        }
+                    });
+
+                    settingsTable.add(setting2).padBottom(5).padLeft(7).align(Align.left).row();
+
                     break;
             }
         }
 
+        settingsTable.add(musicSelector).width(WIDTH / 2f - 22).padBottom(5).row();
         settingsTable.add(typeSelector).width(WIDTH / 2f - 22).padBottom(5).row();
         settingsTable.add(paletteSelector).width(WIDTH / 2f - 22).padBottom(5).row();
         settingsTable.add(visualiserStartButton).width(330).height(75);

@@ -19,7 +19,7 @@ import static com.deo.mvis.Launcher.WIDTH;
 public class GameOfLife extends BaseVisualiser implements Screen {
 
     private final int fieldWidth = 800;
-    private final int fieldHeight = 450;
+    private static final int fieldHeight = 450;
     private static int oneDRuleHeight = 100;
     private static boolean oneDRuleEnabled = true;
 
@@ -444,7 +444,11 @@ public class GameOfLife extends BaseVisualiser implements Screen {
 
         settings = new String[]{"Type", "Pallet", "Bottom enabled", "Bottom rule height"};
         settingTypes = new String[]{"int", "int", "boolean", "int"};
-        settingMaxValues = new float[]{typeNames.length, paletteNames.length, 1, HEIGHT/2f};
+
+        settingMaxValues = new float[]{typeNames.length - 1, paletteNames.length - 1, 1, fieldHeight - 1};
+        settingMinValues = new float[]{0, 0, 0, 0};
+
+        defaultSettings = new float[]{0, 0, 1, oneDRuleHeight};
     }
 
     public static String getName() {

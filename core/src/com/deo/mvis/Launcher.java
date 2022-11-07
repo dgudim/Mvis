@@ -1,8 +1,7 @@
 package com.deo.mvis;
 import com.badlogic.gdx.Game;
-import com.deo.mvis.otherScreens.GameOfLife;
-import com.deo.mvis.visualisers.FFTScreen;
-import com.deo.mvis.visualisers.RingScreen;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.files.FileHandle;
 
 public final class Launcher extends Game {
 
