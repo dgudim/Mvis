@@ -386,17 +386,19 @@ public class MenuScreen implements Screen {
         final SelectBox<String> musicSelector = new SelectBox<>(selectBoxStyle);
 
         Array<String> availableMusic = new Array<>();
-        availableMusic.add("Up and away", "liquid cinema", "customMusic");
+        availableMusic.add("Up and away", "liquid cinema");
         final Array<FileHandle> availableMusicFiles = new Array<>();
         availableMusicFiles.add(Gdx.files.internal("away.wav"), Gdx.files.internal("liquid.wav"));
 
         File musicFolder = Gdx.files.external("Mvis").file();
-        try {
+        try{
             for (File m : musicFolder.listFiles()) {
-                availableMusic.add(m.getName().replace(".wav", ""));
-                availableMusicFiles.add(Gdx.files.external("Mvis/" + m.getName()));
+                if(m.getName().endsWith(".wav")) {
+                    availableMusic.add(m.getName().replace(".wav", ""));
+                    availableMusicFiles.add(Gdx.files.external("Mvis/" + m.getName()));
+                }
             }
-        } catch (Exception e) {
+        }catch (Exception e){
             e.printStackTrace();
         }
 
@@ -413,7 +415,7 @@ public class MenuScreen implements Screen {
         typeSelector.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                newSettings[0] = typeSelector.getSelectedIndex() - 1;
+                newSettings[0] = typeSelector.getSelectedIndex();
                 putInteger("type" + finalName, (int) newSettings[0]);
             }
         });
@@ -437,7 +439,7 @@ public class MenuScreen implements Screen {
             public void clicked(InputEvent event, float x, float y) {
                 try {
                     visualiser.getMethod("setSettings", newSettings.getClass()).invoke(visualiser, newSettings);
-                    visualiser.getMethod("setMusic", FileHandle.class).invoke(visualiser, availableMusicFiles.get(musicSelector.getSelectedIndex() - 1));
+                    visualiser.getMethod("setMusic", FileHandle.class).invoke(visualiser, availableMusicFiles.get(musicSelector.getSelectedIndex()));
                     game.setScreen((Screen) visualiser.newInstance());
                     MenuScreen.this.dispose();
                 } catch (Exception e) {
@@ -452,7 +454,7 @@ public class MenuScreen implements Screen {
                 case ("float"):
 
                     float step = 0.001f;
-                    if (settingTypes[i].equals("int")) {
+                    if(settingTypes[i].equals("int")){
                         step = 1;
                     }
 
@@ -461,9 +463,9 @@ public class MenuScreen implements Screen {
 
                     final Slider slider = (Slider) setting.getCells().get(0).getActor();
 
-                    if (!getBoolean(name + "_" + i + "_changed")) {
+                    if(!getBoolean(name + "_" + i+"_changed")) {
                         slider.setValue(defaultSettings[i]);
-                    } else {
+                    }else{
                         newSettings[i] = slider.getValue();
                     }
 
@@ -472,7 +474,7 @@ public class MenuScreen implements Screen {
                         @Override
                         public void changed(ChangeEvent event, Actor actor) {
                             newSettings[finalI] = slider.getValue();
-                            putBoolean(finalName + "_" + finalI + "_changed", true);
+                            putBoolean(finalName + "_" + finalI+"_changed", true);
                         }
                     });
 
@@ -482,9 +484,9 @@ public class MenuScreen implements Screen {
 
                     final CheckBox setting2 = uiComposer.addCheckBox("checkBoxDefault", settingNames[i], name + "_" + i);
 
-                    if (!getBoolean(name + "_" + i + "_changed")) {
-                        setting2.setChecked(defaultSettings[i] > 0);
-                    } else {
+                    if(!getBoolean(name + "_" + i+"_changed")) {
+                        setting2.setChecked(defaultSettings[i]>0);
+                    }else{
                         int set = 0;
                         if (setting2.isChecked()) {
                             set = 1;
@@ -501,7 +503,7 @@ public class MenuScreen implements Screen {
                                 set = 1;
                             }
                             newSettings[finalI1] = set;
-                            putBoolean(finalName + "_" + finalI1 + "_changed", true);
+                            putBoolean(finalName + "_" + finalI1+"_changed", true);
                         }
                     });
 
