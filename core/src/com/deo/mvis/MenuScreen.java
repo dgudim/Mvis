@@ -97,19 +97,17 @@ public class MenuScreen implements Screen {
 
     public MenuScreen(final Game game) {
 
-        FileHandle destination;
-        FileHandle destinationMusic;
-        if (Gdx.app.getType() == Application.ApplicationType.Android) {
-            destination = Gdx.files.external("Mvis/");
-            destinationMusic = Gdx.files.external("Mvis/liquid.wav");
-        } else {
-            destination = Gdx.files.external("!Deltacore");
-            destinationMusic = Gdx.files.external("!Deltacore/liquid.wav");
+        FileHandle destinationFolder = Gdx.files.external("Mvis/");
+
+        if(!destinationFolder.exists()){
+            destinationFolder.mkdirs();
         }
 
+        FileHandle destinationMusic = Gdx.files.external("Mvis/liquid.wav");
+
         if (!destinationMusic.exists()) {
-            Gdx.files.internal("away.wav").copyTo(destination);
-            Gdx.files.internal("liquid.wav").copyTo(destination);
+            Gdx.files.internal("away.wav").copyTo(destinationFolder);
+            Gdx.files.internal("liquid.wav").copyTo(destinationFolder);
         }
 
         this.game = game;
@@ -418,17 +416,7 @@ public class MenuScreen implements Screen {
         final Array<FileHandle> availableMusicFiles = new Array<>();
 
         File musicFolder = Gdx.files.external("Mvis").file();
-        File musicFolder2 = Gdx.files.external("!Deltacore").file();
-        try {
-            for (File m : musicFolder2.listFiles()) {
-                if (m.getName().endsWith(".wav")) {
-                    availableMusic.add(m.getName().replace(".wav", ""));
-                    availableMusicFiles.add(Gdx.files.external("!Deltacore/" + m.getName()));
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+
         try {
             for (File m : musicFolder.listFiles()) {
                 if (m.getName().endsWith(".wav")) {
